@@ -167,8 +167,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     router.replace("/login");
   }
 
-  if (!ready || !userId) return <p role="status" className="p-8 text-sm">{error || "Checking your session…"}</p>;
-
   function getInitials(fullName: string) {
     const parts = fullName.trim().split(/\s+/);
     if (!parts[0]) return "U";
@@ -333,6 +331,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       </header>
       <main className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+        {(!ready || !userId) && <p role="status" className="mb-4 text-sm">{error || "Checking your session…"}</p>}
         {error && <div role="alert" className="mb-4 rounded-lg border border-red-500/30 p-4 text-sm text-red-500">{error} <button type="button" onClick={() => { void refreshData(); }} className="underline">Retry</button></div>}{children}
       </main>
 
