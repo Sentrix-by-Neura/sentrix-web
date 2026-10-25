@@ -499,9 +499,9 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
                 onClick={async () => {
                   closeMenu();
                   const ok = await confirm({
-                    title: "Delete Sensor",
-                    message: "Remove this device and permanently delete its telemetry, predictions, and alerts? Its factory identity is preserved. Hold BOOT for 5 seconds and release before setting it up again.",
-                    confirmText: "Delete Sensor",
+                    title: device.archivedAt ? "Delete Archived History" : "Delete Sensor",
+                    message: device.archivedAt ? "Permanently delete this archived sensor's telemetry, predictions, and alerts? This does not affect the sensor's current owner." : "Remove this device and permanently delete its telemetry, predictions, and alerts? Hold BOOT for 5 seconds and release before setting it up again.",
+                    confirmText: device.archivedAt ? "Delete History" : "Delete Sensor",
                     cancelText: "Cancel",
                     type: "danger",
                   });
@@ -512,7 +512,7 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
               >
-                <span>Delete Sensor</span>
+                <span>{device.archivedAt ? "Delete History" : "Delete Sensor"}</span>
               </button>
             </div>
           </>
@@ -523,6 +523,7 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
     if (menuState.type === "alert" && menuState.id) {
       const alert = alerts.find((a) => a.id === menuState.id);
       if (alert) {
+        if (devices.find(d => d.id === alert.deviceId)?.archivedAt) return <p className="px-3 py-2 text-xs text-[var(--text-secondary)]">Archived sensor history</p>;
         return (
           <>
             <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">

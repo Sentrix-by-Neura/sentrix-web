@@ -7,6 +7,7 @@ export type DeviceRow = {
   status: "UNCLAIMED" | "CALIBRATING" | "ACTIVE" | "OFFLINE";
   calibration_started_at: string | null; calibration_ends_at: string | null;
   last_seen: string | null;
+  archived_at?: string | null;
 };
 export type AlertRow = {
   id: string; device_id: string; group_id: string; timestamp: string;
@@ -30,7 +31,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, sessio
   let response: Response;
   try {
     response = await fetch(`${base}/api${path}`, {
-      ...init, cache: "no-store", signal: init.signal ?? AbortSignal.timeout(20000),
+      ...init, cache: "no-store", signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000),
       headers: { "Content-Type": "application/json", ...init.headers, Authorization: `Bearer ${auth.access_token}` },
     });
   } catch {

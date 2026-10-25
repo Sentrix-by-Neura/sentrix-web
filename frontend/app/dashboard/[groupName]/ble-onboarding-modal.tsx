@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { useSentrix, useTelemetry, type Group } from "../../lib/sentrix-store";
-import { authenticateSentrixHardware, scanSentrixHardware, scanSentrixWifi, provisionSentrixHardware, validateSentrixConfiguration, type ScanResult, type SentrixHardware } from "../../lib/sentrix-bluetooth";
+import { useSentrix, useTelemetry, type Group, type DeviceClaim } from "../../lib/sentrix-store";
+import { authenticateSentrixHardware, scanSentrixHardware, scanSentrixWifi, provisionSentrixHardware, validateSentrixNetwork, type ScanResult, type SentrixHardware } from "../../lib/sentrix-bluetooth";
 
 const inputClass = "mt-2 min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-sm outline-none focus:border-amber-500";
 const buttonClass = "min-h-11 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-50 disabled:cursor-wait";
 const setupSteps = ["Sensor", "PIN", "Wi-Fi", "Finish"];
 
 export function BleOnboardingModal({ group, onClose, initialScan }: { group: Group; onClose: () => void; initialScan?: Promise<ScanResult> }) {
-  const { claimDevice, devices, refreshData, userId } = useSentrix();
+  const { claimDevice, getDeviceClaim, devices, refreshData, userId } = useSentrix();
   const [step, setStep] = useState<"scan" | "pin" | "wifi" | "saved">("scan");
   const [hardware, setHardware] = useState<SentrixHardware | null>(null);
   const hardwareRef = useRef<SentrixHardware | null>(null);
@@ -25,11 +25,13 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
   const [scanningWifi, setScanningWifi] = useState(false);
   const [error, setError] = useState("");
   const [claimedId, setClaimedId] = useState("");
+  const [pendingClaim, setPendingClaim] = useState<Pick<DeviceClaim, "id" | "expires_at"> | null>(null);
+  const [claimExpired, setClaimExpired] = useState(false);
   const [setupStartedAt, setSetupStartedAt] = useState(0);
   const { points } = useTelemetry(claimedId, "1h");
   const device = devices.find(d => d.id === claimedId);
   const backendSeen = !!device?.lastSeen && Date.parse(device.lastSeen) >= setupStartedAt;
-  const telemetrySeen = points.some(p => Date.parse(p.timestamp) >= setupStartedAt);
+  const telemetrySeen = !!claimedId && points.some(p => Date.parse(p.timestamp) >= setupStartedAt);
   const currentStep = { scan: 0, pin: 1, wifi: 2, saved: 3 }[step];
   const setupComplete = step === "saved" && telemetrySeen;
   const owner = useRef(userId);
@@ -61,6 +63,36 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
     });
     return () => { cancelled = true; };
   }, [initialScan, acceptScan]);
+  useEffect(() => {
+    if (step !== "saved" || !pendingClaim || claimedId || claimExpired || owner.current !== userId) return;
+    const claim = pendingClaim;
+    let cancelled = false, polling = false;
+    const controller = new AbortController();
+    async function poll() {
+      if (cancelled || polling) return;
+      polling = true;
+      try {
+        const result = await getDeviceClaim(group.id, claim.id, controller.signal);
+        if (cancelled) return;
+        setError("");
+        if (result.status === "confirmed" && result.device) {
+          setClaimedId(result.device.id);
+          setPendingClaim(null);
+          void refreshData();
+        } else if (result.status === "expired") {
+          setClaimExpired(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          if (Date.now() >= Date.parse(claim.expires_at)) setClaimExpired(true);
+          else setError((error instanceof Error ? error.message : "Could not check device confirmation.") + " Keep the sensor powered; confirmation will retry automatically.");
+        }
+      } finally { polling = false; }
+    }
+    const timer = setInterval(poll, 2000);
+    void poll();
+    return () => { cancelled = true; controller.abort(); clearInterval(timer); };
+  }, [step, pendingClaim, claimedId, claimExpired, group.id, userId, getDeviceClaim, refreshData]);
   async function scan() {
     setBusy(true); setError("");
     hardwareRef.current?.device.gatt?.disconnect();
@@ -92,22 +124,25 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
     event.preventDefault();
     if (!hardware || busy || scanningWifi) return;
     setBusy(true); setError("");
+    let phase: "verify" | "claim" | "transfer" = "verify";
     try {
       if (!/^[0-9A-F]{12}$/.test(group.meshId)) throw new Error("This group has no valid mesh ID. Refresh the dashboard.");
-      validateSentrixConfiguration({ ssid, password, pin, mesh_id: group.meshId });
+      validateSentrixNetwork({ ssid, password, pin, mesh_id: group.meshId });
       await authenticateSentrixHardware(hardware, pin);
       if (!mounted.current) return;
       const started = Date.now();
       setSetupStartedAt(started);
-      const claimed = await claimDevice(group.id, { name: name.trim(), macAddress: hardware.macAddress, pin });
+      phase = "claim";
+      const claim = await claimDevice(group.id, { name: name.trim(), macAddress: hardware.macAddress });
       if (!mounted.current) return;
-      setClaimedId(claimed.id);
-      await provisionSentrixHardware(hardware, { ssid, password, pin, mesh_id: group.meshId });
+      phase = "transfer";
+      await provisionSentrixHardware(hardware, { ssid, password, pin, mesh_id: group.meshId, setup_token: claim.setup_token });
       if (!mounted.current) return;
+      setPendingClaim({ id: claim.id, expires_at: claim.expires_at }); setClaimExpired(false);
       setPassword(""); setShowPassword(false); setPin(""); setStep("saved");
       void refreshData();
     } catch (error) {
-      if (mounted.current) setError((error instanceof Error ? error.message : "Setup failed.") + " If Wi-Fi settings were already saved, keep the device powered and check its dashboard before retrying. For recovery, hold BOOT for 5 seconds and release, then scan again in this group.");
+      if (mounted.current) setError((error instanceof Error ? error.message : "Setup failed.") + (phase === "transfer" ? " Keep the sensor powered and check this group before retrying; it may still finish setup. For recovery, hold BOOT for 5 seconds and release, then scan again in this group." : ""));
     } finally { if (mounted.current) setBusy(false); }
   }
 
@@ -143,6 +178,7 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
         </form>}
         {step === "wifi" && <form onSubmit={provision} className="mt-5 space-y-4">
           <p className="text-sm">Connect the sensor to a 2.4 GHz Wi-Fi network.</p>
+          <p className="text-xs text-[var(--text-secondary)]">Setup assigns this sensor to {group.name}. Previous account history stays private.</p>
           <div>
             <div className="flex items-center justify-between gap-3">
               <p id="nearby-networks" className="text-sm font-medium">Nearby networks</p>
@@ -176,9 +212,11 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
           <button type="submit" disabled={busy || scanningWifi} className={`${buttonClass} w-full`}>{busy ? "Registering and saving settings…" : "Register and connect"}</button>
         </form>}
         {step === "saved" && <div className="mt-5 space-y-4 text-sm">
-          <p role="status" className="font-semibold">{telemetrySeen ? "Telemetry received" : backendSeen ? "Backend contact confirmed; waiting for telemetry" : "Settings saved; waiting for backend contact"}</p>
-          <p>The sensor is registered. It restarts with Bluetooth off, reconnects using saved Wi-Fi settings, and waits for Go confirmation before sending readings. This page updates automatically; the first batch can take over a minute.</p>
-          {!backendSeen && <p>If it keeps waiting, check Wi-Fi, the MQTT service, and the backend deployment. Settings stay saved through power loss.</p>}
+          <p role="status" className="font-semibold">{claimExpired ? "Setup confirmation expired" : telemetrySeen ? "Telemetry received" : backendSeen ? "Backend contact confirmed; waiting for telemetry" : claimedId ? "Registration confirmed; waiting for backend contact" : "Wi-Fi settings saved; waiting for device confirmation"}</p>
+          {claimExpired ? <p>Check this group first in case registration already completed. If the sensor is still missing, hold BOOT for 5 seconds and release, then set it up again in this group.</p> : <>
+            <p>{claimedId ? "The sensor is registered. " : "Keep the sensor powered while registration is confirmed. "}It restarts with Bluetooth off and reconnects using saved Wi-Fi settings. Readings start after Go confirmation; the first batch can take over a minute. This page updates automatically.</p>
+            {!backendSeen && <p>If it keeps waiting, check Wi-Fi, the MQTT service, and the backend deployment. You can return to the group; the sensor can finish registration without this page.</p>}
+          </>}
           <button type="button" onClick={onClose} className={buttonClass}>Return to group</button>
         </div>}
       </section>

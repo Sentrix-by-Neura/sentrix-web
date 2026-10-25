@@ -107,10 +107,13 @@ export default function DashboardPage() {
     );
   }
 
-  const online = devices.filter(hasRecentContact).length;
-  const offline = devices.length - online;
-  const unresolved = alerts.filter((a) => !a.isResolved);
-  const { current, previous } = anomalyStats(alerts, anomalyWindow);
+  const currentDevices = devices.filter(d => !d.archivedAt);
+  const currentIds = new Set(currentDevices.map(d => d.id));
+  const currentAlerts = alerts.filter(a => currentIds.has(a.deviceId));
+  const online = currentDevices.filter(hasRecentContact).length;
+  const offline = currentDevices.length - online;
+  const unresolved = currentAlerts.filter((a) => !a.isResolved);
+  const { current, previous } = anomalyStats(currentAlerts, anomalyWindow);
 
   return (
     <>
@@ -140,7 +143,7 @@ export default function DashboardPage() {
             <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Awaiting contact</span>
           </p>
           <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
-            {devices.length} sensors registered
+            {currentDevices.length} sensors registered
           </p>
         </article>
 
@@ -219,7 +222,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {groups.map((group) => {
-              const groupDevices = devices.filter((d) => d.groupId === group.id);
+              const groupDevices = currentDevices.filter((d) => d.groupId === group.id);
               const activeCount = groupDevices.filter((d) => d.status === "ACTIVE").length;
               const alertCount = unresolved.filter((a) => a.groupId === group.id).length;
 

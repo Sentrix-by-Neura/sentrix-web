@@ -146,9 +146,10 @@ export async function scanSentrixWifi(hardware: SentrixHardware, pin: string): P
   throw new Error("Wi-Fi scan timed out. Wait a moment and retry, or enter the SSID manually.");
 }
 
-export function validateSentrixConfiguration(
-  credentials: { ssid: string; password: string; pin: string; mesh_id: string },
-) {
+type NetworkCredentials = { ssid: string; password: string; pin: string; mesh_id: string };
+type SetupConfiguration = NetworkCredentials & { setup_token: string };
+
+export function validateSentrixNetwork(credentials: NetworkCredentials) {
   const encoder = new TextEncoder();
   const ssidLength = encoder.encode(credentials.ssid).length;
   const passwordLength = encoder.encode(credentials.password).length;
@@ -156,18 +157,23 @@ export function validateSentrixConfiguration(
       (passwordLength > 0 && passwordLength < 8) ||
       !/^\d{6}$/.test(credentials.pin) ||
       !/^[0-9A-F]{12}$/.test(credentials.mesh_id) ||
-      Object.values(credentials).some((value) => value.includes("\0"))) {
+      [credentials.ssid, credentials.password, credentials.pin, credentials.mesh_id].some((value) => value.includes("\0"))) {
     throw new Error("Check the SSID (1–32 bytes), password (8–63 bytes or empty for open Wi-Fi), and six-digit hardware PIN.");
   }
-  const { ssid, password, mesh_id } = credentials;
-  const payload = encoder.encode(JSON.stringify({ ssid, password, mesh_id }));
+}
+
+export function validateSentrixConfiguration(credentials: SetupConfiguration) {
+  validateSentrixNetwork(credentials);
+  if (!/^[0-9a-f]{64}$/.test(credentials.setup_token)) throw new Error("Invalid setup challenge. Restart sensor setup.");
+  const { ssid, password, mesh_id, setup_token } = credentials;
+  const payload = new TextEncoder().encode(JSON.stringify({ ssid, password, mesh_id, setup_token }));
   if (payload.length > 384) throw new Error("Wi-Fi configuration is too large.");
   return payload;
 }
 
 export async function provisionSentrixHardware(
   hardware: SentrixHardware,
-  credentials: { ssid: string; password: string; pin: string; mesh_id: string },
+  credentials: SetupConfiguration,
 ): Promise<void> {
   const payload = validateSentrixConfiguration(credentials);
   const gatt = hardware.device.gatt;

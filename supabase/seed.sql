@@ -1,5 +1,6 @@
 -- DEV ONLY: a fake unclaimed device for testing with mosquitto_pub / MQTTX
 -- (architecture guide, section 13). Never run this against production.
-insert into devices (mac_address, pin_code)
-values ('AABBCCDDEEFF', '123456')
-on conflict (mac_address) do nothing;
+-- Registration also works without this row, after a device confirms setup.
+insert into devices (mac_address)
+values ('AABBCCDDEEFF')
+on conflict (mac_address) where archived_at is null do nothing;

@@ -15,9 +15,9 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 const text = node => typeof node === "string" || typeof node === "number" ? String(node) : Array.isArray(node) ? node.map(text).join("") : node?.props ? text(node.props.children) : "";
 const all = node => Array.isArray(node) ? node.flatMap(all) : node?.props ? [node, ...all(node.props.children)] : [];
 
-function fixture() {
-  const cells = [], effects = [], exports = {}, scans = [];
-  let cursor = 0, tree, transferred;
+function fixture({ claimError, authError } = {}) {
+  const cells = [], effects = [], exports = {}, scans = [], claims = [], timers = new Set();
+  let cursor = 0, tree, transferred, status = "pending";
   const points = [], devices = [];
   const hardware = { name: "Sensor", macAddress: "24:6F:28:C2:5E:19", device: { gatt: { disconnect() {} } } };
   const hooks = {
@@ -25,19 +25,27 @@ function fixture() {
     useState(initial) { const index = cursor++; if (!(index in cells)) cells[index] = initial; return [cells[index], value => { cells[index] = typeof value === "function" ? value(cells[index]) : value; }]; },
     useRef(initial) { const index = cursor++; return cells[index] ??= { current: initial }; },
     useCallback(fn) { cursor++; return fn; },
-    useEffect(fn, deps) { const index = cursor++; const previous = cells[index]; if (!previous || deps?.some((d, i) => d !== previous[i])) effects.push(fn); cells[index] = deps; },
+    useEffect(fn, deps) { const index = cursor++; const previous = cells[index]; if (!previous || deps?.some((d, i) => d !== previous.deps[i])) { const entry = { deps }; cells[index] = entry; effects.push(() => { previous?.cleanup?.(); entry.cleanup = fn(); }); } },
   };
-  runInNewContext(outputText, { exports, queueMicrotask, Date, Error, require: name => {
+  runInNewContext(outputText, { exports, queueMicrotask, Date, Error, AbortController, setInterval: fn => { timers.add(fn); return fn; }, clearInterval: fn => timers.delete(fn), require: name => {
     if (name === "react") return hooks;
     if (name === "react/jsx-runtime") return require(name);
     if (name.endsWith("sentrix-store")) return {
-      useSentrix: () => ({ userId: "operator", devices, refreshData() {}, claimDevice: async () => ({ id: "claimed" }) }),
+      useSentrix: () => ({ userId: "operator", devices, refreshData() {}, claimDevice: async (_, payload) => {
+        claims.push(payload);
+        if (claimError) throw new Error(claimError);
+        return { id: "claim", setup_token: "a".repeat(64), expires_at: new Date(Date.now() + 600000).toISOString() };
+      }, getDeviceClaim: async () => {
+        if (status === "confirmed" && devices.length === 0) devices.push({ id: "claimed", lastSeen: new Date(Date.now() + 1000).toISOString() });
+        return { id: "claim", status, ...(status === "confirmed" ? { device: { id: "claimed" } } : {}) };
+      } }),
       useTelemetry: () => ({ points }),
     };
     if (name.endsWith("sentrix-bluetooth")) return {
       scanSentrixHardware: async () => hardware,
-      authenticateSentrixHardware: async () => {},
+      authenticateSentrixHardware: async () => { if (authError) throw new Error(authError); },
       scanSentrixWifi: () => { const scan = deferred(); scans.push(scan); return scan.promise; },
+      validateSentrixNetwork() {},
       validateSentrixConfiguration() {},
       provisionSentrixHardware: async (_, config) => { transferred = config; },
     };
@@ -52,7 +60,7 @@ function fixture() {
   const submit = async () => { await find(n => n.type === "form").props.onSubmit({ preventDefault() {} }); render(); };
   const wifi = async () => { await button("Find sensor").props.onClick(); render(); change("Hardware PIN", "849201"); await submit(); };
   render();
-  return { render, find, button, input, change, submit, wifi, scans, points, devices, get tree() { return tree; }, get transferred() { return transferred; }, async finishScan(names) { scans.at(-1).resolve(names); await tick(); render(); } };
+  return { render, find, button, input, change, submit, wifi, scans, points, devices, claims, get tree() { return tree; }, get transferred() { return transferred; }, async poll(nextStatus) { await tick(); status = nextStatus; for (const timer of [...timers]) await timer(); await tick(); render(); }, async finishScan(names) { scans.at(-1).resolve(names); await tick(); render(); } };
 }
 
 test("progress follows setup and waits for telemetry before completing Finish", async () => {
@@ -65,7 +73,11 @@ test("progress follows setup and waits for telemetry before completing Finish", 
   f.change("Wi-Fi network", "Office");
   await f.submit();
   assert.match(current(), /Finish/);
-  assert.match(text(f.tree), /Settings saved; waiting for backend contact/);
+  assert.match(text(f.tree), /Wi-Fi settings saved; waiting for device confirmation/);
+  await f.poll("confirmed");
+  assert.match(text(f.tree), /Backend contact confirmed; waiting for telemetry/);
+  f.points.push({ timestamp: new Date(Date.now() - 60000).toISOString() }); f.render();
+  assert.doesNotMatch(text(f.tree), /Telemetry received/);
   f.points.push({ timestamp: new Date(Date.now() + 1000).toISOString() }); f.render();
   assert.match(text(f.tree), /Telemetry received/);
   assert.equal(all(f.tree).some(n => n.props["aria-current"] === "step"), false);
@@ -123,4 +135,36 @@ test("password eye preserves the value, stays out of submission and resets after
   assert.equal(f.transferred.password, "fixture-password");
   assert.equal(all(f.tree).some(n => n.type === "input"), false);
   assert.doesNotMatch(text(f.tree), /fixture-password/);
+});
+
+test("claim excludes PIN and encrypted transfer receives its one-time setup token", async () => {
+  const f = fixture(); await f.wifi(); await f.finishScan(["Office"]);
+  f.change("Wi-Fi network", "Office"); await f.submit();
+  assert.equal("pin" in f.claims[0], false);
+  assert.equal(f.transferred.setup_token, "a".repeat(64));
+  assert.doesNotMatch(text(f.tree), new RegExp("a".repeat(64)));
+});
+
+test("a claim-start failure does not imply Wi-Fi settings were saved", async () => {
+  const f = fixture({ claimError: "This device is not available for this group." }); await f.wifi(); await f.finishScan(["Office"]);
+  f.change("Wi-Fi network", "Office"); await f.submit();
+  assert.match(text(f.tree), /This device is not available/);
+  assert.doesNotMatch(text(f.tree), /If Wi-Fi settings were already saved/);
+  assert.equal(f.transferred, undefined);
+});
+
+test("wrong hardware PIN prevents any registration request", async () => {
+  const f = fixture({ authError: "The hardware PIN is incorrect." }); await f.wifi();
+  assert.match(text(f.tree), /hardware PIN is incorrect/);
+  assert.equal(f.claims.length, 0);
+  assert.equal(f.transferred, undefined);
+});
+
+test("expired confirmation gives recovery guidance and never reports registration success", async () => {
+  const f = fixture(); await f.wifi(); await f.finishScan(["Office"]);
+  f.change("Wi-Fi network", "Office"); await f.submit(); await f.poll("expired");
+  assert.match(text(f.tree), /Setup confirmation expired/);
+  assert.match(text(f.tree), /BOOT/);
+  assert.doesNotMatch(text(f.tree), /The sensor is registered\./);
+  assert.match(text(f.find(n => n.props["aria-current"] === "step")), /Finish/);
 });

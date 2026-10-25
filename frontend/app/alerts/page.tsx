@@ -88,7 +88,7 @@ function AlertsContent() {
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   }, [alerts, dateFilter, groupFilter, statusFilter, now]);
 
-  const unresolvedCount = alerts.filter((a) => !a.isResolved).length;
+  const unresolvedCount = alerts.filter((a) => !a.isResolved && !devices.find(d => d.id === a.deviceId)?.archivedAt).length;
 
   if (!ready) {
     return (
@@ -255,7 +255,7 @@ function AlertsContent() {
                   data-context-type="alert"
                   data-context-id={alert.id}
                   className={`surface-card rounded-2xl border transition shadow-sm ${
-                    alert.isResolved
+                    device?.archivedAt || alert.isResolved
                       ? "border-[var(--border)] opacity-85"
                       : "border-amber-500/30 hover:border-amber-500/50"
                   }`}
@@ -264,15 +264,15 @@ function AlertsContent() {
                     {/* Card Top Row: Status and Timestamps */}
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
                       <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${alert.isResolved ? "bg-emerald-500" : "bg-red-500 animate-pulse"}`} />
+                        <span className={`h-2 w-2 rounded-full ${device?.archivedAt ? "bg-neutral-400" : alert.isResolved ? "bg-emerald-500" : "bg-red-500 animate-pulse"}`} />
                         <span
                           className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-semibold ${
-                            alert.isResolved
+                            device?.archivedAt ? "border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text-secondary)]" : alert.isResolved
                               ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                               : "bg-red-500/10 text-red-500 border border-red-500/20"
                           }`}
                         >
-                          {alert.isResolved ? "✓ Resolved" : "Active Anomaly"}
+                          {device?.archivedAt ? "Archived" : alert.isResolved ? "✓ Resolved" : "Active Anomaly"}
                         </span>
                       </div>
 
@@ -350,7 +350,7 @@ function AlertsContent() {
                     </div>
 
                     {/* Card Bottom: Human-in-the-Loop Validation & Actions */}
-                    <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
+                    {device?.archivedAt ? <p className="mt-5 border-t border-[var(--border)] pt-4 text-sm text-[var(--text-secondary)]">Archived sensor history</p> : <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
                       {/* Only 2 Feedback Options: "Valid Issue" and "False Alarm" */}
                       <div className="flex flex-wrap items-center gap-2">
                         {alert.userFeedback === null ? (
@@ -412,7 +412,7 @@ function AlertsContent() {
                           </span>
                         )}
                       </div>
-                    </div>
+                    </div>}
                   </div>
                 </div>
               );

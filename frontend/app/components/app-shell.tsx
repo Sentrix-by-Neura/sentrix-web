@@ -73,7 +73,7 @@ function NotificationsBell() {
   const { alerts, devices } = useSentrix();
   const [open, setOpen] = useState(false);
   const unresolved = alerts
-    .filter((alert) => !alert.isResolved)
+    .filter((alert) => !alert.isResolved && !devices.find(d => d.id === alert.deviceId)?.archivedAt)
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   return (

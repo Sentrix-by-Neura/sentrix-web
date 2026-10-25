@@ -9,7 +9,10 @@ export type DeviceStatus = "CALIBRATING" | "ACTIVE" | "OFFLINE";
 export type Device = {
   id: string; groupId: string; name: string; macAddress: string; status: DeviceStatus;
   calibrationStartedAt: string; calibrationEndsAt: string; lastSeen: string | null;
+  archivedAt: string | null;
 };
+export type DeviceClaim = { id: string; setup_token: string; expires_at: string };
+export type DeviceClaimStatus = { id: string; status: "pending" | "confirmed" | "expired"; expires_at: string; device?: DeviceRow };
 export type AlertSeverity = "WARNING" | "CRITICAL";
 export type Alert = {
   id: string; deviceId: string; groupId: string; timestamp: string; actualValue: number;
@@ -46,6 +49,7 @@ const mapDevice = (d: DeviceRow): Device => ({
   macAddress: mac(d.mac_address).match(/../g)?.join(":") ?? d.mac_address,
   status: d.status === "UNCLAIMED" ? "OFFLINE" : d.status,
   calibrationStartedAt: d.calibration_started_at ?? "", calibrationEndsAt: d.calibration_ends_at ?? "", lastSeen: d.last_seen,
+  archivedAt: d.archived_at ?? null,
 });
 const mapAlert = (a: AlertRow): Alert => ({ id: a.id, deviceId: a.device_id, groupId: a.group_id, timestamp: a.timestamp,
   actualValue: a.actual_value, expectedMax: a.expected_max, expectedMin: a.expected_min, severity: a.severity, isResolved: a.is_resolved, userFeedback: a.user_feedback });
@@ -103,25 +107,30 @@ async function createGroup(name: string, description = ""): Promise<Group> {
   });
   return mapGroup(row);
 }
-export async function claimDevice(groupId: string, payload: { name: string; macAddress: string; pin: string }): Promise<Device> {
-  // Refresh ownership first: recovery must also work after a reload or another tab's claim.
+export async function claimDevice(groupId: string, payload: { name: string; macAddress: string }): Promise<DeviceClaim> {
+  return mutation<DeviceClaim>(`/groups/${groupId}/devices`, { method: "POST", body: JSON.stringify({ name: payload.name, mac: payload.macAddress }) }, claim => {
+    if (!claim?.id || !/^[0-9a-f]{64}$/.test(claim.setup_token) || !Number.isFinite(Date.parse(claim.expires_at)) || Date.parse(claim.expires_at) <= Date.now()) {
+      throw new Error("Invalid setup challenge. Check that the backend is updated, then restart sensor setup.");
+    }
+    publish({ ...state, error: null });
+  });
+}
+export async function getDeviceClaim(groupId: string, claimId: string, signal?: AbortSignal): Promise<DeviceClaimStatus> {
   const owner = epoch;
   const session = await authenticatedSession();
   if (owner !== epoch || state.userId !== session.user.id) throw new Error("Account changed. Refresh before continuing.");
-  const rows = await apiRequest<DeviceRow[]>(`/groups/${groupId}/devices`, {}, session);
+  const result = await apiRequest<DeviceClaimStatus>(`/groups/${groupId}/device-claims/${encodeURIComponent(claimId)}`, { signal }, session);
   if (owner !== epoch) throw new Error("Account changed. Refresh before continuing.");
-  const existing = rows.find(d => mac(d.mac_address) === mac(payload.macAddress));
-  if (existing) {
-    const device = mapDevice(existing);
+  if (result?.id !== claimId || !["pending", "confirmed", "expired"].includes(result.status) ||
+      (result.status === "confirmed" && (!result.device?.id || result.device.group_id !== groupId || !!result.device.archived_at))) {
+    throw new Error("Invalid device confirmation. Refresh the dashboard before retrying.");
+  }
+  if (result.status === "confirmed" && result.device) {
+    const device = mapDevice(result.device);
     refreshSequence++;
     publish({ ...state, devices: [...state.devices.filter(d => d.id !== device.id), device] });
-    return device;
   }
-  const row = await mutation<DeviceRow>(`/groups/${groupId}/devices`, { method: "POST", body: JSON.stringify({ name: payload.name, mac: payload.macAddress, pin: payload.pin }) }, row => {
-    const device = mapDevice(row);
-    publish({ ...state, error: null, devices: [...state.devices.filter(d => d.id !== device.id), device] });
-  });
-  return mapDevice(row);
+  return result;
 }
 async function deleteGroup(id: string) {
   await mutation<void>(`/groups/${id}`, { method: "DELETE" }, () => publish({ ...state, error: null, groups: state.groups.filter(g => g.id !== id) }));
@@ -180,9 +189,9 @@ export function useTelemetry(deviceId: string, range: TelemetryRange) {
 }
 
 export function hasRecentContact(device: Device) {
-  return !!device.lastSeen && Date.now() - Date.parse(device.lastSeen) < 90000;
+  return !device.archivedAt && !!device.lastSeen && Date.now() - Date.parse(device.lastSeen) < 90000;
 }
-const actions = { createGroup, deleteGroup, claimDevice, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
+const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
 type SentrixContextValue = StoreState & typeof actions;
 const SentrixContext = createContext<SentrixContextValue | null>(null);
 export function SentrixProvider({ children }: { children: ReactNode }) {

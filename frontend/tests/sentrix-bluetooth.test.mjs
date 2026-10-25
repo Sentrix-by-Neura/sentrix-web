@@ -10,7 +10,7 @@ const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 });
 const SERVICE = "12345678-1234-5678-1234-56789abcdef0";
-const credentials = { ssid: "Sentrix WiFi", password: "test-password", pin: "849201", mesh_id: "AABBCCDDEEFF" };
+const credentials = { ssid: "Sentrix WiFi", password: "test-password", pin: "849201", mesh_id: "AABBCCDDEEFF", setup_token: "a".repeat(64) };
 
 test("setup accepts a mesh ID and rejects a database group UUID before any claim", () => {
   const api = load();
@@ -134,11 +134,13 @@ test("provisioning sends bounded chunks and waits for firmware acknowledgement",
   await load().provisionSentrixHardware({ device: node.device }, credentials);
   assert.deepEqual(node.writes[0], [1]);
   assert.ok(node.writes.every((chunk) => chunk.length <= 20));
-  assert.deepEqual(node.decoded(), { ssid: credentials.ssid, password: credentials.password, mesh_id: credentials.mesh_id });
+  assert.deepEqual(node.decoded(), { ssid: credentials.ssid, password: credentials.password, mesh_id: credentials.mesh_id, setup_token: credentials.setup_token });
+  assert.equal("pin" in node.decoded(), false);
   const wire = new TextDecoder().decode(new Uint8Array(node.writes.flat()));
   assert.ok(!wire.includes(credentials.password));
   assert.ok(!wire.includes(credentials.ssid));
   assert.ok(!wire.includes(credentials.pin));
+  assert.ok(!wire.includes(credentials.setup_token));
   assert.equal(node.disconnects(), 1);
 });
 test("firmware failure statuses never report success", async () => {
@@ -148,6 +150,17 @@ test("firmware failure statuses never report success", async () => {
     assert.equal(node.disconnects(), 1);
   }
 });
+test("maximum Wi-Fi fields and setup token fit the encrypted firmware envelope", async () => {
+  const node = peripheral();
+  const maximum = { ...credentials, ssid: "é".repeat(16), password: "p".repeat(63) };
+  const api = load();
+  const payload = api.validateSentrixConfiguration(maximum);
+  assert.ok(payload.length <= 384);
+  await api.provisionSentrixHardware({ device: node.device }, maximum);
+  assert.equal(node.decoded().ssid, maximum.ssid);
+  assert.equal(node.decoded().setup_token, credentials.setup_token);
+  assert.equal(node.writes.every(chunk => chunk.length <= 20), true);
+});
 test("invalid credentials are rejected before opening GATT", async () => {
   for (const changes of [{ ssid: "" }, { ssid: "é".repeat(17) }, { password: "short" }, { pin: "abc123" }, { ssid: "bad\0ssid" }]) {
     const node = peripheral();
@@ -156,6 +169,13 @@ test("invalid credentials are rejected before opening GATT", async () => {
   }
 });
 
+test("invalid setup tokens are rejected before opening GATT", async () => {
+  for (const setup_token of ["", "A".repeat(64), "a".repeat(65), undefined]) {
+    const node = peripheral();
+    await assert.rejects(load().provisionSentrixHardware({ device: node.device }, { ...credentials, setup_token }), /Invalid setup challenge/);
+    assert.equal(node.writes.length, 0);
+  }
+});
 test("a busy device or stale success cannot acknowledge a new configuration", async () => {
   for (const resetState of ["connecting", "connected"]) {
     const node = peripheral({ resetState });

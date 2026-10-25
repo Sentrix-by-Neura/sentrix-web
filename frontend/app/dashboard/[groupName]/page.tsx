@@ -9,6 +9,7 @@ import { BleOnboardingModal } from "./ble-onboarding-modal";
 import { useConfirm } from "../../components/confirm-modal";
 
 function StatusBadge({ device }: { device: Device }) {
+  if (device.archivedAt) return <span className="text-xs text-[var(--text-secondary)]">Transferred — history only</span>;
   if (device.status === "ACTIVE") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -76,6 +77,7 @@ function LocationDetailContent() {
   }
 
   const groupDevices = devices.filter((d) => d.groupId === group.id);
+  const archivedCount = groupDevices.filter(d => d.archivedAt).length;
   const isMeshHealthy = groupDevices.some(hasRecentContact);
 
   return (
@@ -121,7 +123,7 @@ function LocationDetailContent() {
             onClick={async () => {
               const ok = await confirm({
                 title: "Delete Group",
-                message: "Only empty groups can be deleted. Remove the devices first.",
+                message: "Only empty groups can be deleted. Remove the sensors and any archived history first.",
                 confirmText: "Delete Group",
                 type: "danger",
               });
@@ -155,7 +157,7 @@ function LocationDetailContent() {
           <div className="flex items-center gap-2.5">
             <h2 className="eyebrow">Sensors</h2>
             <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
-              {groupDevices.length.toString().padStart(2, "0")} SENSORS
+              {(groupDevices.length - archivedCount).toString().padStart(2, "0")} SENSORS{archivedCount > 0 && ` · ${archivedCount} ARCHIVED`}
             </span>
           </div>
         </div>
@@ -212,9 +214,9 @@ function LocationDetailContent() {
                       onClick={async (e) => {
                         e.stopPropagation();
                         const ok = await confirm({
-                          title: "Delete Sensor",
-                          message: "Remove this device and permanently delete its telemetry, predictions, and alerts? Its factory identity is preserved. Hold BOOT for 5 seconds and release before setting it up again.",
-                          confirmText: "Delete Sensor",
+                          title: device.archivedAt ? "Delete Archived History" : "Delete Sensor",
+                          message: device.archivedAt ? "Permanently delete this archived sensor's telemetry, predictions, and alerts? This does not affect the sensor's current owner." : "Remove this device and permanently delete its telemetry, predictions, and alerts? Hold BOOT for 5 seconds and release before setting it up again.",
+                          confirmText: device.archivedAt ? "Delete History" : "Delete Sensor",
                           type: "danger",
                         });
                         if (ok) {
@@ -232,9 +234,9 @@ function LocationDetailContent() {
                   <div className="mt-5 flex items-end justify-between border-t border-[var(--border)] pt-4">
                     <StatusBadge device={device} />
                     <div className="text-right">
-                      <span className="eyebrow block">Connection</span>
+                      <span className="eyebrow block">{device.archivedAt ? "History" : "Connection"}</span>
                       <span className="font-mono text-base font-semibold text-[var(--text-primary)]">
-                        <span>{hasRecentContact(device) ? "Backend contact recent" : "Waiting for device"}</span>
+                        <span>{device.archivedAt ? "View preserved history" : hasRecentContact(device) ? "Backend contact recent" : "Waiting for device"}</span>
                       </span>
                     </div>
                   </div>

@@ -8,6 +8,7 @@ import { TelemetryChart } from "./telemetry-chart";
 import { useConfirm } from "../../../components/confirm-modal";
 
 function DynamicSensorStatusBadge({ device }: { device: Device }) {
+  if (device.archivedAt) return <span className="text-sm text-[var(--text-secondary)]">Transferred — history only</span>;
   if (device.status === "CALIBRATING") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
@@ -45,7 +46,12 @@ function SensorAnalyticsContent() {
 
   const { ready, groups, devices, alerts, deleteDevice, submitAlertFeedback, resolveAlert } = useSentrix();
   const confirm = useConfirm();
-  const { points: telemetry } = useTelemetry(sensorId, "24h");
+  const group = findGroup(groups, groupSlug);
+  const groupDevices = devices.filter(d => d.groupId === group?.id);
+  const device = groupDevices.find(d => d.id === sensorId || d.id === rawSensor)
+    ?? groupDevices.find(d => !d.archivedAt && (d.macAddress === sensorId || d.macAddress === rawSensor))
+    ?? groupDevices.find(d => d.macAddress === sensorId || d.macAddress === rawSensor);
+  const { points: telemetry } = useTelemetry(device?.id ?? "", "24h");
 
   if (!ready) {
     return (
@@ -54,9 +60,6 @@ function SensorAnalyticsContent() {
       </p>
     );
   }
-
-  const group = findGroup(groups, groupSlug);
-  const device = devices.find((d) => d.id === sensorId || d.macAddress === sensorId || d.id === rawSensor || d.macAddress === rawSensor);
 
   if (!group || !device || device.groupId !== group.id) {
     return (
@@ -122,9 +125,9 @@ function SensorAnalyticsContent() {
             id="delete-sensor-button"
             onClick={async () => {
               const ok = await confirm({
-                title: "Delete Sensor",
-                message: "Remove this device and permanently delete its telemetry, predictions, and alerts? Its factory identity is preserved. Hold BOOT for 5 seconds and release before setting it up again.",
-                confirmText: "Delete Sensor",
+                title: device.archivedAt ? "Delete Archived History" : "Delete Sensor",
+                message: device.archivedAt ? "Permanently delete this archived sensor's telemetry, predictions, and alerts? This does not affect the sensor's current owner." : "Remove this device and permanently delete its telemetry, predictions, and alerts? Hold BOOT for 5 seconds and release before setting it up again.",
+                confirmText: device.archivedAt ? "Delete History" : "Delete Sensor",
                 type: "danger",
               });
               if (ok) {
@@ -137,7 +140,7 @@ function SensorAnalyticsContent() {
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
             </svg>
-            Delete Sensor
+            {device.archivedAt ? "Delete History" : "Delete Sensor"}
           </button>
           <Link
             href={`/dashboard/${group.slug}`}
@@ -148,11 +151,12 @@ function SensorAnalyticsContent() {
         </div>
       </div>
 
+      {device.archivedAt && <p role="status" className="rounded-lg border border-[var(--border)] p-4 text-sm text-[var(--text-secondary)]">This sensor was transferred. Your monitoring history is preserved in this account; live monitoring belongs to its current owner. Chart windows end when the sensor was transferred.</p>}
       {/* 2. Live Metric Cards Section */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {/* Live RMS Current Card */}
         <div className="surface-card rounded-xl border border-[var(--border)] p-5">
-          <p className="eyebrow">Real-Time RMS Current</p>
+          <p className="eyebrow">{device.archivedAt ? "Last recorded RMS current" : "Real-Time RMS Current"}</p>
           <div className="mt-2 flex items-baseline gap-2 font-mono">
             <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
               {latestTelemetry?.rmsCurrent.toFixed(2) ?? "—"}
@@ -166,7 +170,7 @@ function SensorAnalyticsContent() {
           <p className="eyebrow">Backend contact</p>
           <div className="mt-2 flex items-baseline gap-2 font-mono">
             <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
-              {hasRecentContact(device) ? "Recent" : "Waiting"}
+              {device.archivedAt ? "Archived" : hasRecentContact(device) ? "Recent" : "Waiting"}
             </span>
             <span className="text-xs text-[var(--text-secondary)]">Go service</span>
           </div>
@@ -219,7 +223,7 @@ function SensorAnalyticsContent() {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className={`flex h-1.5 w-1.5 rounded-full ${device.archivedAt ? "bg-neutral-400" : "bg-red-500 animate-pulse"}`} />
                     <time className="font-mono text-[10px] text-[var(--text-muted)]">
                       {new Date(alert.timestamp).toLocaleString("en-GB", {
                         day: "2-digit",
@@ -240,7 +244,7 @@ function SensorAnalyticsContent() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {alert.userFeedback !== null ? (
+                  {device.archivedAt ? <span className="text-xs text-[var(--text-secondary)]">Archived sensor history</span> : alert.userFeedback !== null ? (
                     <span className="font-mono text-[10px] text-[var(--text-muted)]">
                       Feedback: {alert.userFeedback ? "✓ Valid Issue" : "✕ False Alarm"}
                     </span>
@@ -262,7 +266,7 @@ function SensorAnalyticsContent() {
                       </button>
                     </>
                   )}
-                  {!alert.isResolved && (
+                  {!device.archivedAt && !alert.isResolved && (
                     <button
                       type="button"
                       onClick={() => { void resolveAlert(alert.id).catch(() => {}); }}
