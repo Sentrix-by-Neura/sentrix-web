@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 import { webcrypto, createECDH, randomBytes, createHash, createHmac, createDecipheriv } from "node:crypto";
@@ -10,7 +10,15 @@ const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 });
 const SERVICE = "12345678-1234-5678-1234-56789abcdef0";
-const credentials = { ssid: "Sentrix WiFi", password: "test-password", pin: "715204", group_id: "test-group" };
+const credentials = { ssid: "Sentrix WiFi", password: "test-password", pin: "849201", mesh_id: "AABBCCDDEEFF" };
+
+test("setup accepts a mesh ID and rejects a database group UUID before any claim", () => {
+  const api = load();
+  for (const mesh_id of ["", "aaaaaaaa-0000-0000-0000-000000000001", "aabbccddeeff"]) {
+    assert.throws(() => api.validateSentrixConfiguration({ ...credentials, mesh_id }), /Check the SSID/);
+  }
+  assert.doesNotThrow(() => api.validateSentrixConfiguration(credentials));
+});
 function load({ secure = true, bluetooth } = {}) {
   const exports = {};
   runInNewContext(outputText, {
@@ -47,7 +55,7 @@ function peripheral({ mac = "24:6F:28:C2:5E:19", states = ["connecting", "connec
           if (!frame.endsWith("\n")) return;
           const request = JSON.parse(frame);
           if (request.op === "auth") {
-            key = createHash("sha256").update(Buffer.concat([ecdh.computeSecret(Buffer.from(request.public, "hex")), challenge, Buffer.from("715204")])).digest();
+            key = createHash("sha256").update(Buffer.concat([ecdh.computeSecret(Buffer.from(request.public, "hex")), challenge, Buffer.from(credentials.pin)])).digest();
             const proof = createHmac("sha256", key).update("sentrix-client-v1").digest("hex");
             state = proof === request.proof ? "authenticated" : "invalid_pin";
             hello = createHmac("sha256", key).update("sentrix-device-v1").digest();
@@ -126,7 +134,7 @@ test("provisioning sends bounded chunks and waits for firmware acknowledgement",
   await load().provisionSentrixHardware({ device: node.device }, credentials);
   assert.deepEqual(node.writes[0], [1]);
   assert.ok(node.writes.every((chunk) => chunk.length <= 20));
-  assert.deepEqual(node.decoded(), { ssid: credentials.ssid, password: credentials.password, group_id: credentials.group_id });
+  assert.deepEqual(node.decoded(), { ssid: credentials.ssid, password: credentials.password, mesh_id: credentials.mesh_id });
   const wire = new TextDecoder().decode(new Uint8Array(node.writes.flat()));
   assert.ok(!wire.includes(credentials.password));
   assert.ok(!wire.includes(credentials.ssid));
@@ -156,8 +164,10 @@ test("a busy device or stale success cannot acknowledge a new configuration", as
   }
 });
 
-test("website UUIDs match the single-file firmware contract", () => {
-  const firmware = readFileSync(new URL("../../../../SentrixArduino/SentrixESP32/SentrixESP32.ino", import.meta.url), "utf8");
+test("website UUIDs match the firmware contract", (t) => {
+  const path = new URL("../../../sentrix-firmware/SentrixESP32/SentrixESP32.ino", import.meta.url);
+  if (!existsSync(path)) { t.skip("Sibling firmware checkout is unavailable."); return; }
+  const firmware = readFileSync(path, "utf8");
   for (const uuid of source.matchAll(/"(12345678-1234-5678-1234-56789abcdef[0-5])"/g)) {
     assert.ok(firmware.includes(`"${uuid[1]}"`), `Missing firmware UUID ${uuid[1]}`);
   }

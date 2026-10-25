@@ -3,23 +3,16 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { useSentrix, type Device } from "../../../lib/sentrix-store";
+import { useSentrix, useTelemetry, findGroup, hasRecentContact, type Device } from "../../../lib/sentrix-store";
 import { TelemetryChart } from "./telemetry-chart";
 import { useConfirm } from "../../../components/confirm-modal";
 
-function getCalibrationDay(startedAt: string): number {
-  const diffMs = Math.max(0, Date.now() - new Date(startedAt).getTime());
-  const day = Math.floor(diffMs / (24 * 60 * 60 * 1000)) + 1;
-  return Math.max(1, Math.min(7, day));
-}
-
 function DynamicSensorStatusBadge({ device }: { device: Device }) {
   if (device.status === "CALIBRATING") {
-    const day = getCalibrationDay(device.calibrationStartedAt);
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
         <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-        Calibrating (Day {day}/7)
+        Calibrating
       </span>
     );
   }
@@ -50,8 +43,9 @@ function SensorAnalyticsContent() {
   const groupSlug = decodeURIComponent(rawGroup || "");
   const sensorId = decodeURIComponent(rawSensor || "");
 
-  const { ready, groups, devices, alerts, deleteDevice, submitAlertFeedback, resolveAlert, getTelemetryWithBounds } = useSentrix();
+  const { ready, groups, devices, alerts, deleteDevice, submitAlertFeedback, resolveAlert } = useSentrix();
   const confirm = useConfirm();
+  const { points: telemetry } = useTelemetry(sensorId, "24h");
 
   if (!ready) {
     return (
@@ -61,10 +55,10 @@ function SensorAnalyticsContent() {
     );
   }
 
-  const group = groups.find((g) => g.slug === groupSlug || g.id === groupSlug || g.slug === rawGroup || g.id === rawGroup);
+  const group = findGroup(groups, groupSlug);
   const device = devices.find((d) => d.id === sensorId || d.macAddress === sensorId || d.id === rawSensor || d.macAddress === rawSensor);
 
-  if (!group || !device) {
+  if (!group || !device || device.groupId !== group.id) {
     return (
       <div className="py-24 text-center">
         <h1 className="text-lg font-semibold text-[var(--text-primary)]">Sensor Not Found</h1>
@@ -82,10 +76,9 @@ function SensorAnalyticsContent() {
   }
 
   // Get current 24h telemetry to pull expected bounds
-  const telemetry = getTelemetryWithBounds(device.id, "24h");
   const latestTelemetry = telemetry[telemetry.length - 1];
-  const expectedMin = latestTelemetry?.lowerBound ?? (device.liveRmsAmps > 0 ? (device.liveRmsAmps * 0.88).toFixed(2) : "0.00");
-  const expectedMax = latestTelemetry?.upperBound ?? (device.liveRmsAmps > 0 ? (device.liveRmsAmps * 1.12).toFixed(2) : "0.00");
+  const expectedMin = latestTelemetry?.lowerBound?.toFixed(2) ?? "Unavailable";
+  const expectedMax = latestTelemetry?.upperBound?.toFixed(2) ?? "Unavailable";
 
   // Local Alerts for this sensor
   const localAlerts = alerts
@@ -130,12 +123,12 @@ function SensorAnalyticsContent() {
             onClick={async () => {
               const ok = await confirm({
                 title: "Delete Sensor",
-                message: `Are you sure you want to delete "${device.name}" (${device.macAddress})? This action cannot be undone.`,
+                message: "Remove this device and permanently delete its telemetry, predictions, and alerts? Its factory identity is preserved. Hold BOOT for 5 seconds and release before setting it up again.",
                 confirmText: "Delete Sensor",
                 type: "danger",
               });
               if (ok) {
-                deleteDevice(device.id);
+                try { await deleteDevice(device.id); } catch { return; }
                 router.push(`/dashboard/${group.slug}`);
               }
             }}
@@ -162,7 +155,7 @@ function SensorAnalyticsContent() {
           <p className="eyebrow">Real-Time RMS Current</p>
           <div className="mt-2 flex items-baseline gap-2 font-mono">
             <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
-              {device.liveRmsAmps > 0 ? device.liveRmsAmps.toFixed(2) : "0.00"}
+              {latestTelemetry?.rmsCurrent.toFixed(2) ?? "—"}
             </span>
             <span className="text-base text-amber-500 font-semibold">Amps</span>
           </div>
@@ -170,12 +163,12 @@ function SensorAnalyticsContent() {
 
         {/* Target AC Temperature Setpoint */}
         <div className="surface-card rounded-xl border border-[var(--border)] p-5">
-          <p className="eyebrow">Target Setpoint</p>
+          <p className="eyebrow">Backend contact</p>
           <div className="mt-2 flex items-baseline gap-2 font-mono">
             <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
-              {device.targetTempC}
+              {hasRecentContact(device) ? "Recent" : "Waiting"}
             </span>
-            <span className="text-base text-[var(--text-secondary)]">°C</span>
+            <span className="text-xs text-[var(--text-secondary)]">Go service</span>
           </div>
         </div>
 
@@ -255,14 +248,14 @@ function SensorAnalyticsContent() {
                     <>
                       <button
                         type="button"
-                        onClick={() => submitAlertFeedback(alert.id, true)}
+                        onClick={() => { void submitAlertFeedback(alert.id, true).catch(() => {}); }}
                         className="rounded border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)] hover:text-emerald-500 hover:border-emerald-500/40"
                       >
                         Valid Issue
                       </button>
                       <button
                         type="button"
-                        onClick={() => submitAlertFeedback(alert.id, false)}
+                        onClick={() => { void submitAlertFeedback(alert.id, false).catch(() => {}); }}
                         className="rounded border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/40"
                       >
                         False Alarm
@@ -272,7 +265,7 @@ function SensorAnalyticsContent() {
                   {!alert.isResolved && (
                     <button
                       type="button"
-                      onClick={() => resolveAlert(alert.id)}
+                      onClick={() => { void resolveAlert(alert.id).catch(() => {}); }}
                       className="rounded bg-amber-500 px-2.5 py-1 font-mono text-[10px] font-semibold text-[#20170a] hover:bg-amber-400"
                     >
                       Resolve

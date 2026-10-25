@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { useSentrix, type Alert } from "../lib/sentrix-store";
+import { useSentrix, hasRecentContact, type Alert } from "../lib/sentrix-store";
 import { useConfirm } from "../components/confirm-modal";
 
 type AnomalyWindow = "24h" | "7d";
@@ -30,14 +30,18 @@ const pad = (n: number) => n.toString().padStart(2, "0");
 
 function CreateGroupModal({ onClose }: { onClose: () => void }) {
   const { createGroup } = useSentrix();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") ?? "").trim();
-    if (!name) return;
-    createGroup(name);
-    onClose();
+    if (!name || pending) return;
+    setPending(true); setError("");
+    try { await createGroup(name); onClose(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Could not create group."); }
+    finally { setPending(false); }
   }
 
   return (
@@ -57,6 +61,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             Group Name
           </span>
           <input
+            maxLength={100}
             id="group-name"
             name="name"
             autoFocus
@@ -65,6 +70,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-amber-500"
           />
         </label>
+        {error && <p role="alert" className="mt-3 text-sm text-red-500">{error}</p>}
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
@@ -74,6 +80,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             Cancel
           </button>
           <button
+            disabled={pending}
             id="create-group-submit"
             type="submit"
             className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-[#20170a] hover:bg-amber-400 transition"
@@ -100,8 +107,8 @@ export default function DashboardPage() {
     );
   }
 
-  const offline = devices.filter((d) => d.status === "OFFLINE").length;
-  const online = devices.length - offline;
+  const online = devices.filter(hasRecentContact).length;
+  const offline = devices.length - online;
   const unresolved = alerts.filter((a) => !a.isResolved);
   const { current, previous } = anomalyStats(alerts, anomalyWindow);
 
@@ -124,13 +131,13 @@ export default function DashboardPage() {
 
       <section className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3" aria-label="Global health overview">
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
-          <h2 className="eyebrow">Total active nodes</h2>
+          <h2 className="eyebrow">Device contact</h2>
           <p className="mt-2 font-mono text-2xl leading-none tracking-[-0.06em] sm:text-[1.75rem]">
             <span className="text-emerald-600 dark:text-emerald-400">{pad(online)}</span>
-            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Online</span>
+            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Recent contact</span>
             <span className="mx-2 text-[var(--text-muted)]">/</span>
             <span className={offline ? "text-red-500" : ""}>{pad(offline)}</span>
-            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Offline</span>
+            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Awaiting contact</span>
           </p>
           <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
             {devices.length} sensors registered
@@ -142,7 +149,7 @@ export default function DashboardPage() {
           {unresolved.length === 0 ? (
             <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b98199]" />
-              All Systems Normal
+              No unresolved recent alerts
             </span>
           ) : (
             <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1.5 text-sm font-semibold text-red-500">
@@ -151,7 +158,7 @@ export default function DashboardPage() {
             </span>
           )}
           <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
-            {unresolved.length} unresolved alert{unresolved.length === 1 ? "" : "s"}
+            {unresolved.length} unresolved alert{unresolved.length === 1 ? "" : "s"} in recent history
             {unresolved.length > 0 && (
               <Link href="/alerts" className="ml-2 text-amber-600 hover:text-amber-500 dark:text-amber-400">
                 Review →
@@ -162,7 +169,7 @@ export default function DashboardPage() {
 
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="eyebrow">Total anomalies</h2>
+            <h2 className="eyebrow">Recent anomalies</h2>
             <div className="inline-flex rounded-md border border-[var(--border)] bg-[var(--canvas)] p-0.5">
               {(["24h", "7d"] as const).map((option) => (
                 <button
@@ -242,12 +249,12 @@ export default function DashboardPage() {
                           e.stopPropagation();
                           const ok = await confirm({
                             title: "Delete Group",
-                            message: `Are you sure you want to delete "${group.name}" and all its connected devices? This action cannot be undone.`,
+                            message: `Are you sure you want to delete "${group.name}" ? The group must be empty before it can be deleted.`,
                             confirmText: "Delete Group",
                             type: "danger",
                           });
                           if (ok) {
-                            deleteGroup(group.id);
+                            try { await deleteGroup(group.id); } catch { /* Error is shown by AppShell. */ }
                           }
                         }}
                         className="rounded p-1 text-[var(--text-muted)] opacity-60 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 transition"

@@ -22,7 +22,7 @@ function AuthArtwork() {
         <div className="mb-5 flex items-center gap-2">
           <BrandMark className="h-7 w-7 rounded-lg" />
           <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-amber-500">
-            AC energy example
+            Electrical monitoring
           </span>
         </div>
         <h2 className="max-w-lg text-4xl font-semibold leading-tight tracking-[-0.06em] text-[var(--text-primary)] xl:text-5xl">
@@ -31,34 +31,7 @@ function AuthArtwork() {
           <span className="text-[var(--text-muted)]">Waste less cooling energy.</span>
         </h2>
      
-        <div className="mt-9 max-w-md rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-4">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[8px] uppercase tracking-widest text-[var(--text-muted)]">
-              AC unit · sample power draw
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-mono text-[8px] text-emerald-500">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              SAMPLE
-            </span>
-          </div>
-          <div className="mt-2 flex items-end justify-between">
-            <span className="font-mono text-3xl tracking-tight text-[var(--text-primary)]">
-              4.82<span className="ml-1 text-sm text-amber-500">kW</span>
-            </span>
-            <span className="mb-1 text-[10px] text-[var(--text-muted)]">Illustrative data</span>
-          </div>
-          <div className="mt-3 flex h-12 items-end gap-1">
-            {[25, 38, 31, 52, 42, 57, 47, 66, 54, 76, 64, 91, 70, 84, 72, 100, 78, 89, 74, 95].map(
-              (height, index) => (
-                <span
-                  key={index}
-                  className="flex-1 rounded-t-[2px] bg-gradient-to-t from-amber-600/40 to-amber-400/80"
-                  style={{ height: `${height}%` }}
-                />
-              ),
-            )}
-          </div>
-        </div>
+
       </div>
       <div className="relative flex items-center justify-between font-mono text-[8px] uppercase tracking-widest text-[var(--text-muted)]">
         
@@ -81,11 +54,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
-    const remember = formData.get("remember") === "on";
 
     if (!isSupabaseConfigured || !supabase) {
-      (remember ? localStorage : sessionStorage).setItem("sentrix-demo-session", "active");
-      router.push("/dashboard");
+      setFormError("Authentication is unavailable. Contact your administrator.");
       return;
     }
 
@@ -190,16 +161,12 @@ export function AuthForm({ mode }: AuthFormProps) {
               </div>
             </label>
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
-                <input type="checkbox" name="remember" className="accent-amber-500" />
-                Remember me
-              </label>
               {!isSignup && (
                 <button
                   type="button"
                   onClick={() =>
                     setFormError(
-                      "Password reset instructions have been sent to your registered email address.",
+                      "Contact your administrator for account recovery.",
                     )
                   }
                   className="text-[11px] font-medium text-amber-500 transition hover:text-amber-400"

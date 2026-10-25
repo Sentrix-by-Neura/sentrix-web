@@ -19,11 +19,18 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+function applyTheme(t: Theme) {
+  const root = document.documentElement;
+  root.setAttribute("data-theme", t);
+  root.classList.toggle("dark", t === "dark");
+  root.classList.toggle("light", t === "light");
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    const frame = requestAnimationFrame(() => {
     try {
       const saved = localStorage.getItem("sentrix-theme") as Theme | null;
       if (saved === "light" || saved === "dark") {
@@ -35,21 +42,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       applyTheme("dark");
     }
-    setMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
-
-  function applyTheme(t: Theme) {
-    if (typeof document === "undefined") return;
-    const root = document.documentElement;
-    root.setAttribute("data-theme", t);
-    if (t === "dark") {
-      root.classList.add("dark");
-      root.classList.remove("light");
-    } else {
-      root.classList.add("light");
-      root.classList.remove("dark");
-    }
-  }
 
   function setTheme(newTheme: Theme) {
     setThemeState(newTheme);

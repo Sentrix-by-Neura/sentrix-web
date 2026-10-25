@@ -146,23 +146,30 @@ export async function scanSentrixWifi(hardware: SentrixHardware, pin: string): P
   throw new Error("Wi-Fi scan timed out. Wait a moment and retry, or enter the SSID manually.");
 }
 
-export async function provisionSentrixHardware(
-  hardware: SentrixHardware,
-  credentials: { ssid: string; password: string; pin: string; group_id: string },
-): Promise<void> {
+export function validateSentrixConfiguration(
+  credentials: { ssid: string; password: string; pin: string; mesh_id: string },
+) {
   const encoder = new TextEncoder();
   const ssidLength = encoder.encode(credentials.ssid).length;
   const passwordLength = encoder.encode(credentials.password).length;
   if (!ssidLength || ssidLength > 32 || passwordLength > 63 ||
       (passwordLength > 0 && passwordLength < 8) ||
       !/^\d{6}$/.test(credentials.pin) ||
-      !credentials.group_id || encoder.encode(credentials.group_id).length > 64 ||
+      !/^[0-9A-F]{12}$/.test(credentials.mesh_id) ||
       Object.values(credentials).some((value) => value.includes("\0"))) {
     throw new Error("Check the SSID (1–32 bytes), password (8–63 bytes or empty for open Wi-Fi), and six-digit hardware PIN.");
   }
-  const { ssid, password, group_id } = credentials;
-  const payload = encoder.encode(JSON.stringify({ ssid, password, group_id }));
+  const { ssid, password, mesh_id } = credentials;
+  const payload = encoder.encode(JSON.stringify({ ssid, password, mesh_id }));
   if (payload.length > 384) throw new Error("Wi-Fi configuration is too large.");
+  return payload;
+}
+
+export async function provisionSentrixHardware(
+  hardware: SentrixHardware,
+  credentials: { ssid: string; password: string; pin: string; mesh_id: string },
+): Promise<void> {
+  const payload = validateSentrixConfiguration(credentials);
   const gatt = hardware.device.gatt;
   if (!gatt) throw new Error("Bluetooth disconnected. Rescan the hardware.");
   let stage = "connect";

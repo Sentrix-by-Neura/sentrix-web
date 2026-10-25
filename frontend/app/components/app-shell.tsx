@@ -143,14 +143,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { isDark, toggleTheme } = useTheme();
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { userProfile } = useSentrix();
+  const { userProfile, userId, ready, error, refreshData } = useSentrix();
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return;
+    if (!isSupabaseConfigured || !supabase) { router.replace("/login"); return; }
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) router.replace("/login");
     });
   }, [router]);
+
+  useEffect(() => {
+    if (ready && !userId) router.replace("/login");
+  }, [ready, userId, router]);
 
   async function handleLogout() {
     if (isSupabaseConfigured && supabase) {
@@ -162,6 +166,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     } catch {}
     router.replace("/login");
   }
+
+  if (!ready || !userId) return <p role="status" className="p-8 text-sm">{error || "Checking your session…"}</p>;
 
   function getInitials(fullName: string) {
     const parts = fullName.trim().split(/\s+/);
@@ -327,7 +333,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       </header>
       <main className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        {children}
+        {error && <div role="alert" className="mb-4 rounded-lg border border-red-500/30 p-4 text-sm text-red-500">{error} <button type="button" onClick={() => { void refreshData(); }} className="underline">Retry</button></div>}{children}
       </main>
 
       {/* Account Settings Modal with CRUD */}

@@ -21,6 +21,9 @@
 /build
 
 # misc
+.build-tmp/
+build-local.py
+.browser-check/
 .DS_Store
 *.pem
 

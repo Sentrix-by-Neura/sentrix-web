@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  webpack(config) {
+    // Keep the existing Tailwind loader available for Webpack production builds.
+    for (const rule of config.module.rules) {
+      for (const entry of rule.oneOf ?? []) {
+        if (Array.isArray(entry.use) && entry.use.some((item: { loader?: string }) => item.loader?.includes("postcss-loader"))) {
+          entry.use.push({ loader: "@tailwindcss/turbopack" });
+        }
+      }
+    }
+    return config;
+  },
   turbopack: {
     rules: {
       "*.css": {

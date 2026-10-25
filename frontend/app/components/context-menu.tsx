@@ -34,13 +34,16 @@ function QuickCreateGroupModal({
   const { createGroup } = useSentrix();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-    const newGroup = createGroup(name.trim(), description.trim());
-    onCreated?.(newGroup.name);
-    onClose();
+    if (!name.trim() || pending) return;
+    setPending(true); setError("");
+    try { const newGroup = await createGroup(name.trim(), description.trim()); onCreated?.(newGroup.name); onClose(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Could not create group."); }
+    finally { setPending(false); }
   }
 
   return (
@@ -93,6 +96,7 @@ function QuickCreateGroupModal({
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-amber-500 placeholder:text-[var(--text-muted)]"
           />
         </label>
+        {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
@@ -102,6 +106,7 @@ function QuickCreateGroupModal({
             Cancel
           </button>
           <button
+            disabled={pending}
             type="submit"
             className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-[#20170a] hover:bg-amber-400 transition"
           >
@@ -191,8 +196,6 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
     deleteDevice,
     submitAlertFeedback,
     resolveAlert,
-    dispatchMaintenance,
-    simulateNewAnomaly,
   } = useSentrix();
   const confirm = useConfirm();
 
@@ -425,13 +428,13 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
                   closeMenu();
                   const ok = await confirm({
                     title: "Delete Location Group",
-                    message: `Are you sure you want to delete "${group.name}" and all its devices? This action cannot be undone.`,
+                    message: `Are you sure you want to delete "${group.name}" ? Remove its devices first; only an empty group can be deleted.`,
                     confirmText: "Delete Group",
                     cancelText: "Cancel",
                     type: "danger",
                   });
                   if (ok) {
-                    deleteGroup(group.id);
+                    try { await deleteGroup(group.id); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
                     showToast(`Group "${group.name}" deleted`);
                   }
                 }}
@@ -489,16 +492,7 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
                   Copy MAC Address ({device.macAddress})
                 </span>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMenu();
-                  copyToClipboard(device.pinCode, "Hardware PIN");
-                }}
-                className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
-              >
-                <span>Copy Hardware PIN ({device.pinCode})</span>
-              </button>
+
               <div className="my-1 border-t border-[var(--border)]" />
               <button
                 type="button"
@@ -506,13 +500,13 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
                   closeMenu();
                   const ok = await confirm({
                     title: "Delete Sensor",
-                    message: `Are you sure you want to delete "${device.name}"? Telemetry recording will stop and all sensor historical logs will be removed.`,
+                    message: "Remove this device and permanently delete its telemetry, predictions, and alerts? Its factory identity is preserved. Hold BOOT for 5 seconds and release before setting it up again.",
                     confirmText: "Delete Sensor",
                     cancelText: "Cancel",
                     type: "danger",
                   });
                   if (ok) {
-                    deleteDevice(device.id);
+                    try { await deleteDevice(device.id); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
                     showToast(`Sensor "${device.name}" deleted`);
                   }
                 }}
@@ -537,9 +531,9 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
             <div className="py-1">
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   closeMenu();
-                  submitAlertFeedback(alert.id, true);
+                  try { await submitAlertFeedback(alert.id, true); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
                   showToast("Feedback: Valid Issue recorded");
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
@@ -548,32 +542,22 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   closeMenu();
-                  submitAlertFeedback(alert.id, false);
+                  try { await submitAlertFeedback(alert.id, false); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
                   showToast("Feedback: False Alarm recorded");
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
                 <span>Feedback: False Alarm (False Positive)</span>
               </button>
+
               <button
                 type="button"
-                onClick={() => {
-                  closeMenu();
-                  dispatchMaintenance(alert.id);
-                  showToast("Maintenance dispatched");
-                }}
-                className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
-              >
-                <span>Dispatch Maintenance</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
+                onClick={async () => {
                   closeMenu();
                   if (!alert.isResolved) {
-                    resolveAlert(alert.id);
+                    try { await resolveAlert(alert.id); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
                     showToast("Alert marked as resolved");
                   } else {
                     showToast("Alert is already resolved");
@@ -633,18 +617,7 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
             <span>+ Create New Location Group</span>
           </button>
 
-          {/* Simulate AC Anomaly */}
-          <button
-            type="button"
-            onClick={() => {
-              closeMenu();
-              simulateNewAnomaly();
-              showToast("Anomaly simulated");
-            }}
-            className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
-          >
-            <span>⚡ Simulate AC Anomaly</span>
-          </button>
+
 
           <div className="my-1 border-t border-[var(--border)]" />
 

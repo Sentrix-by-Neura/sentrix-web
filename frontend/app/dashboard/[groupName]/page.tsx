@@ -3,33 +3,26 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
-import { useSentrix, type Device } from "../../lib/sentrix-store";
+import { useSentrix, findGroup, hasRecentContact, type Device } from "../../lib/sentrix-store";
 import { scanSentrixHardware, type ScanResult } from "../../lib/sentrix-bluetooth";
 import { BleOnboardingModal } from "./ble-onboarding-modal";
 import { useConfirm } from "../../components/confirm-modal";
-
-function getCalibrationDay(startedAt: string): number {
-  const diffMs = Math.max(0, Date.now() - new Date(startedAt).getTime());
-  const day = Math.floor(diffMs / (24 * 60 * 60 * 1000)) + 1;
-  return Math.max(1, Math.min(7, day));
-}
 
 function StatusBadge({ device }: { device: Device }) {
   if (device.status === "ACTIVE") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
-        Online
+        Monitoring active
       </span>
     );
   }
 
   if (device.status === "CALIBRATING") {
-    const day = getCalibrationDay(device.calibrationStartedAt);
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-amber-600 dark:text-amber-400">
         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-        Calibrating (Day {day}/7)
+        Calibrating
       </span>
     );
   }
@@ -63,7 +56,7 @@ function LocationDetailContent() {
     );
   }
 
-  const group = groups.find((g) => g.slug === groupSlug);
+  const group = findGroup(groups, groupSlug);
 
   if (!group) {
     return (
@@ -83,8 +76,7 @@ function LocationDetailContent() {
   }
 
   const groupDevices = devices.filter((d) => d.groupId === group.id);
-  const activeCount = groupDevices.filter((d) => d.status === "ACTIVE").length;
-  const isMeshHealthy = groupDevices.length > 0 && activeCount > 0;
+  const isMeshHealthy = groupDevices.some(hasRecentContact);
 
   return (
     <div className="space-y-6">
@@ -129,12 +121,12 @@ function LocationDetailContent() {
             onClick={async () => {
               const ok = await confirm({
                 title: "Delete Group",
-                message: `Are you sure you want to delete the group "${group.name}" and all ${groupDevices.length} connected device(s)? This action cannot be undone.`,
+                message: "Only empty groups can be deleted. Remove the devices first.",
                 confirmText: "Delete Group",
                 type: "danger",
               });
               if (ok) {
-                deleteGroup(group.id);
+                try { await deleteGroup(group.id); } catch { return; }
                 router.push("/dashboard");
               }
             }}
@@ -221,12 +213,12 @@ function LocationDetailContent() {
                         e.stopPropagation();
                         const ok = await confirm({
                           title: "Delete Sensor",
-                          message: `Are you sure you want to delete "${device.name}" (${device.macAddress})? This action cannot be undone.`,
+                          message: "Remove this device and permanently delete its telemetry, predictions, and alerts? Its factory identity is preserved. Hold BOOT for 5 seconds and release before setting it up again.",
                           confirmText: "Delete Sensor",
                           type: "danger",
                         });
                         if (ok) {
-                          deleteDevice(device.id);
+                          try { await deleteDevice(device.id); } catch { return; }
                         }
                       }}
                       className="rounded p-1 text-[var(--text-muted)] opacity-60 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 transition"
@@ -240,16 +232,9 @@ function LocationDetailContent() {
                   <div className="mt-5 flex items-end justify-between border-t border-[var(--border)] pt-4">
                     <StatusBadge device={device} />
                     <div className="text-right">
-                      <span className="eyebrow block">Live RMS</span>
+                      <span className="eyebrow block">Connection</span>
                       <span className="font-mono text-base font-semibold text-[var(--text-primary)]">
-                        {device.liveRmsAmps > 0 ? (
-                          <>
-                            {device.liveRmsAmps.toFixed(2)}
-                            <span className="ml-1 text-xs text-[var(--text-muted)] font-normal">A</span>
-                          </>
-                        ) : (
-                          <span className="text-[var(--text-muted)] font-normal text-xs">0.00 A</span>
-                        )}
+                        <span>{hasRecentContact(device) ? "Backend contact recent" : "Waiting for device"}</span>
                       </span>
                     </div>
                   </div>
