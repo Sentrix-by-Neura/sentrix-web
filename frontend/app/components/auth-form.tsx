@@ -56,7 +56,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     const password = String(formData.get("password") ?? "");
 
     if (!isSupabaseConfigured || !supabase) {
-      setFormError("Authentication is unavailable. Contact your administrator.");
+      setFormError("Sign-in is temporarily unavailable. Please try again later.");
       return;
     }
 
@@ -160,21 +160,6 @@ export function AuthForm({ mode }: AuthFormProps) {
                 </button>
               </div>
             </label>
-            <div className="flex items-center justify-between pt-1">
-              {!isSignup && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormError(
-                      "Contact your administrator for account recovery.",
-                    )
-                  }
-                  className="text-[11px] font-medium text-amber-500 transition hover:text-amber-400"
-                >
-                  Forgot password?
-                </button>
-              )}
-            </div>
             {isSignup && (
               <label className="flex items-start gap-2.5 pt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
                 <input

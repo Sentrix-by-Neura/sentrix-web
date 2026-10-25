@@ -18,7 +18,7 @@ export type ReadingRow = { timestamp: string; rms_current: number; max_rms_curre
 export type BoundRow = { timestamp: string; lower_bound: number; upper_bound: number };
 
 export async function authenticatedSession(): Promise<Session> {
-  if (!supabase) throw new Error("Authentication is not configured. Contact your administrator.");
+  if (!supabase) throw new Error("Sign-in is temporarily unavailable. Please try again later.");
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) throw new Error("Your session has expired. Log in again.");
   return data.session;
@@ -26,7 +26,7 @@ export async function authenticatedSession(): Promise<Session> {
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}, session?: Session): Promise<T> {
   const base = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_GO_API_URL)?.replace(/\/$/, "");
-  if (!base) throw new Error("The API address is not configured. Contact your administrator.");
+  if (!base) throw new Error("Sentrix is temporarily unavailable. Please try again later.");
   const auth = session ?? await authenticatedSession();
   let response: Response;
   try {

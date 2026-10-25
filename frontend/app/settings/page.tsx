@@ -17,19 +17,18 @@ function ProfileForm({ initialName }: { initialName: string }) {
     catch (error) { setResult(error instanceof Error ? error.message : "Could not save profile."); }
     finally { setPending(false); }
   }
-  return <form onSubmit={save} className="surface-card mt-6 max-w-xl space-y-5 rounded-xl border border-[var(--border)] p-6">
+  return <form onSubmit={save} className="surface-card mt-6 space-y-5 rounded-xl border border-[var(--border)] p-6">
     <h2 className="text-base font-semibold">Profile</h2>
     <label className="block text-sm">Full name<input required maxLength={100} value={name} onChange={e => setName(e.target.value)} className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-3" /></label>
     <p className="text-sm">Email: {userProfile.email}</p>
     <p className="text-sm">Role: {userProfile.role}</p>
-    <p className="text-sm text-[var(--text-muted)]">Contact your administrator for email changes, account recovery, or team access.</p>
     <button type="submit" disabled={pending} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-50">{pending ? "Saving…" : "Save profile"}</button>
     {result && <p role="status" className="text-sm">{result}</p>}
   </form>;
 }
 function SettingsContent() {
   const { userProfile, userId } = useSentrix();
-  return <AppShell><h1 className="text-2xl font-semibold">Settings</h1><ProfileForm key={userId} initialName={userProfile.name} /></AppShell>;
+  return <AppShell><div className="mx-auto w-full max-w-xl"><h1 className="text-2xl font-semibold">Settings</h1><ProfileForm key={userId} initialName={userProfile.name} /></div></AppShell>;
 }
 export default function SettingsPage() {
   return <Suspense fallback={<p className="p-8">Loading settings…</p>}><SettingsContent /></Suspense>;

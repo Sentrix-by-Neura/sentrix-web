@@ -24,7 +24,7 @@ test("requests use the session token and disable caching", async () => {
   assert.equal((await api.apiRequest("/groups")).length, 0);
 });
 test("missing configuration, network failure and server rejection are visible", async () => {
-  await assert.rejects(load(() => assert.fail(), "").apiRequest("/groups"), /not configured/);
+  await assert.rejects(load(() => assert.fail(), "").apiRequest("/groups"), /temporarily unavailable/);
   await assert.rejects(load(() => { throw new Error("network"); }).apiRequest("/groups"), /Cannot reach/);
   await assert.rejects(load(async () => new Response(JSON.stringify({ error: "remove devices first" }), { status: 409 })).apiRequest("/groups/g", { method: "DELETE" }), /remove devices first/);
   assert.equal(await load(async () => new Response(null, { status: 204 })).apiRequest("/devices/d", { method: "DELETE" }), undefined);
