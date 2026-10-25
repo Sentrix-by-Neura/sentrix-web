@@ -5,13 +5,13 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 
 const source = readFileSync(new URL("../app/lib/sentrix-store.tsx", import.meta.url), "utf8");
-const { outputText } = ts.transpileModule(source + "\nexport const testing = { read: () => state, resetAccount, actions };", {
+const { outputText } = ts.transpileModule(source + "\nexport const testing = { read: () => state, resetAccount, actions, subscribe };", {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 });
 const group = { id: "g1", name: "East Wing", mesh_id: "AABBCCDDEEFF", description: null };
 const device = { id: "d1", name: "Sensor", mac_address: "246F28C25E19", group_id: "g1", status: "CALIBRATING", last_seen: null };
 const claim = { id: "claim-1", setup_token: "a".repeat(64), expires_at: new Date(Date.now() + 600000).toISOString() };
-function setup(handler) {
+function setup(handler, environment = {}) {
   const calls = [];
   let session = { user: { id: "alice", email: "alice@example.test", user_metadata: {} }, access_token: "token" };
   const exports = {};
@@ -23,10 +23,10 @@ function setup(handler) {
     throw new Error("Unexpected request " + path);
   };
   runInNewContext(outputText, {
-    exports, Error, Date, Map, Set,
+    exports, Error, Date, Map, Set, ...environment,
     require: name => name === "./sentrix-api" ? { apiRequest, authenticatedSession: async () => { if (!session) throw new Error("Log in again"); return session; } } :
-      name === "./supabase-browser" ? { supabase: { from: table => { assert.equal(table, "users"); return { select: columns => { assert.equal(columns, "name,role"); return { eq: () => ({ maybeSingle: async () => ({ data: { name: "Alice", role: "USER" } }) }) }; } }; } } } :
-      { createContext: () => ({}) },
+      name === "./supabase-browser" ? { supabase: { auth: { onAuthStateChange: () => ({ data: {} }) }, from: table => { assert.equal(table, "users"); return { select: columns => { assert.equal(columns, "name,role"); return { eq: () => ({ maybeSingle: async () => ({ data: { name: "Alice", role: "USER" } }) }) }; } }; } } } :
+      { createContext: () => ({}), ...environment.react },
   });
   return { api: exports, calls, read: exports.testing.read, actions: exports.testing.actions, switchUser: id => { session = id ? { ...session, user: { id, email: "new@example.test", user_metadata: {} } } : null; exports.testing.resetAccount(id); } };
 }
@@ -46,6 +46,50 @@ test("transferred devices keep their historical identity without counting as rec
   assert.equal(read().devices[0].archivedAt, archived.archived_at);
   assert.equal(read().devices[0].id, device.id);
   assert.equal(api.hasRecentContact(read().devices[0]), false);
+});
+test("availability prioritizes disconnects and rejects stale, invalid and future contact", async () => {
+  let now = Date.now();
+  class Clock extends Date { static now() { return now; } }
+  const { api, read } = setup(path => path.endsWith("/devices") ? [{ ...device, mqtt_connected: false, last_seen: new Date(now).toISOString() }] : undefined, { Date: Clock });
+  await api.refreshData();
+  const current = { ...read().devices[0], mqttConnected: true };
+  assert.equal(api.hasRecentContact(current), true);
+  assert.equal(api.hasRecentContact({ ...current, mqttConnected: false }), false);
+  assert.equal(api.hasRecentContact({ ...current, status: "OFFLINE" }), false);
+  for (const lastSeen of [null, "invalid", new Date(now - 90000).toISOString(), new Date(now + 60000).toISOString()]) {
+    assert.equal(api.hasRecentContact({ ...current, lastSeen }), false);
+  }
+  assert.equal(api.hasRecentContact({ ...current, mqttConnected: null }), true);
+  now += 90001;
+  assert.equal(api.hasRecentContact(current), false);
+  assert.equal(read().devices[0].mqttConnected, false);
+});
+test("visible-page ticks expire contact during failed refreshes and resume immediately on tab return", async () => {
+  let now = Date.now(), tick, visibility, cleanup, fail = false;
+  const effects = [];
+  const doc = { visibilityState: "visible", addEventListener: (event, callback) => { assert.equal(event, "visibilitychange"); visibility = callback; }, removeEventListener: (event, callback) => { assert.equal(callback, visibility); cleanup = true; } };
+  class Clock extends Date { static now() { return now; } }
+  const { api, read } = setup(path => {
+    if (fail) throw new Error("network unavailable");
+    if (path.endsWith("/devices")) return [{ ...device, last_seen: new Date(now).toISOString() }];
+  }, { Date: Clock, document: doc, setInterval: callback => { tick = callback; return 1; }, clearInterval() {},
+    react: { useEffect: effect => effects.push(effect), useSyncExternalStore: (_subscribe, get) => get(), useMemo: callback => callback(), jsx: () => null } });
+  await api.refreshData();
+  api.SentrixProvider({ children: null });
+  const dispose = effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  let updates = 0;
+  api.testing.subscribe(() => updates++);
+  assert.equal(api.hasRecentContact(read().devices[0]), true);
+  fail = true; now += 90001;
+  const before = read(); tick();
+  assert.notEqual(read(), before);
+  assert.equal(api.hasRecentContact(read().devices[0]), false);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(read().error, /network unavailable/);
+  const hidden = updates; doc.visibilityState = "hidden"; tick(); assert.equal(updates, hidden);
+  doc.visibilityState = "visible"; visibility(); assert.ok(updates > hidden);
+  dispose(); assert.equal(cleanup, true);
 });
 test("failed creation never creates a ghost group", async () => {
   const { api, actions, read } = setup((path, init) => { if (init.method === "POST") throw new Error("database unavailable"); });

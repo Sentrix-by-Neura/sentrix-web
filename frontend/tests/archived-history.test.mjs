@@ -23,7 +23,7 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
     if (name.endsWith("sentrix-store")) return {
       useSentrix: () => ({ ready: true, groups: [group], devices, alerts: [alert] }),
       findGroup: () => group,
-      hasRecentContact: device => !device.archivedAt && !!device.lastSeen,
+      hasRecentContact: device => !device.archivedAt && device.status !== "OFFLINE" && device.mqttConnected !== false && !!device.lastSeen,
       useTelemetry: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { points: [{ timestamp: "2026-10-24T01:00:00Z", rmsCurrent: 2, lowerBound: 0, upperBound: 5 }], loading: false, error: null }; },
     };
     if (name.endsWith("sentrix-bluetooth")) return {};
@@ -64,4 +64,16 @@ test("legacy MAC routes prefer the current device in the selected group", () => 
   const html = renderRoute("dashboard/[groupName]/[sensorId]/page.tsx", { devices: [archived, active], sensorId: archived.macAddress, expectedTelemetryId: active.id });
   assert.doesNotMatch(html, /Your monitoring history is preserved/);
   assert.match(html, /Monitoring Active/);
+});
+test("group and detail show unavailable ahead of calibration and active monitoring", () => {
+  for (const path of ["dashboard/[groupName]/page.tsx", "dashboard/[groupName]/[sensorId]/page.tsx"]) {
+    for (const status of ["CALIBRATING", "ACTIVE"]) {
+      const current = { ...archived, archivedAt: null, status, mqttConnected: false };
+      const html = renderRoute(path, { devices: [current] });
+      assert.match(html, /Unavailable/);
+      assert.doesNotMatch(html, />\s*Calibrating\s*<|>\s*Monitoring [Aa]ctive\s*</);
+      const recovered = renderRoute(path, { devices: [{ ...current, mqttConnected: true }] });
+      assert.match(recovered, status === "CALIBRATING" ? /Calibrating/ : /Monitoring [Aa]ctive/);
+    }
+  }
 });

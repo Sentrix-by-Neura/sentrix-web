@@ -8,6 +8,7 @@ export type DeviceRow = {
   calibration_started_at: string | null; calibration_ends_at: string | null;
   last_seen: string | null;
   archived_at?: string | null;
+  mqtt_connected?: boolean | null;
 };
 export type AlertRow = {
   id: string; device_id: string; group_id: string; timestamp: string;

@@ -1,6 +1,6 @@
 # Sensor availability from MQTT disconnect notifications
 
-Status: proposed; awaiting implementation approval. Revised 2026-10-26 to replace the frontend-only proposal with coordinated firmware, Go API and frontend changes.
+Status: approved and implemented locally on 2026-10-26; rollout pending. Replaced the frontend-only proposal with coordinated firmware, Go API and frontend changes.
 
 ## 1. Problem
 
@@ -68,3 +68,7 @@ No product decision is required before approval. This proposal deliberately reta
 Environment checks during implementation/rollout: confirm broker ACLs permit the new presence topic, confirm retained/Last Will behavior with the actual broker configuration, and determine whether browser access and a physical ESP32 are available. These checks are not assumed complete.
 
 The same-device/two-group policy remains unchanged: completing physical setup in another group archives the previous registration and creates a new active registration with fresh calibration, even within the same account. The previous group's history stays preserved.
+
+Implementation record: added MQTT Last Will/intentional offline publication, Go connection binding/subscription/persistence, the additive `20261026000000_mqtt_connection_presence.sql` migration, API device connectivity mapping, shared availability precedence and visible-tab timer refresh. A new connection remains unavailable until a live online publication follows its accepted Go handshake; retained online state alone cannot revive it. Frontend clock skew tolerance is five seconds.
+
+Verification: all 61 frontend tests, TypeScript, focused ESLint, Go vet, the full Go integration suite against fresh disposable PostgreSQL 17.6, all 26 firmware host-test groups plus four Go ACK fixtures, and the pinned ESP32 firmware build passed. Firmware uses 64,344 bytes RAM and 2,058,733 bytes flash. Browser control remains disabled in Work settings, and Docker's local broker engine is stopped, so browser visuals, real broker Last Will delivery and physical ESP32 power-loss/recovery are unverified. No live migration, deployment, broker ACL change or hardware flashing was performed. Detailed contract and rollout notes are in `sentrix-api/docs/mqtt-presence.md`.

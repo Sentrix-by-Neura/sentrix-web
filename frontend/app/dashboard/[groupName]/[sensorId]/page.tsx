@@ -9,7 +9,7 @@ import { useConfirm } from "../../../components/confirm-modal";
 
 function DynamicSensorStatusBadge({ device }: { device: Device }) {
   if (device.archivedAt) return <span className="text-sm text-[var(--text-secondary)]">Transferred — history only</span>;
-  if (device.status === "CALIBRATING") {
+  if (hasRecentContact(device) && device.status === "CALIBRATING") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
         <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
@@ -18,7 +18,7 @@ function DynamicSensorStatusBadge({ device }: { device: Device }) {
     );
   }
 
-  if (device.status === "ACTIVE") {
+  if (hasRecentContact(device) && device.status === "ACTIVE") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
         <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
@@ -30,7 +30,7 @@ function DynamicSensorStatusBadge({ device }: { device: Device }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 font-mono text-xs font-semibold text-red-500">
       <span className="h-2 w-2 rounded-full bg-red-500" />
-      Node Offline
+      Unavailable
     </span>
   );
 }
@@ -170,7 +170,7 @@ function SensorAnalyticsContent() {
           <p className="eyebrow">Backend contact</p>
           <div className="mt-2 flex items-baseline gap-2 font-mono">
             <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
-              {device.archivedAt ? "Archived" : hasRecentContact(device) ? "Recent" : "Waiting"}
+              {device.archivedAt ? "Archived" : hasRecentContact(device) ? "Recent" : "Unavailable"}
             </span>
             <span className="text-xs text-[var(--text-secondary)]">Go service</span>
           </div>

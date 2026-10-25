@@ -10,7 +10,7 @@ import { useConfirm } from "../../components/confirm-modal";
 
 function StatusBadge({ device }: { device: Device }) {
   if (device.archivedAt) return <span className="text-xs text-[var(--text-secondary)]">Transferred — history only</span>;
-  if (device.status === "ACTIVE") {
+  if (hasRecentContact(device) && device.status === "ACTIVE") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
@@ -19,7 +19,7 @@ function StatusBadge({ device }: { device: Device }) {
     );
   }
 
-  if (device.status === "CALIBRATING") {
+  if (hasRecentContact(device) && device.status === "CALIBRATING") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-amber-600 dark:text-amber-400">
         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -31,7 +31,7 @@ function StatusBadge({ device }: { device: Device }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-hover)] px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[var(--text-muted)]">
       <span className="h-1.5 w-1.5 rounded-full bg-neutral-400" />
-      Offline
+      Unavailable
     </span>
   );
 }
@@ -236,7 +236,7 @@ function LocationDetailContent() {
                     <div className="text-right">
                       <span className="eyebrow block">{device.archivedAt ? "History" : "Connection"}</span>
                       <span className="font-mono text-base font-semibold text-[var(--text-primary)]">
-                        <span>{device.archivedAt ? "View preserved history" : hasRecentContact(device) ? "Backend contact recent" : "Waiting for device"}</span>
+                        <span>{device.archivedAt ? "View preserved history" : hasRecentContact(device) ? "Backend contact recent" : "Unavailable"}</span>
                       </span>
                     </div>
                   </div>

@@ -10,6 +10,7 @@ export type Device = {
   id: string; groupId: string; name: string; macAddress: string; status: DeviceStatus;
   calibrationStartedAt: string; calibrationEndsAt: string; lastSeen: string | null;
   archivedAt: string | null;
+  mqttConnected: boolean | null;
 };
 export type DeviceClaim = { id: string; setup_token: string; expires_at: string };
 export type DeviceClaimStatus = { id: string; status: "pending" | "confirmed" | "expired"; expires_at: string; device?: DeviceRow };
@@ -50,6 +51,7 @@ const mapDevice = (d: DeviceRow): Device => ({
   status: d.status === "UNCLAIMED" ? "OFFLINE" : d.status,
   calibrationStartedAt: d.calibration_started_at ?? "", calibrationEndsAt: d.calibration_ends_at ?? "", lastSeen: d.last_seen,
   archivedAt: d.archived_at ?? null,
+  mqttConnected: d.mqtt_connected ?? null,
 });
 const mapAlert = (a: AlertRow): Alert => ({ id: a.id, deviceId: a.device_id, groupId: a.group_id, timestamp: a.timestamp,
   actualValue: a.actual_value, expectedMax: a.expected_max, expectedMin: a.expected_min, severity: a.severity, isResolved: a.is_resolved, userFeedback: a.user_feedback });
@@ -189,7 +191,10 @@ export function useTelemetry(deviceId: string, range: TelemetryRange) {
 }
 
 export function hasRecentContact(device: Device) {
-  return !device.archivedAt && !!device.lastSeen && Date.now() - Date.parse(device.lastSeen) < 90000;
+  const now = Date.now();
+  const seen = device.lastSeen ? Date.parse(device.lastSeen) : NaN;
+  return !device.archivedAt && device.status !== "OFFLINE" && device.mqttConnected !== false &&
+    Number.isFinite(seen) && seen <= now + 5000 && now - seen < 90000;
 }
 const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
 type SentrixContextValue = StoreState & typeof actions;
@@ -200,13 +205,19 @@ export function SentrixProvider({ children }: { children: ReactNode }) {
     // Drop old demo snapshots and secrets rather than migrating them into production.
     try { localStorage.removeItem("sentrix-store-v2"); localStorage.removeItem("sentrix-demo-session"); sessionStorage.removeItem("sentrix-demo-session"); } catch { /* Storage may be disabled. */ }
     void refreshData();
-    const timer = setInterval(() => { if (document.visibilityState === "visible") void refreshData(); }, 15000);
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      publish({ ...state }); // Reevaluate freshness even when the next request fails or stalls.
+      void refreshData();
+    };
+    const timer = setInterval(refresh, 15000);
+    document.addEventListener("visibilitychange", refresh);
     const subscription = supabase?.auth.onAuthStateChange((_event, session) => {
       if (state.userId !== (session?.user.id ?? null)) resetAccount(session?.user.id ?? null);
       // Supabase auth callbacks must release their lock before querying auth again.
       setTimeout(() => { void refreshData(); }, 0);
     }).data.subscription;
-    return () => { clearInterval(timer); subscription?.unsubscribe(); resetAccount(null); };
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", refresh); subscription?.unsubscribe(); resetAccount(null); };
   }, []);
   const value = useMemo(() => ({ ...snapshot, ...actions }), [snapshot]);
   return <SentrixContext.Provider value={value}>{children}</SentrixContext.Provider>;

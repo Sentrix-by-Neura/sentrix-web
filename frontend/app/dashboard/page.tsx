@@ -223,7 +223,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {groups.map((group) => {
               const groupDevices = currentDevices.filter((d) => d.groupId === group.id);
-              const activeCount = groupDevices.filter((d) => d.status === "ACTIVE").length;
+              const activeCount = groupDevices.filter((d) => d.status === "ACTIVE" && hasRecentContact(d)).length;
               const alertCount = unresolved.filter((a) => a.groupId === group.id).length;
 
               return (
