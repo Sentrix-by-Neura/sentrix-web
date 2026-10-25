@@ -32,28 +32,35 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      # "npm ci" installs exactly what package-lock.json says (and fails if the
-      # lockfile and package.json disagree), so CI matches your machine.
+      # Use the checked-in pnpm lockfile so CI matches local dependencies.
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
+
+      - name: Test production flows
+        run: pnpm test
 
       # No real secrets here on purpose. Without NEXT_PUBLIC_SUPABASE_* the app
       # sets its Supabase client to null, so the build never touches a real
       # database. These placeholders only make that explicit.
       - name: Build
-        run: npm run build
+        run: pnpm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ""
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ""
-          NEXT_PUBLIC_GO_API_URL: http://localhost:8080
+          NEXT_PUBLIC_API_URL: http://localhost:8080
           NEXT_TELEMETRY_DISABLED: "1"

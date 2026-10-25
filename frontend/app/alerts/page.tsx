@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/app-shell";
 import { useSentrix } from "../lib/sentrix-store";
 
@@ -30,6 +30,8 @@ function formatExactDate(isoString: string): string {
 }
 
 function AlertsContent() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
   const {
     ready,
     alerts,
@@ -57,7 +59,6 @@ function AlertsContent() {
 
   // Filtered Alert List
   const filteredAlerts = useMemo(() => {
-    const now = Date.now();
     return alerts
       .filter((alert) => {
         // 1. Date Filter
@@ -85,7 +86,7 @@ function AlertsContent() {
         return true;
       })
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  }, [alerts, dateFilter, groupFilter, statusFilter]);
+  }, [alerts, dateFilter, groupFilter, statusFilter, now]);
 
   const unresolvedCount = alerts.filter((a) => !a.isResolved).length;
 
@@ -118,6 +119,7 @@ function AlertsContent() {
           </div>
         </div>
 
+        <p className="text-sm text-[var(--text-muted)]">Showing up to the latest 200 alerts. Filters apply to this recent history.</p>
         {/* Transient Notification Toast */}
         {toastMessage && (
           <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-500 shadow-lg animate-in fade-in slide-in-from-top-2">
@@ -355,14 +357,14 @@ function AlertsContent() {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => submitAlertFeedback(alert.id, true)}
+                              onClick={() => { void submitAlertFeedback(alert.id, true).catch(() => {}); }}
                               className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-500 hover:border-emerald-500/40 transition"
                             >
                               Valid Issue
                             </button>
                             <button
                               type="button"
-                              onClick={() => submitAlertFeedback(alert.id, false)}
+                              onClick={() => { void submitAlertFeedback(alert.id, false).catch(() => {}); }}
                               className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/40 transition"
                             >
                               False Alarm
@@ -381,7 +383,7 @@ function AlertsContent() {
                             </span>
                             <button
                               type="button"
-                              onClick={() => submitAlertFeedback(alert.id, !alert.userFeedback)}
+                              onClick={() => { void submitAlertFeedback(alert.id, !alert.userFeedback).catch(() => {}); }}
                               className="font-mono text-[10px] text-[var(--text-muted)] hover:text-amber-500 underline"
                             >
                               Change
@@ -395,8 +397,8 @@ function AlertsContent() {
                         {!alert.isResolved ? (
                           <button
                             type="button"
-                            onClick={() => {
-                              resolveAlert(alert.id);
+                            onClick={async () => {
+                              try { await resolveAlert(alert.id); } catch { return; }
                               showToast(`Alert #${alert.id.slice(-4)} marked as resolved.`);
                             }}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-[#20170a] hover:bg-amber-400 transition"

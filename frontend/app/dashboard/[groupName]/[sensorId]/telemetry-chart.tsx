@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useSentrix, type TelemetryPoint, type TelemetryRange } from "../../../lib/sentrix-store";
+import { useTelemetry, type TelemetryPoint, type TelemetryRange } from "../../../lib/sentrix-store";
 
 interface TelemetryChartProps {
   deviceId: string;
@@ -49,7 +49,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       <div className="flex items-center justify-between font-mono text-[11px] text-[var(--text-muted)]">
         <span>Safe Zone:</span>
         <span className="text-amber-500/90">
-          {data.lowerBound.toFixed(2)} – {data.upperBound.toFixed(2)} A
+          {data.lowerBound?.toFixed(2) ?? "—"} – {data.upperBound?.toFixed(2) ?? "—"} A
         </span>
       </div>
     </div>
@@ -57,21 +57,20 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export function TelemetryChart({ deviceId }: TelemetryChartProps) {
-  const { getTelemetryWithBounds } = useSentrix();
   const [timeframe, setTimeframe] = useState<TelemetryRange>("24h");
 
-  const rawData = getTelemetryWithBounds(deviceId, timeframe);
+  const { points: rawData, loading, error } = useTelemetry(deviceId, timeframe);
 
   // Map to chart items with dual-bound array for shaded Area
   const chartData = rawData.map((pt) => ({
     ...pt,
-    bounds: [pt.lowerBound, pt.upperBound] as [number, number],
+    bounds: pt.lowerBound === null || pt.upperBound === null ? null : [pt.lowerBound, pt.upperBound],
   }));
 
   // Find min/max for dynamic Y-Axis scale safely
   const allValues = rawData
     .flatMap((d) => [d.rmsCurrent, d.lowerBound, d.upperBound])
-    .filter((v) => typeof v === "number" && Number.isFinite(v));
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   const minY = allValues.length > 0 ? Math.max(0, Math.floor(Math.min(...allValues) - 1)) : 0;
   const maxY = allValues.length > 0 ? Math.ceil(Math.max(...allValues) + 1.5) : 25;
 
@@ -138,7 +137,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       <div className="h-80 w-full">
         {chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs text-[var(--text-muted)]">
-            No telemetry data recorded for this timeframe.
+            {error || (loading ? "Loading telemetry…" : "No telemetry recorded for this timeframe.")}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
