@@ -2,6 +2,8 @@ Sentrix production frontend: Next.js, Supabase Auth, and the Sentrix Go API.
 
 Read [production setup and recovery](../docs/production-setup.md) for environment variables, deployment ordering, device registration, and removal semantics. Demo access and simulated monitoring data have been removed.
 
+Copy `.env.example` to `.env.local` in this directory and replace its placeholders before starting the app. Use your public HTTPS Go API origin in production; the example uses local port 9000 for development.
+
 ## Getting Started
 
 First, run the development server:
