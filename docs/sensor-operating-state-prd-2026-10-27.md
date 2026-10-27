@@ -1,6 +1,6 @@
 # Record room temperature and show AC operating information
 
-Status: proposed; Felix selected both remote power information and measured current activity, then added a physical room-temperature sensor on 2026-10-27. Sensor model/wiring and implementation approval pending.
+Status: proposed; Felix selected both remote power information and measured current activity, then selected a DS18B20 probe and delegated GPIO selection on 2026-10-27. GPIO32 selected after checking firmware usage. Implementation approval pending.
 
 ## 1. Problem
 
@@ -15,7 +15,8 @@ Go already parses optional `current_temperature` and writes it to telemetry. Reu
 - Replace the Backend contact metric with readable target temperature and AC state, keeping the current sensor-detail visual style. Preserve RMS current, expected bounds, chart and the main availability/calibration badge.
 - Temperature means the last valid target setpoint heard from the remote, displayed in Celsius. Missing/unsupported IR data shows Unknown or a dash, never zero, NaN or fabricated room temperature. It is not proof that the appliance received the command.
 - Keep two distinct temperatures: **Room temperature** from the added physical sensor as `current_temperature`, and **Target temperature** from the IR setpoint as `target_temperature`. Record valid room measurements in Celsius with their telemetry timestamp and the existing device identity. Do not mix, overwrite or infer one from the other.
-- Read the selected room sensor at its supported cadence outside the CT acquisition window; publish a fresh valid value in the existing sixty-second batch. Sensor disconnection, failed checksums, nonfinite/out-of-range data or an expired cached sample must not become zero or a silently repeated fresh reading. Omit invalid optional room temperature so its stored value is NULL, while valid current telemetry continues.
+- Read the DS18B20 probe on GPIO32 using external 3.3 V power. Start a 12-bit conversion every five seconds outside the CT acquisition window and read it asynchronously after the required conversion interval (up to 750 ms), without a blocking conversion wait. Publish a fresh valid value in the existing sixty-second batch; invalidate cached values older than fifteen seconds. Sensor disconnection, failed checksums, nonfinite/out-of-range data or an expired cached sample must not become zero or a silently repeated fresh reading. Omit invalid optional room temperature so its stored value is NULL, while valid current telemetry continues.
+- Do not publish the DS18B20 power-on scratchpad temperature before a completed successful conversion. Do not blindly reject a valid 85 C result solely by its numeric value; conversion completion, device presence and CRC establish validity. Support recovery after the probe is unplugged/reconnected, without rebooting or re-registering the ESP32.
 - Return room temperature through the authenticated latest-state read and show its latest recorded value with the other operating information. Existing chart transport and RMS chart stay unchanged; a new temperature history chart is not part of this request.
 - Display both **Last remote power command** (On / Off / Unknown) and **Measured current activity** (Active / Low or standby / Unknown). Keep them separate; current activity does not conclusively establish the appliance's logical power setting or why a compressor has cycled off. Do not label low current alone as confirmed AC Off.
 - Publish the valid current-based state from firmware rather than inferring hysteresis from averaged chart points. Current thresholds currently switch active at >=0.25 A and inactive at <=0.15 A, retaining the prior state between them; they need validation against the real installation before treating the result as authoritative. Start Unknown until a valid sample establishes a threshold state; an invalid measurement cannot establish a new state.
@@ -26,7 +27,7 @@ Go already parses optional `current_temperature` and writes it to telemetry. Reu
 
 ## 3. Scope
 
-Firmware: initialize and read the chosen physical room sensor on confirmed unused GPIO(s), add valid room readings as `current_temperature`, and add optional `remote_power_on` and `load_active` values to the existing batch reading, with known-state/validity checks, plus the observation time of the last explicit power command. Decode only explicit supported power information. Keep existing TLS, provisioning, PIN, retry and ACK behavior.
+Firmware: initialize and read one externally powered DS18B20 on GPIO32, add valid room readings as `current_temperature`, and add optional `remote_power_on` and `load_active` values to the existing batch reading, with known-state/validity checks, plus the observation time of the last explicit power command. Decode only explicit supported power information. Keep existing TLS, provisioning, PIN, retry and ACK behavior.
 
 Go/database: validate and store the optional remote-power/current-activity fields and remote observation time using additive nullable telemetry columns; reuse `current_temperature` and `target_temperature`, providing the missing schema prerequisites without overwriting existing columns/data. Add an authenticated latest-state read using the latest raw telemetry record and current ownership rules, exposing both temperatures. Keep old firmware compatible with unknown AC state and room temperature. Update wire fixtures and relevant store/HTTP tests.
 
@@ -40,13 +41,17 @@ Use existing dependencies and pinned ESP32 toolchain. Add only the selected sens
 
 GPIO 34 is used for the CT sensor, 35 for IR, 4/2 for indicator LEDs, 0 for BOOT, and 25/26/27 are reserved for the optional RGB indicator. Do not silently reuse any of those pins for the new room sensor. Do not block CT sampling while waiting for a sensor conversion.
 
+Selected wiring: probe VDD to ESP32 3V3, GND to GND, and DQ to GPIO32, with a 4.7 kilohm pull-up between DQ and 3V3 (ensure one suitable pull-up is present if the probe adapter already includes it). Use three-wire external power, not parasite-power mode, and keep the data pull-up at 3.3 V. Probe cable colors are vendor-specific; identify VDD/GND/DQ from the supplied probe documentation. GPIO32 is unused by this sketch and is an input/output pin without a boot-strapping role on the classic ESP32 Dev Module. Confirm no extra user wiring occupies it.
+
+Hardware references checked on 2026-10-27: [DS18B20 datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf), [manufacturer pull-up guidance](https://support.analog.com/en-US/knowledgebase/article/000094969), and [ESP32 GPIO table](https://docs.espressif.com/projects/esp-idf/en/v5.1/esp32/api-reference/peripherals/gpio.html). Use the normal DS18B20 -55 C to 125 C validity limits; physical sensor accuracy and wiring still require a board check.
+
 Optional fields must remain backward compatible. Unknown must remain distinct from boolean false. Parse bounded, correctly typed MQTT values, and never send hardware PINs, secrets or synthetic state. Preserve telemetry timestamps and historical records. Use the existing device/timestamp index for latest-raw lookup and enforce access before returning readings.
 
 Browser control was disabled in Work settings during preceding checks. Recheck access for visual verification and report any remaining limitation. Physical IR/current interpretation cannot be verified by a software build.
 
 ## 5. Plan
 
-1. Confirm the room sensor model and wiring, inspect its manufacturer timing/electrical documentation, then obtain sign-off on the combined scope. Preserve Felix's selected separate observations: last remote power command and measured current activity.
+1. Use the confirmed DS18B20 probe and selected GPIO32 three-wire wiring, then obtain sign-off on the combined scope. Preserve Felix's selected separate observations: last remote power command and measured current activity.
 2. Add focused tests for room-sensor valid/invalid/stale values and failure isolation, both AC states' validity/unknowns, optional-field compatibility, typed MQTT parsing, latest raw temperature/state lookup, ownership/archive access and stale-sample handling. Cover valid target/power commands, partial/unsupported/toggle IR commands, no IR since boot, invalid current samples and hysteresis transitions.
 3. Prepare the minimal additive migration (including missing temperature-column prerequisites) and Go ingest/latest-state response, then implement the matching firmware fields and room sensor read without changing unrelated constants or behavior. Document deployment order, hardware wiring and legacy fallback.
 4. Replace the detail card using the existing UI components/styles and freshness policy. Include last-update context and distinct unknown/unavailable states. Update component fixtures and tests.
@@ -59,6 +64,6 @@ Resolved: Felix requested both observations as information about the current AC 
 
 The observed serial readings around 0.3 A exceed the existing 0.25 A activity threshold. This does not establish whether those readings represent a running appliance or a measurement offset/noise; do not silently promise reliable current-based On/Off without a hardware check.
 
-Pending hardware detail: which room-temperature sensor model and ESP32 GPIO/bus pins will be used? Do not choose a driver or invent wiring until Felix provides that information. The database field remains `current_temperature` regardless of the hardware model.
+Resolved hardware detail: DS18B20 probe, GPIO32 data, external 3.3 V power and a 4.7 kilohm data pull-up to 3.3 V. The database field remains `current_temperature`. No further product question blocks implementation approval. Probe lead colors and actual external wiring are not verified remotely.
 
 Latest-state design and tests must preserve that semantic distinction. No application code has been changed for this request.
