@@ -1,6 +1,6 @@
 # Show target temperature and AC state on sensor detail
 
-Status: proposed; AC-state meaning and implementation approval pending.
+Status: proposed; Felix selected both remote power information and measured current activity on 2026-10-27. Implementation approval pending.
 
 ## 1. Problem
 
@@ -12,18 +12,18 @@ The current firmware sends valid `target_temperature` values in its sixty-second
 
 - Replace the Backend contact metric with readable target temperature and AC state, keeping the current sensor-detail visual style. Preserve RMS current, expected bounds, chart and the main availability/calibration badge.
 - Temperature means the last valid target setpoint heard from the remote, displayed in Celsius. Missing/unsupported IR data shows Unknown or a dash, never zero, NaN or fabricated room temperature. It is not proof that the appliance received the command.
-- AC state follows the product choice below: measured current activity, or the last decoded remote power command. The label must make that source clear and must not imply that compressor activity and remote power setting are identical.
-- If measured activity is chosen, publish the existing valid current-based state from firmware rather than inferring hysteresis from averaged chart points. Current thresholds currently switch active at >=0.25 A and inactive at <=0.15 A, retaining the prior state between them; they need validation against the real installation before treating the result as authoritative.
-- If remote power is chosen, start Unknown until an explicit supported power command is decoded. Partial/temperature-only/toggle commands must not invent an absolute state or reset it from decoder defaults. A reboot without a new usable command must not imply Off.
+- Display both **Last remote power command** (On / Off / Unknown) and **Measured current activity** (Active / Low or standby / Unknown). Keep them separate; current activity does not conclusively establish the appliance's logical power setting or why a compressor has cycled off. Do not label low current alone as confirmed AC Off.
+- Publish the valid current-based state from firmware rather than inferring hysteresis from averaged chart points. Current thresholds currently switch active at >=0.25 A and inactive at <=0.15 A, retaining the prior state between them; they need validation against the real installation before treating the result as authoritative. Start Unknown until a valid sample establishes a threshold state; an invalid measurement cannot establish a new state.
+- Remote power starts Unknown until an explicit supported absolute power command is decoded. Partial/temperature-only/toggle commands must not invent an absolute state or reset it from decoder defaults. A reboot without a new usable command must not imply Off. Preserve the observation time of the last explicit remote command separately from the latest measurement time, so repeated telemetry does not imply a newly heard command.
 - Expose a latest raw sample and its timestamp through authenticated Go API access. Do not use time-bucketed chart averages to represent the current appliance state. Preserve account/ownership and archived-history isolation.
 - Reuse fifteen-second visible-page polling for the displayed snapshot. Firmware batches remain sixty seconds apart: values are latest received, not instantaneous; normal batching plus polling can add about seventy-five seconds of delay, excluding outages and network latency. Show an update age or last-reported context.
 - A disconnected sensor or stale measurement must not be shown as Off. Retain existing availability precedence and distinguish Unknown, Unavailable and the last reported historical values. A recent handshake alone does not make an old measurement fresh. Archived devices show last-recorded information, not live operating state.
 
 ## 3. Scope
 
-Firmware: add the chosen nullable/known AC-state value to the existing batch reading, with appropriate validity checks. For the remote-power option, decode only explicit supported power information. Keep existing TLS, provisioning, PIN, retry and ACK behavior.
+Firmware: add optional `remote_power_on` and `load_active` values to the existing batch reading, with known-state/validity checks, plus the observation time of the last explicit power command. Decode only explicit supported power information. Keep existing TLS, provisioning, PIN, retry and ACK behavior.
 
-Go/database: validate and store the optional AC-state field using an additive nullable telemetry column if needed; reuse the existing target-temperature column. Add an authenticated latest-state read using the latest raw telemetry record and current ownership rules. Keep old firmware compatible with unknown AC state. Update wire fixtures and relevant store/HTTP tests.
+Go/database: validate and store the optional remote-power/current-activity fields and remote observation time using additive nullable telemetry columns; reuse the existing target-temperature column. Add an authenticated latest-state read using the latest raw telemetry record and current ownership rules. Keep old firmware compatible with unknown AC state. Update wire fixtures and relevant store/HTTP tests.
 
 Frontend: map the latest-state response, poll while visible, and replace the Backend contact card with target setpoint/AC state and honest unknown/stale/update-age behavior. Reuse surrounding layout and styles; avoid a general dashboard redesign.
 
@@ -39,8 +39,8 @@ Browser control was disabled in Work settings during preceding checks. Recheck a
 
 ## 5. Plan
 
-1. Resolve whether AC On/Off means measured current activity or the last remote power command, then obtain implementation sign-off on this PRD.
-2. Add focused tests for chosen-state validity/unknowns, optional-field compatibility, typed MQTT parsing, latest raw temperature/state lookup, ownership/archive access and stale-sample handling.
+1. Implement Felix's selected semantics as two separate observations after sign-off on this PRD: last remote power command and measured current activity.
+2. Add focused tests for both states' validity/unknowns, optional-field compatibility, typed MQTT parsing, latest raw temperature/state lookup, ownership/archive access and stale-sample handling. Cover valid target/power commands, partial/unsupported/toggle IR commands, no IR since boot, invalid current samples and hysteresis transitions.
 3. Prepare the minimal additive migration and Go ingest/latest-state response, then implement the matching firmware field without changing unrelated constants or behavior. Document deployment order and legacy fallback.
 4. Replace the detail card using the existing UI components/styles and freshness policy. Include last-update context and distinct unknown/unavailable states. Update component fixtures and tests.
 5. Run firmware host tests/build, Go tests/vet and disposable database integration tests, frontend tests/type checks/focused lint, and a browser reload when permitted. Separately document physical remote-command and current-threshold checks.
@@ -48,8 +48,8 @@ Browser control was disabled in Work settings during preceding checks. Recheck a
 
 ## 6. Open questions
 
-Pending Felix's choice: should On/Off represent activity inferred from SCT current, or the last On/Off command heard from the IR remote? Current activity can fall when the compressor cycles even though the remote power setting is On. A remote command may be missed or may never reach the AC.
+Resolved: Felix requested both observations as information about the current AC condition. Show their sources separately and include last-received context. Current activity can fall when the compressor cycles even though the remote power setting is On. A remote command may be missed or may never reach the AC. Do not derive an authoritative combined On/Off state from these conflicting signals.
 
 The observed serial readings around 0.3 A exceed the existing 0.25 A activity threshold. This does not establish whether those readings represent a running appliance or a measurement offset/noise; do not silently promise reliable current-based On/Off without a hardware check.
 
-Latest-state design and tests must preserve that semantic distinction. No application code has been changed for this request.
+Latest-state design and tests must preserve that semantic distinction. No further product question blocks this proposal. No application code has been changed for this request.
