@@ -23,7 +23,7 @@ function setup(handler, environment = {}) {
     throw new Error("Unexpected request " + path);
   };
   runInNewContext(outputText, {
-    exports, Error, Date, Map, Set, ...environment,
+    exports, Error, Date, Map, Set, AbortController, ...environment,
     require: name => name === "./sentrix-api" ? { apiRequest, authenticatedSession: async () => { if (!session) throw new Error("Log in again"); return session; } } :
       name === "./supabase-browser" ? { supabase: { auth: { onAuthStateChange: () => ({ data: {} }) }, from: table => { assert.equal(table, "users"); return { select: columns => { assert.equal(columns, "name,role"); return { eq: () => ({ maybeSingle: async () => ({ data: { name: "Alice", role: "USER" } }) }) }; } }; } } } :
       { createContext: () => ({}), ...environment.react },
@@ -90,6 +90,42 @@ test("visible-page ticks expire contact during failed refreshes and resume immed
   const hidden = updates; doc.visibilityState = "hidden"; tick(); assert.equal(updates, hidden);
   doc.visibilityState = "visible"; visibility(); assert.ok(updates > hidden);
   dispose(); assert.equal(cleanup, true);
+});
+test("operating readings poll visibly, retain data on failure and reject stale account results", async () => {
+  let box, tick, onVisible, effect, release, fail = false, pending = false;
+  const doc = { visibilityState: "visible", addEventListener: (_event, callback) => { onVisible = callback; }, removeEventListener() {} };
+  const fixture = { timestamp: new Date().toISOString(), rms_current: 0.12, current_temperature: 27.5, target_temperature: 24, remote_power_on: true, remote_power_observed_at: null, load_active: false };
+  const context = { userId: "alice" };
+  const { api, calls, switchUser } = setup(path => {
+    if (!path.endsWith("/state")) return;
+    if (pending) return new Promise(resolve => { release = resolve; });
+    if (fail) throw new Error("probe request failed");
+    return { reading: fixture };
+  }, { document: doc, setInterval: (callback, ms) => { assert.equal(ms, 15000); tick = callback; return 1; }, clearInterval() {}, react: {
+    useContext: () => context, useState: initial => { box ??= initial; return [box, update => { box = typeof update === "function" ? update(box) : update; }]; }, useEffect: callback => { effect = callback; },
+  } });
+  await api.refreshData();
+  api.useOperatingState("sensor-1"); const dispose = effect();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(api.useOperatingState("sensor-1").reading.current_temperature, 27.5);
+  fail = true; tick(); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(api.useOperatingState("sensor-1").reading.target_temperature, 24);
+  assert.match(box.error, /probe request failed/);
+  const before = calls.length; doc.visibilityState = "hidden"; tick(); assert.equal(calls.length, before);
+  doc.visibilityState = "visible"; fail = false; pending = true; onVisible(); await new Promise(resolve => setImmediate(resolve));
+  const inFlight = calls.length; tick(); assert.equal(calls.length, inFlight);
+  switchUser("bob"); context.userId = "bob"; release({ reading: { ...fixture, current_temperature: 99 } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(api.useOperatingState("sensor-1").reading, null);
+  dispose(); assert.equal(calls.find(call => call.path.endsWith("/state")).signal.aborted, true);
+});
+test("a recent handshake never makes an old operating sample fresh", () => {
+  const { api } = setup();
+  assert.equal(api.hasRecentReading(null), false);
+  assert.equal(api.hasRecentReading({ timestamp: "bad" }), false);
+  assert.equal(api.hasRecentReading({ timestamp: new Date(Date.now() - 100000).toISOString() }), false);
+  assert.equal(api.hasRecentReading({ timestamp: new Date(Date.now() + 60000).toISOString() }), false);
+  assert.equal(api.hasRecentReading({ timestamp: new Date().toISOString() }), true);
 });
 test("failed creation never creates a ghost group", async () => {
   const { api, actions, read } = setup((path, init) => { if (init.method === "POST") throw new Error("database unavailable"); });

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { supabase } from "./supabase-browser";
-import { apiRequest, authenticatedSession, joinTelemetry, type GroupRow, type DeviceRow, type AlertRow, type ReadingRow, type BoundRow } from "./sentrix-api";
+import { apiRequest, authenticatedSession, joinTelemetry, type GroupRow, type DeviceRow, type AlertRow, type ReadingRow, type BoundRow, type OperatingReading } from "./sentrix-api";
 
 export type Group = { id: string; name: string; slug: string; meshId: string; description: string };
 export type DeviceStatus = "CALIBRATING" | "ACTIVE" | "OFFLINE";
@@ -195,6 +195,39 @@ export function hasRecentContact(device: Device) {
   const seen = device.lastSeen ? Date.parse(device.lastSeen) : NaN;
   return !device.archivedAt && device.status !== "OFFLINE" && device.mqttConnected !== false &&
     Number.isFinite(seen) && seen <= now + 5000 && now - seen < 90000;
+}
+
+export function hasRecentReading(reading: OperatingReading | null) {
+  const now = Date.now(), timestamp = reading ? Date.parse(reading.timestamp) : NaN;
+  return Number.isFinite(timestamp) && timestamp <= now + 5000 && now - timestamp < 90000;
+}
+
+export function useOperatingState(deviceId: string) {
+  const { userId } = useSentrix();
+  const key = `${userId}:${epoch}:${deviceId}`;
+  const [result, setResult] = useState<{ key: string; reading: OperatingReading | null; loading: boolean; error: string | null }>({ key: "", reading: null, loading: true, error: null });
+  useEffect(() => {
+    if (!userId || !deviceId) return;
+    let cancelled = false, pending = false;
+    const controller = new AbortController(), owner = epoch;
+    async function load() {
+      if (pending || document.visibilityState !== "visible") return;
+      pending = true;
+      try {
+        const session = await authenticatedSession();
+        if (cancelled || owner !== epoch || session.user.id !== userId) return;
+        const { reading } = await apiRequest<{ reading: OperatingReading | null }>(`/devices/${deviceId}/state`, { signal: controller.signal }, session);
+        if (!cancelled && owner === epoch) setResult({ key, reading, loading: false, error: null });
+      } catch (error) {
+        if (!cancelled && owner === epoch) setResult(previous => ({ key, reading: previous.key === key ? previous.reading : null, loading: false, error: message(error) }));
+      } finally { pending = false; }
+    }
+    void load();
+    const timer = setInterval(load, 15000);
+    document.addEventListener("visibilitychange", load);
+    return () => { cancelled = true; controller.abort(); clearInterval(timer); document.removeEventListener("visibilitychange", load); };
+  }, [userId, deviceId, key]);
+  return result.key === key ? result : { reading: null, loading: !!userId, error: null };
 }
 const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
 type SentrixContextValue = StoreState & typeof actions;

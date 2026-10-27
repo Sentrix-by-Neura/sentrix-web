@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { useSentrix, useTelemetry, findGroup, hasRecentContact, type Device } from "../../../lib/sentrix-store";
+import { useSentrix, useTelemetry, useOperatingState, findGroup, hasRecentContact, type Device } from "../../../lib/sentrix-store";
 import { TelemetryChart } from "./telemetry-chart";
 import { useConfirm } from "../../../components/confirm-modal";
+import { OperatingMetrics } from "./operating-metrics";
 
 function DynamicSensorStatusBadge({ device }: { device: Device }) {
   if (device.archivedAt) return <span className="text-sm text-[var(--text-secondary)]">Transferred — history only</span>;
@@ -52,6 +53,7 @@ function SensorAnalyticsContent() {
     ?? groupDevices.find(d => !d.archivedAt && (d.macAddress === sensorId || d.macAddress === rawSensor))
     ?? groupDevices.find(d => d.macAddress === sensorId || d.macAddress === rawSensor);
   const { points: telemetry } = useTelemetry(device?.id ?? "", "24h");
+  const operating = useOperatingState(device?.id ?? "");
 
   if (!ready) {
     return (
@@ -152,41 +154,7 @@ function SensorAnalyticsContent() {
       </div>
 
       {device.archivedAt && <p role="status" className="rounded-lg border border-[var(--border)] p-4 text-sm text-[var(--text-secondary)]">This sensor was transferred. Your monitoring history is preserved in this account; live monitoring belongs to its current owner. Chart windows end when the sensor was transferred.</p>}
-      {/* 2. Live Metric Cards Section */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* Live RMS Current Card */}
-        <div className="surface-card rounded-xl border border-[var(--border)] p-5">
-          <p className="eyebrow">{device.archivedAt ? "Last recorded RMS current" : "Real-Time RMS Current"}</p>
-          <div className="mt-2 flex items-baseline gap-2 font-mono">
-            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
-              {latestTelemetry?.rmsCurrent.toFixed(2) ?? "—"}
-            </span>
-            <span className="text-base text-amber-500 font-semibold">Amps</span>
-          </div>
-        </div>
-
-        {/* Target AC Temperature Setpoint */}
-        <div className="surface-card rounded-xl border border-[var(--border)] p-5">
-          <p className="eyebrow">Backend contact</p>
-          <div className="mt-2 flex items-baseline gap-2 font-mono">
-            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
-              {device.archivedAt ? "Archived" : hasRecentContact(device) ? "Recent" : "Unavailable"}
-            </span>
-            <span className="text-xs text-[var(--text-secondary)]">Go service</span>
-          </div>
-        </div>
-
-        {/* Expected Safe Range */}
-        <div className="surface-card rounded-xl border border-[var(--border)] p-5">
-          <p className="eyebrow">Expected Safe Range</p>
-          <div className="mt-2 flex items-baseline gap-2 font-mono">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-              {expectedMin} – {expectedMax}
-            </span>
-            <span className="text-xs text-[var(--text-muted)]">A</span>
-          </div>
-        </div>
-      </div>
+      <OperatingMetrics device={device} {...operating} expectedMin={expectedMin} expectedMax={expectedMax} />
 
       {/* 3. Node Analytics Chart (Core Feature - Recharts) */}
       <TelemetryChart deviceId={device.id} />

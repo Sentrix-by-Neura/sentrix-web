@@ -24,12 +24,14 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
       useSentrix: () => ({ ready: true, groups: [group], devices, alerts: [alert] }),
       findGroup: () => group,
       hasRecentContact: device => !device.archivedAt && device.status !== "OFFLINE" && device.mqttConnected !== false && !!device.lastSeen,
+      useOperatingState: () => ({ reading: null, loading: false, error: null }),
       useTelemetry: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { points: [{ timestamp: "2026-10-24T01:00:00Z", rmsCurrent: 2, lowerBound: 0, upperBound: 5 }], loading: false, error: null }; },
     };
     if (name.endsWith("sentrix-bluetooth")) return {};
     if (name.endsWith("confirm-modal")) return { useConfirm: () => () => {} };
     if (name.endsWith("ble-onboarding-modal")) return { BleOnboardingModal: () => null };
     if (name.endsWith("telemetry-chart")) return { TelemetryChart: () => createElement("div", null, "Preserved telemetry chart") };
+    if (name.endsWith("operating-metrics")) return { OperatingMetrics: () => createElement("div", null, "Operating metrics") };
     if (name.endsWith("app-shell")) return { AppShell: ({ children }) => children };
     throw new Error(`Unexpected dependency ${name}`);
   } });

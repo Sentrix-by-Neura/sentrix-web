@@ -16,6 +16,12 @@ export type AlertRow = {
   severity: "WARNING" | "CRITICAL"; is_resolved: boolean; user_feedback: boolean | null;
 };
 export type ReadingRow = { timestamp: string; rms_current: number; max_rms_current: number };
+export type OperatingReading = {
+  timestamp: string; rms_current: number;
+  current_temperature: number | null; target_temperature: number | null;
+  remote_power_on: boolean | null; remote_power_observed_at: string | null;
+  load_active: boolean | null;
+};
 export type BoundRow = { timestamp: string; lower_bound: number; upper_bound: number };
 
 export async function authenticatedSession(): Promise<Session> {

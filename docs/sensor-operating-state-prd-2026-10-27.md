@@ -1,6 +1,6 @@
 # Record room temperature and show AC operating information
 
-Status: proposed; Felix selected both remote power information and measured current activity, then selected a DS18B20 probe and delegated GPIO selection on 2026-10-27. GPIO32 selected after checking firmware usage. Implementation approval pending.
+Status: approved and implemented locally on 2026-10-27. DS18B20 probe on GPIO32, room/target temperatures and separate remote-power/current-activity observations. Live rollout and physical checks pending.
 
 ## 1. Problem
 
@@ -66,4 +66,8 @@ The observed serial readings around 0.3 A exceed the existing 0.25 A activity th
 
 Resolved hardware detail: DS18B20 probe, GPIO32 data, external 3.3 V power and a 4.7 kilohm data pull-up to 3.3 V. The database field remains `current_temperature`. No further product question blocks implementation approval. Probe lead colors and actual external wiring are not verified remotely.
 
-Latest-state design and tests must preserve that semantic distinction. No application code has been changed for this request.
+Latest-state design and tests preserve that semantic distinction. The implementation uses optional paired `remote_power_on` / `remote_power_observed_at`, optional `load_active` and the existing temperature fields. Unknown values stay NULL. The new authenticated `/api/devices/{id}/state` endpoint returns the latest raw reading; existing chart buckets and transport are unchanged.
+
+Implementation verification: all 67 frontend tests passed, including latest-state polling, failed-refresh data retention, hidden-tab suppression, in-flight suppression, account isolation, freshness and rendered metric states. TypeScript and focused ESLint passed. The complete Go suite with disposable PostgreSQL integration tests, vet and API/simulator builds passed. A separate clean-schema migration test supplied the historically missing temperature columns, preserved old RMS readings and rejected unpaired remote observations. The 30 existing firmware host-test groups and four Go ACK fixtures passed; new operating-state host checks cover explicit IR commands, unknowns/hysteresis, probe validity/conversion timing/freshness and rollover. Final pinned ESP32 build passed with 64,456 bytes RAM and 2,065,645 bytes flash. OneWire emits two third-party preprocessor warnings; the build succeeds.
+
+Browser verification: reloaded the actual metric component in an isolated local preview using simulated readings; checked desktop and 390 px layout, dark/light presentation, unknown values and stale-state labeling. The authenticated dashboard session was unavailable, so this does not establish production API/browser integration. No physical probe, AC, production database, broker or device upload was used. Follow `sentrix-api/docs/sensor-operating-state.md` for migration-first rollout, GPIO32 wiring, library versions and hardware checks.
