@@ -116,11 +116,23 @@ function AlertsContent() {
               )}
             </div>
           </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              id="simulate-anomaly-btn"
+              onClick={triggerSimulateAnomaly}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-[#20170a]   transition hover:bg-amber-400"
+            >
+              <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+              ⚡ Simulate New Anomaly
+            </button>
+          </div>
         </div>
 
         {/* Transient Notification Toast */}
         {toastMessage && (
-          <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-500 shadow-lg animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-500  animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-2">
               <span>🔔</span>
               <span>{toastMessage}</span>
@@ -136,7 +148,7 @@ function AlertsContent() {
         )}
 
         {/* Filter Controls (Top Bar) */}
-        <div className="surface-card rounded-2xl border border-[var(--border)] p-4 shadow-sm">
+        <div className="surface-card rounded-2xl border border-[var(--border)] p-4 ">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {/* Filter 1: Date */}
             <div>
@@ -224,7 +236,7 @@ function AlertsContent() {
 
         {/* Chronological Alert Feed */}
         {filteredAlerts.length === 0 ? (
-          <div className="surface-card rounded-2xl border border-[var(--border)] py-16 text-center shadow-sm">
+          <div className="surface-card rounded-2xl border border-[var(--border)] py-16 text-center ">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 text-xl font-bold">
               ✓
             </div>
@@ -252,7 +264,7 @@ function AlertsContent() {
                   key={alert.id}
                   data-context-type="alert"
                   data-context-id={alert.id}
-                  className={`surface-card rounded-2xl border transition shadow-sm ${
+                  className={`surface-card rounded-2xl border transition  ${
                     alert.isResolved
                       ? "border-[var(--border)] opacity-85"
                       : "border-amber-500/30 hover:border-amber-500/50"
