@@ -1,0 +1,17 @@
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Sentrix brand · scope: app · v2.0.0 */
+/* Critique: preserve the existing dark/light palette and reserve color for meaningful state. */
+:root {
+  --sensor-accent: #f59e0b;
+  --sensor-accent-ink: #20170a;
+  --sensor-positive: #65d6a1;
+  --sensor-warning: #f6bc55;
+  --sensor-danger: #ff8589;
+  --sensor-focus: #f6bc55;
+}
+
+[data-theme="light"], .light {
+  --sensor-positive: #166443;
+  --sensor-warning: #87500a;
+  --sensor-danger: #b32331;
+  --sensor-focus: #87500a;
+}

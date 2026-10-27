@@ -1,0 +1,25 @@
+[
+  {
+    "date": "2026-10-28",
+    "mode": "redesign",
+    "depth": "full",
+    "scope": "app",
+    "theme": "Sentrix brand",
+    "shape": "app screen",
+    "signature": "current readings and the normal RMS current range above an anomaly chart",
+    "nav": "existing application shell; breadcrumb to dashboard and group",
+    "footer": "none",
+    "imagery": "actual monitoring components; no photographs",
+    "sections": ["sensor identity and status", "measurements and normal range", "current history", "anomaly history"],
+    "waived": ["26b: read-only metric values have no control states"],
+    "verification": {
+      "floor": 0,
+      "reflex": 0,
+      "warnings": 0,
+      "finishReview": "in-thread: ship; no blocking findings; no gap from declared app-screen direction",
+      "browser": "local simulated fixture, desktop/mobile, light/dark, 10 data states and keyboard/timeframe controls",
+      "limitation": "No authenticated dashboard session; production account/API integration unverified"
+    },
+    "prompt": "Simplify sensor detail labels and remove repeated context while preserving the normal RMS current range and anomaly detection."
+  }
+]

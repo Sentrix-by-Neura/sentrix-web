@@ -24,7 +24,7 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
       useSentrix: () => ({ ready: true, groups: [group], devices, alerts: [alert] }),
       findGroup: () => group,
       hasRecentContact: device => !device.archivedAt && device.status !== "OFFLINE" && device.mqttConnected !== false && !!device.lastSeen,
-      useOperatingState: () => ({ reading: null, loading: false, error: null }),
+      useOperatingState: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { reading: null, loading: false, error: null }; },
       useTelemetry: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { points: [{ timestamp: "2026-10-24T01:00:00Z", rmsCurrent: 2, lowerBound: 0, upperBound: 5 }], loading: false, error: null }; },
     };
     if (name.endsWith("sentrix-bluetooth")) return {};
@@ -33,6 +33,8 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
     if (name.endsWith("telemetry-chart")) return { TelemetryChart: () => createElement("div", null, "Preserved telemetry chart") };
     if (name.endsWith("operating-metrics")) return { OperatingMetrics: () => createElement("div", null, "Operating metrics") };
     if (name.endsWith("app-shell")) return { AppShell: ({ children }) => children };
+    if (name.endsWith(".module.css")) return { default: {} };
+    if (name.endsWith("tokens.css")) return {};
     throw new Error(`Unexpected dependency ${name}`);
   } });
   return renderToStaticMarkup(createElement(exports.default));
@@ -47,7 +49,7 @@ test("group cards label transferred devices as preserved history", () => {
 test("archived detail keeps its chart and removes live monitoring and alert controls", () => {
   const html = renderRoute("dashboard/[groupName]/[sensorId]/page.tsx");
   assert.match(html, /Preserved telemetry chart/);
-  assert.match(html, /history is preserved/);
+  assert.match(html, /Transferred, history only/);
   assert.doesNotMatch(html, /Real-Time RMS Current|>Waiting<|>Valid Issue<|>False Alarm<|>Resolve</);
 });
 test("archived sensors and alerts do not count toward current dashboard health", () => {
@@ -65,7 +67,7 @@ test("legacy MAC routes prefer the current device in the selected group", () => 
   const active = { ...archived, id: "current-device", archivedAt: null, status: "ACTIVE" };
   const html = renderRoute("dashboard/[groupName]/[sensorId]/page.tsx", { devices: [archived, active], sensorId: archived.macAddress, expectedTelemetryId: active.id });
   assert.doesNotMatch(html, /Your monitoring history is preserved/);
-  assert.match(html, /Monitoring Active/);
+  assert.match(html, /Connected/);
 });
 test("group and detail show unavailable ahead of calibration and active monitoring", () => {
   for (const path of ["dashboard/[groupName]/page.tsx", "dashboard/[groupName]/[sensorId]/page.tsx"]) {
@@ -73,9 +75,9 @@ test("group and detail show unavailable ahead of calibration and active monitori
       const current = { ...archived, archivedAt: null, status, mqttConnected: false };
       const html = renderRoute(path, { devices: [current] });
       assert.match(html, /Unavailable/);
-      assert.doesNotMatch(html, />\s*Calibrating\s*<|>\s*Monitoring [Aa]ctive\s*</);
+      assert.doesNotMatch(html, />\s*Calibrating\s*<|>\s*Monitoring [Aa]ctive\s*<|>\s*Connected\s*</);
       const recovered = renderRoute(path, { devices: [{ ...current, mqttConnected: true }] });
-      assert.match(recovered, status === "CALIBRATING" ? /Calibrating/ : /Monitoring [Aa]ctive/);
+      assert.match(recovered, status === "CALIBRATING" ? /Calibrating/ : path.endsWith("[sensorId]/page.tsx") ? /Connected/ : /Monitoring [Aa]ctive/);
     }
   }
 });

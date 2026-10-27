@@ -1,0 +1,110 @@
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Sentrix brand · scope: app · v2.0.0 */
+/* Critique: one measurement row, one device status, chart before event history; existing shell and data retained. */
+/* finish-review: in-thread, ship; gap: none. Normal RMS Current Range remains prominent. */
+/* waive 26b: read-only measurements have no interactive states; controls below have active and disabled styles. */
+/* dropped: repeated back link, group subtitle, received/command times, activity and explanatory copy at the user's request. */
+:global(html):has(.page), :global(body):has(.page) { overflow-x: clip; }
+
+.page {
+  max-width: 72rem;
+  margin-inline: auto;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+.page :where(a, button) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+  transition: background-color 120ms, color 120ms;
+}
+
+.page :where(a, button):focus-visible {
+  outline: 2px solid var(--sensor-focus);
+  outline-offset: 3px;
+}
+
+.page :where(a, button):active { transform: translateY(1px); }
+.page button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.page :where(h1, h2) { min-width: 0; overflow-wrap: break-word; text-wrap: balance; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: .8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+}
+
+.status[data-state="connected"] { color: var(--sensor-positive); }
+.status[data-state="calibrating"] { color: var(--sensor-warning); }
+.status[data-state="unavailable"] { color: var(--sensor-danger); }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px solid var(--border);
+  margin: 0;
+}
+
+.metrics > div { min-width: 0; padding: 24px; }
+.metrics > div:first-child { padding-left: 0; }
+.metrics > div + div { border-left: 1px solid var(--border); }
+.metrics dt { color: var(--text-secondary); font-size: .875rem; }
+.metrics dd { margin: 12px 0 0; font-size: 2rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.metrics > .normalRange { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; padding: 20px 0; border-left: 0; border-top: 1px solid var(--border); }
+.normalRange dt { color: var(--text-primary); font-weight: 500; }
+.normalRange dd { margin: 0; font-size: 1.5rem; }
+.unit { color: var(--text-secondary); font-size: 1rem; font-weight: 400; }
+.skeleton { width: 7rem; max-width: 100%; min-height: 2.4rem; border-radius: 4px; background: var(--surface-hover); }
+.message { margin-top: 12px; color: var(--text-secondary); font-size: .875rem; }
+
+.panel { min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 24px; background: var(--surface); }
+.sectionHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.sectionHeader h2 { font-size: 1rem; font-weight: 600; }
+.sectionHeader a { color: var(--text-secondary); font-size: .875rem; }
+.sectionHeader a:hover { color: var(--text-primary); }
+.control { gap: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; font-size: .875rem; color: var(--text-secondary); background: transparent; }
+.control:hover { background: var(--surface-hover); color: var(--text-primary); }
+.danger { color: var(--sensor-danger); }
+.resolve { color: var(--sensor-accent-ink); background: var(--sensor-accent); border-color: var(--sensor-accent); }
+.resolve:hover { color: var(--sensor-accent-ink); background: var(--sensor-accent); }
+.ranges { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; }
+.ranges button { padding: 0 12px; border-radius: 5px; color: var(--text-secondary); font-size: .875rem; }
+.ranges button:hover { color: var(--text-primary); }
+.ranges button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text-primary); }
+.legend { display: flex; flex-wrap: wrap; gap: 12px 24px; color: var(--text-secondary); font-size: .8125rem; }
+.legend > span { display: inline-flex; align-items: center; gap: 8px; }
+.rangeKey { width: 18px; height: 10px; background: var(--sensor-accent); opacity: .35; }
+.currentKey { width: 18px; height: 2px; background: var(--chart-line); }
+.anomalyKey { width: 8px; height: 8px; background: var(--sensor-danger); }
+.tooltip { min-width: 180px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-primary); font-size: .875rem; }
+.tooltip dl { display: grid; grid-template-columns: auto auto; gap: 8px 16px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.tooltip dt { color: var(--text-secondary); }
+.tooltip dd { text-align: right; }
+.alertRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; border-top: 1px solid var(--border); font-size: .875rem; }
+.alertRow time { color: var(--text-secondary); }
+.alertRow strong { color: var(--sensor-danger); font-weight: 600; }
+.alertActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.empty { padding-block: 24px; font-size: .875rem; color: var(--text-secondary); }
+
+@media (max-width: 640px) {
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics > div { padding: 20px 12px; }
+  .metrics > div:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .metrics > div:nth-child(n+3) { border-top: 1px solid var(--border); }
+  .metrics dt { font-size: .8125rem; }
+  .metrics dd { font-size: 1.75rem; }
+  .panel { padding: 16px; }
+  .ranges button { padding-inline: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page :where(a, button) { transition: none; }
+  .page :where(a, button):active { transform: none; }
+}

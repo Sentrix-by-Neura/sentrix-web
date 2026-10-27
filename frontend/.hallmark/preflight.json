@@ -1,0 +1,14 @@
+{
+  "scanned": "2026-10-28",
+  "scope": "app",
+  "route": "/dashboard/[groupName]/[sensorId]",
+  "findings": {
+    "framework": "Next.js 16.4.2 with React 19.3.0, frontend/package.json",
+    "fonts": "Existing Geist and Geist Mono variables from app/layout.tsx; body labels use the existing sans token",
+    "palette": "Existing dark/light Sentrix tokens in app/globals.css; route state colors in app/dashboard/[groupName]/[sensorId]/tokens.css",
+    "charts": "Existing Recharts current history, predicted bounds and anomaly markers",
+    "runtime": "Authenticated route redirects to login; real components checked in a clearly labeled local simulated fixture"
+  },
+  "preserve": ["application shell", "brand and theme", "normal RMS current range", "data and history", "chart timeframe controls", "alert and delete actions"],
+  "introduce": ["four-readout summary", "prominent normal-range row", "one device-status indicator", "route-local styling", "concise labels"]
+}

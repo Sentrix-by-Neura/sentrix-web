@@ -7,13 +7,14 @@ import { useSentrix, useTelemetry, useOperatingState, findGroup, hasRecentContac
 import { TelemetryChart } from "./telemetry-chart";
 import { useConfirm } from "../../../components/confirm-modal";
 import { OperatingMetrics } from "./operating-metrics";
+import styles from "./sensor-detail.module.css";
+import "./tokens.css";
 
 function DynamicSensorStatusBadge({ device }: { device: Device }) {
-  if (device.archivedAt) return <span className="text-sm text-[var(--text-secondary)]">Transferred — history only</span>;
+  if (device.archivedAt) return <span className={styles.status}>Transferred, history only</span>;
   if (hasRecentContact(device) && device.status === "CALIBRATING") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
-        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+      <span className={styles.status} data-state="calibrating">
         Calibrating
       </span>
     );
@@ -21,16 +22,14 @@ function DynamicSensorStatusBadge({ device }: { device: Device }) {
 
   if (hasRecentContact(device) && device.status === "ACTIVE") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-        <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-        Monitoring Active
+      <span className={styles.status} data-state="connected">
+        Connected
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 font-mono text-xs font-semibold text-red-500">
-      <span className="h-2 w-2 rounded-full bg-red-500" />
+    <span className={styles.status} data-state="unavailable">
       Unavailable
     </span>
   );
@@ -52,12 +51,13 @@ function SensorAnalyticsContent() {
   const device = groupDevices.find(d => d.id === sensorId || d.id === rawSensor)
     ?? groupDevices.find(d => !d.archivedAt && (d.macAddress === sensorId || d.macAddress === rawSensor))
     ?? groupDevices.find(d => d.macAddress === sensorId || d.macAddress === rawSensor);
-  const { points: telemetry } = useTelemetry(device?.id ?? "", "24h");
   const operating = useOperatingState(device?.id ?? "");
+  const { points: telemetry } = useTelemetry(device?.id ?? "", "24h");
+  const latestTelemetry = telemetry[telemetry.length - 1];
 
   if (!ready) {
     return (
-      <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
+      <p className={`${styles.page} py-24 text-center text-sm text-[var(--text-secondary)]`}>
         Loading…
       </p>
     );
@@ -65,59 +65,47 @@ function SensorAnalyticsContent() {
 
   if (!group || !device || device.groupId !== group.id) {
     return (
-      <div className="py-24 text-center">
+      <div className={`${styles.page} py-24 text-center`}>
         <h1 className="text-lg font-semibold text-[var(--text-primary)]">Sensor Not Found</h1>
         <p className="mb-4 mt-1 text-xs text-[var(--text-muted)]">
           The requested sensor could not be located.
         </p>
         <Link
           href={group ? `/dashboard/${group.slug}` : "/dashboard"}
-          className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
+          className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
-          ← Return to {group ? group.name : "Dashboard"}
+          Return to {group ? group.name : "Dashboard"}
         </Link>
       </div>
     );
   }
 
-  // Get current 24h telemetry to pull expected bounds
-  const latestTelemetry = telemetry[telemetry.length - 1];
-  const expectedMin = latestTelemetry?.lowerBound?.toFixed(2) ?? "Unavailable";
-  const expectedMax = latestTelemetry?.upperBound?.toFixed(2) ?? "Unavailable";
-
-  // Local Alerts for this sensor
   const localAlerts = alerts
     .filter((a) => a.deviceId === device.id)
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header & Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-        <Link href="/dashboard" className="transition hover:text-[var(--text-primary)]">
+    <div className={`${styles.page} space-y-6`}>
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+        <Link href="/dashboard" className="hover:text-[var(--text-primary)]">
           Dashboard
         </Link>
-        <span>/</span>
-        <Link href={`/dashboard/${group.slug}`} className="transition hover:text-[var(--text-primary)]">
+        <span aria-hidden="true">/</span>
+        <Link href={`/dashboard/${group.slug}`} className="hover:text-[var(--text-primary)]">
           {group.name}
         </Link>
-        <span>/</span>
-        <span className="font-medium text-[var(--text-primary)]">{device.name}</span>
       </nav>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+            <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
               {device.name}
             </h1>
-            <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 font-mono text-[11px] text-[var(--text-muted)]">
-              {device.macAddress}
-            </span>
             <DynamicSensorStatusBadge device={device} />
           </div>
-          <p className="mt-1 text-xs text-[var(--text-muted)] sm:text-sm">
-            {group.name}
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            {device.macAddress}
           </p>
         </div>
 
@@ -137,62 +125,48 @@ function SensorAnalyticsContent() {
                 router.push(`/dashboard/${group.slug}`);
               }
             }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 text-xs font-medium text-red-500 transition hover:bg-red-500/20"
+            className={`${styles.control} ${styles.danger}`}
           >
-            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
             </svg>
             {device.archivedAt ? "Delete History" : "Delete Sensor"}
           </button>
-          <Link
-            href={`/dashboard/${group.slug}`}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-          >
-            ← Back to {group.name}
-          </Link>
         </div>
       </div>
 
-      {device.archivedAt && <p role="status" className="rounded-lg border border-[var(--border)] p-4 text-sm text-[var(--text-secondary)]">This sensor was transferred. Your monitoring history is preserved in this account; live monitoring belongs to its current owner. Chart windows end when the sensor was transferred.</p>}
-      <OperatingMetrics device={device} {...operating} expectedMin={expectedMin} expectedMax={expectedMax} />
+      <OperatingMetrics device={device} {...operating} expectedMin={latestTelemetry?.lowerBound ?? null} expectedMax={latestTelemetry?.upperBound ?? null} />
 
-      {/* 3. Node Analytics Chart (Core Feature - Recharts) */}
       <TelemetryChart deviceId={device.id} />
 
-      {/* 4. Local Alert Mini-Feed */}
-      <section aria-label="Local Sensor Anomalies" className="surface-card rounded-xl border border-[var(--border)] p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between">
+      <section aria-label="Anomaly history" className={styles.panel}>
+        <div className={styles.sectionHeader}>
           <div className="flex items-center gap-2">
-            <h3 className="eyebrow">Anomaly History for this Sensor</h3>
-            <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
-              {localAlerts.length.toString().padStart(2, "0")} RECORDED
-            </span>
+            <h2>Anomaly history</h2>
           </div>
           <Link
             href="/alerts"
-            className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-500 transition"
           >
-            Open Global Alert Logs →
+            All alerts
           </Link>
         </div>
 
         {localAlerts.length === 0 ? (
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-8 text-center text-xs text-[var(--text-muted)]">
-            No anomalies recorded for this sensor.
+          <div className={styles.empty}>
+            No anomalies recorded.
           </div>
         ) : (
-          <div className="divide-y divide-[var(--border)] rounded-lg border border-[var(--border)] bg-[var(--canvas)]">
+          <div>
             {localAlerts.map((alert) => (
               <div
                 key={alert.id}
                 data-context-type="alert"
                 data-context-id={alert.id}
-                className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                className={styles.alertRow}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className={`flex h-1.5 w-1.5 rounded-full ${device.archivedAt ? "bg-neutral-400" : "bg-red-500 animate-pulse"}`} />
-                    <time className="font-mono text-[10px] text-[var(--text-muted)]">
+                    <time dateTime={alert.timestamp}>
                       {new Date(alert.timestamp).toLocaleString("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -201,34 +175,34 @@ function SensorAnalyticsContent() {
                       })}
                     </time>
                     {alert.isResolved && (
-                      <span className="font-mono text-[9px] text-emerald-500 font-semibold">
-                        ✓ Resolved
+                      <span className="text-[var(--sensor-positive)]">
+                        Resolved
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[var(--text-primary)] font-mono">
-                    Measured Draw: <strong className="text-red-500">{alert.actualValue.toFixed(2)} A</strong> (Threshold: {alert.expectedMin.toFixed(2)} – {alert.expectedMax.toFixed(2)} A)
+                  <p className="tabular-nums">
+                    <strong>{alert.actualValue.toFixed(2)} A</strong> <span className="text-[var(--text-secondary)]">(range {alert.expectedMin.toFixed(2)} to {alert.expectedMax.toFixed(2)} A)</span>
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {device.archivedAt ? <span className="text-xs text-[var(--text-secondary)]">Archived sensor history</span> : alert.userFeedback !== null ? (
-                    <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                      Feedback: {alert.userFeedback ? "✓ Valid Issue" : "✕ False Alarm"}
+                <div className={styles.alertActions}>
+                  {device.archivedAt ? null : alert.userFeedback !== null ? (
+                    <span className="text-[var(--text-secondary)]">
+                      {alert.userFeedback ? "Valid Issue" : "False Alarm"}
                     </span>
                   ) : (
                     <>
                       <button
                         type="button"
                         onClick={() => { void submitAlertFeedback(alert.id, true).catch(() => {}); }}
-                        className="rounded border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)] hover:text-emerald-500 hover:border-emerald-500/40"
+                        className={styles.control}
                       >
                         Valid Issue
                       </button>
                       <button
                         type="button"
                         onClick={() => { void submitAlertFeedback(alert.id, false).catch(() => {}); }}
-                        className="rounded border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/40"
+                        className={styles.control}
                       >
                         False Alarm
                       </button>
@@ -238,7 +212,7 @@ function SensorAnalyticsContent() {
                     <button
                       type="button"
                       onClick={() => { void resolveAlert(alert.id).catch(() => {}); }}
-                      className="rounded bg-amber-500 px-2.5 py-1 font-mono text-[10px] font-semibold text-[#20170a] hover:bg-amber-400"
+                      className={`${styles.control} ${styles.resolve}`}
                     >
                       Resolve
                     </button>
@@ -257,7 +231,7 @@ export default function SensorDetailPage() {
   return (
     <Suspense
       fallback={
-        <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
+        <p className={`${styles.page} py-24 text-center text-sm text-[var(--text-secondary)]`}>
           Loading…
         </p>
       }
