@@ -148,7 +148,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) { router.replace("/login"); return; }
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.replace("/login");
+      if (!data.session) {
+        router.replace("/login");
+        return;
+      }
+      const user = data.session.user;
+      if (user && !user.email_confirmed_at && !user.confirmed_at) {
+        void supabase?.auth.signOut().then(() => {
+          router.replace("/login");
+        });
+      }
     });
   }, [router]);
 
