@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Temporary build caches and isolated browser previews include bundled dependencies.
+    ".build-tmp/**",
+    ".browser-check/**",
   ]),
 ]);
 

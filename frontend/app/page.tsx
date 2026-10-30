@@ -3,11 +3,15 @@
 import { useState } from "react";
 
 import Link from "next/link";
+import Image from "next/image";
+import darkLogo from "../public/images/logo-text-dark.png";
+import lightLogo from "../public/images/logo-text-light.png";
 import { Brand } from "./components/brand";
 import { ThemeToggle } from "./components/theme-toggle";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [prototypeImageSrc, setPrototypeImageSrc] = useState("/images/esp32-sensor-prototype.jpeg");
 
   return (
     <main className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--text-primary)] transition-colors duration-200">
@@ -485,12 +489,12 @@ export default function Home() {
                 {/* Hardware Photo Container */}
                 <div className="mt-4">
                   <div className="relative overflow-hidden rounded-xl border border-stone-800 bg-[#0d0e0c] group aspect-[4/3] sm:aspect-[16/9] w-full min-h-[220px]">
-                    <img
-                      src="/images/esp32-sensor-prototype.jpeg"
+                    <Image
+                      src={prototypeImageSrc}
+                      fill
+                      sizes="(min-width: 1400px) 580px, (min-width: 1024px) 50vw, 100vw"
                       alt="Sentrix ESP32 IoT Sensor Node Prototype"
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/esp32-sensor-prototype.jpg";
-                      }}
+                      onError={() => setPrototypeImageSrc("/images/esp32-sensor-prototype.jpg")}
                       className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
@@ -880,13 +884,13 @@ export default function Home() {
 
           <div className="mt-10 flex flex-col gap-4 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-2">
-              <img
-                src="/images/logo-text-dark.png"
+              <Image
+                src={darkLogo}
                 alt="Sentrix"
                 className="h-4 w-auto object-contain logo-dark-theme"
               />
-              <img
-                src="/images/logo-text-light.png"
+              <Image
+                src={lightLogo}
                 alt="Sentrix"
                 className="h-4 w-auto object-contain logo-light-theme"
               />

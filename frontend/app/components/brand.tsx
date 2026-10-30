@@ -1,4 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
+import orangeIcon from "../../public/images/logo-icon-orange.png";
+import darkIcon from "../../public/images/logo-icon-dark.png";
+import transparentMark from "../../public/images/logo-mark.png";
+import darkLogo from "../../public/images/logo-text-dark.png";
+import lightLogo from "../../public/images/logo-text-light.png";
 
 export function BrandMark({
   className = "h-8 w-8",
@@ -9,8 +15,8 @@ export function BrandMark({
 }) {
   if (variant === "orange") {
     return (
-      <img
-        src="/images/logo-icon-orange.png"
+      <Image
+        src={orangeIcon}
         alt="Sentrix Mark"
         className={`object-contain rounded-lg ${className}`}
       />
@@ -18,8 +24,8 @@ export function BrandMark({
   }
   if (variant === "dark") {
     return (
-      <img
-        src="/images/logo-icon-dark.png"
+      <Image
+        src={darkIcon}
         alt="Sentrix Mark"
         className={`object-contain rounded-lg ${className}`}
       />
@@ -27,8 +33,8 @@ export function BrandMark({
   }
   if (variant === "transparent") {
     return (
-      <img
-        src="/images/logo-mark.png"
+      <Image
+        src={transparentMark}
         alt="Sentrix Mark"
         className={`object-contain ${className}`}
       />
@@ -40,13 +46,13 @@ export function BrandMark({
   // In light mode: Dark icon pops with high contrast
   return (
     <span className={`inline-flex items-center justify-center shrink-0 ${className}`}>
-      <img
-        src="/images/logo-icon-orange.png"
+      <Image
+        src={orangeIcon}
         alt="Sentrix Mark"
         className="h-full w-full object-contain rounded-lg logo-dark-theme"
       />
-      <img
-        src="/images/logo-icon-dark.png"
+      <Image
+        src={darkIcon}
         alt="Sentrix Mark"
         className="h-full w-full object-contain rounded-lg logo-light-theme shadow-xs"
       />
@@ -87,14 +93,14 @@ export function Brand({
       aria-label="Sentrix"
     >
       {/* Dark theme logo: white text + orange bolt */}
-      <img
-        src="/images/logo-text-dark.png"
+      <Image
+        src={darkLogo}
         alt="Sentrix"
         className={`${heightClass} w-auto object-contain logo-dark-theme`}
       />
       {/* Light theme logo: dark text + orange bolt */}
-      <img
-        src="/images/logo-text-light.png"
+      <Image
+        src={lightLogo}
         alt="Sentrix"
         className={`${heightClass} w-auto object-contain logo-light-theme`}
       />

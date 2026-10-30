@@ -363,7 +363,7 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
         setMenuState((prev) => (prev ? { ...prev, x: newX, y: newY } : null));
       }
     }
-  }, [menuState?.type, menuState?.id, menuState?.selectedText]);
+  }, [menuState]);
 
   // Determine if the current route is inside a specific group dashboard
   const currentPath = pathname || menuState?.routePath || "";

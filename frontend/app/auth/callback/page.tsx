@@ -11,23 +11,17 @@ function CallbackContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const callbackError = !isSupabaseConfigured || !supabase
+    ? "Authentication service is temporarily unavailable."
+    : searchParams.get("error")
+      ? searchParams.get("error_description") || searchParams.get("error")
+      : null;
+  const displayStatus = callbackError ? "error" : status;
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
-      setStatus("error");
-      setErrorMessage("Authentication service is temporarily unavailable.");
-      return;
-    }
+    if (callbackError || !supabase) return;
 
     const code = searchParams.get("code");
-    const errorParam = searchParams.get("error");
-    const errorDesc = searchParams.get("error_description");
-
-    if (errorParam) {
-      setStatus("error");
-      setErrorMessage(errorDesc || errorParam);
-      return;
-    }
 
     let isMounted = true;
 
@@ -96,11 +90,11 @@ function CallbackContent() {
     return () => {
       isMounted = false;
     };
-  }, [searchParams, router]);
+  }, [searchParams, router, callbackError]);
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center justify-center py-12 text-center">
-      {status === "loading" && (
+      {displayStatus === "loading" && (
         <div className="space-y-4">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
           <h2 className="text-xl font-semibold text-[var(--text-primary)]">
@@ -112,7 +106,7 @@ function CallbackContent() {
         </div>
       )}
 
-      {status === "success" && (
+      {displayStatus === "success" && (
         <div className="space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/30">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -136,7 +130,7 @@ function CallbackContent() {
         </div>
       )}
 
-      {status === "error" && (
+      {displayStatus === "error" && (
         <div className="space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-400 border border-red-500/30">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -147,7 +141,7 @@ function CallbackContent() {
             Verification Incomplete
           </h2>
           <p className="text-xs text-[var(--text-muted)] max-w-sm">
-            {errorMessage || "The verification link may have expired or was already used."}
+            {callbackError || errorMessage || "The verification link may have expired or was already used."}
           </p>
           <div className="pt-3">
             <Link
