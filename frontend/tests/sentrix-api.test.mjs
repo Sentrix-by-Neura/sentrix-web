@@ -16,7 +16,7 @@ function load(fetch, base = "https://api.example.test/", signals = AbortSignal) 
 }
 
 test("CSV export sends the selected browser timezone and reads the full authenticated file", async () => {
-  const csv = "date,time,current_rms,target_temp,room_temp\r\n2026-01-02,01:30:00,0,,27.125\r\n";
+  const csv = "date,time,current_rms,target_temp,room_temp,is_ac_on\r\n2026-01-02,01:30:00,0,,27.125,1\r\n2026-01-02,01:31:00,0,,27.125,0\r\n2026-01-02,01:32:00,0,,27.125,\r\n";
   const api = load(async (url, options) => {
     assert.equal(url, "https://api.example.test/api/devices/sensor-id/telemetry/export?timezone=Asia%2FJakarta");
     assert.equal(options.headers.Authorization, "Bearer test-token");
