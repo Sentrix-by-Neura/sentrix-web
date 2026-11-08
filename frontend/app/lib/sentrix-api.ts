@@ -31,14 +31,14 @@ export async function authenticatedSession(): Promise<Session> {
   return data.session;
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}, session?: Session): Promise<T> {
+async function apiResponse(path: string, init: RequestInit = {}, session?: Session, timeoutMs = 20000): Promise<Response> {
   const base = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_GO_API_URL)?.replace(/\/$/, "");
   if (!base) throw new Error("Sentrix is temporarily unavailable. Please try again later.");
   const auth = session ?? await authenticatedSession();
   let response: Response;
   try {
     response = await fetch(`${base}/api${path}`, {
-      ...init, cache: "no-store", signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000),
+      ...init, cache: "no-store", signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
       headers: { "Content-Type": "application/json", ...init.headers, Authorization: `Bearer ${auth.access_token}` },
     });
   } catch {
@@ -48,7 +48,27 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, sessio
     const body = await response.json().catch(() => null);
     throw new Error(body?.error || `Sentrix request failed (${response.status}).`);
   }
+  return response;
+}
+
+export async function apiRequest<T>(path: string, init: RequestInit = {}, session?: Session): Promise<T> {
+  const response = await apiResponse(path, init, session);
   return response.status === 204 ? undefined as T : response.json();
+}
+
+export async function telemetryCsv(deviceId: string, timeZone: string, signal?: AbortSignal): Promise<Blob> {
+  const response = await apiResponse(
+    `/devices/${encodeURIComponent(deviceId)}/telemetry/export?timezone=${encodeURIComponent(timeZone)}`,
+    { signal, headers: { Accept: "text/csv" } }, undefined, 120000,
+  );
+  if (!response.headers.get("Content-Type")?.toLowerCase().startsWith("text/csv")) {
+    throw new Error("Sentrix did not return a CSV file. Please try again.");
+  }
+  try {
+    return await response.blob();
+  } catch {
+    throw new Error("The export was interrupted. Please try again.");
+  }
 }
 
 export function joinTelemetry(readings: ReadingRow[], bounds: BoundRow[]) {

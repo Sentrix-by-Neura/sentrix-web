@@ -7,6 +7,7 @@ import { useSentrix, useTelemetry, useOperatingState, findGroup, hasRecentContac
 import { TelemetryChart } from "./telemetry-chart";
 import { useConfirm } from "../../../components/confirm-modal";
 import { OperatingMetrics } from "./operating-metrics";
+import { TelemetryExport } from "./telemetry-export";
 import styles from "./sensor-detail.module.css";
 import "./tokens.css";
 
@@ -109,7 +110,8 @@ function SensorAnalyticsContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className={styles.headerActions}>
+          <TelemetryExport key={device.id} deviceId={device.id} />
           <button
             type="button"
             id="delete-sensor-button"

@@ -31,6 +31,7 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
     if (name.endsWith("confirm-modal")) return { useConfirm: () => () => {} };
     if (name.endsWith("ble-onboarding-modal")) return { BleOnboardingModal: () => null };
     if (name.endsWith("telemetry-chart")) return { TelemetryChart: () => createElement("div", null, "Preserved telemetry chart") };
+    if (name.endsWith("telemetry-export")) return { TelemetryExport: ({ deviceId }) => { if (expectedTelemetryId) assert.equal(deviceId, expectedTelemetryId); return createElement("button", null, "Export all data (CSV)"); } };
     if (name.endsWith("operating-metrics")) return { OperatingMetrics: () => createElement("div", null, "Operating metrics") };
     if (name.endsWith("app-shell")) return { AppShell: ({ children }) => children };
     if (name.endsWith(".module.css")) return { default: {} };
@@ -49,6 +50,7 @@ test("group cards label transferred devices as preserved history", () => {
 test("archived detail keeps its chart and removes live monitoring and alert controls", () => {
   const html = renderRoute("dashboard/[groupName]/[sensorId]/page.tsx");
   assert.match(html, /Preserved telemetry chart/);
+  assert.match(html, /Export all data \(CSV\)/);
   assert.match(html, /Transferred, history only/);
   assert.doesNotMatch(html, /Real-Time RMS Current|>Waiting<|>Valid Issue<|>False Alarm<|>Resolve</);
 });

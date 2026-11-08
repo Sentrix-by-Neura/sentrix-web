@@ -71,6 +71,10 @@
 .sectionHeader a:hover { color: var(--text-primary); }
 .control { gap: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; font-size: .875rem; color: var(--text-secondary); background: transparent; }
 .control:hover { background: var(--surface-hover); color: var(--text-primary); }
+.headerActions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; max-width: 100%; }
+.export { min-width: 0; max-width: 19rem; }
+.exportHint, .exportError { margin-top: 6px; color: var(--text-secondary); font-size: .8125rem; }
+.exportError { color: var(--sensor-danger); }
 .danger { color: var(--sensor-danger); }
 .resolve { color: var(--sensor-accent-ink); background: var(--sensor-accent); border-color: var(--sensor-accent); }
 .resolve:hover { color: var(--sensor-accent-ink); background: var(--sensor-accent); }

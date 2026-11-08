@@ -14,6 +14,25 @@ function load(fetch, base = "https://api.example.test/", signals = AbortSignal) 
   });
   return exports;
 }
+
+test("CSV export sends the selected browser timezone and reads the full authenticated file", async () => {
+  const csv = "date,time,current_rms,target_temp,room_temp\r\n2026-01-02,01:30:00,0,,27.125\r\n";
+  const api = load(async (url, options) => {
+    assert.equal(url, "https://api.example.test/api/devices/sensor-id/telemetry/export?timezone=Asia%2FJakarta");
+    assert.equal(options.headers.Authorization, "Bearer test-token");
+    assert.equal(options.headers.Accept, "text/csv");
+    assert.equal(options.cache, "no-store");
+    return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8" } });
+  }, "https://api.example.test/", { timeout: ms => { assert.equal(ms, 120000); return new AbortController().signal; } });
+  assert.equal(await (await api.telemetryCsv("sensor-id", "Asia/Jakarta")).text(), csv);
+});
+
+test("CSV export rejects error responses, unexpected formats and interrupted streams", async () => {
+  await assert.rejects(load(async () => new Response(JSON.stringify({ error: "device not found" }), { status: 404 })).telemetryCsv("sensor", "UTC"), /device not found/);
+  await assert.rejects(load(async () => new Response("{}", { headers: { "Content-Type": "application/json" } })).telemetryCsv("sensor", "UTC"), /did not return a CSV/);
+  const response = { ok: true, headers: new Headers({ "Content-Type": "text/csv" }), blob: async () => { throw new Error("truncated response"); } };
+  await assert.rejects(load(async () => response).telemetryCsv("sensor", "UTC"), /export was interrupted/);
+});
 test("requests use the session token and disable caching", async () => {
   const api = load(async (url, options) => {
     assert.equal(url, "https://api.example.test/api/groups");
