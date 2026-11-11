@@ -7,6 +7,7 @@ import Image from "next/image";
 import darkLogo from "../public/images/logo-text-dark.png";
 import lightLogo from "../public/images/logo-text-light.png";
 import { Brand } from "./components/brand";
+import { LandingCircuit } from "./components/landing-circuit";
 import { useLandingMotion } from "./components/landing-motion";
 import { ThemeToggle } from "./components/theme-toggle";
 
@@ -207,9 +208,10 @@ export default function Home() {
       </section>
 
       {/* 2.5 Section #overview: Smarter Air Conditioning · A Practical Climate Win */}
-      <section id="overview" className="scroll-mt-20 border-t border-[var(--border)] bg-[var(--canvas)] px-6 py-16 sm:px-8 sm:py-24">
+      <section id="overview" className="relative isolate scroll-mt-20 border-t border-[var(--border)] bg-[var(--canvas)] px-6 py-16 sm:px-8 sm:py-24">
+        <LandingCircuit pattern="overview" />
         <div className="mx-auto max-w-[1280px]">
-          <div className="max-w-2xl">
+          <div data-landing-circuit-anchor className="max-w-2xl">
             <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
               START WHERE THE ENERGY GOES
             </p>
@@ -226,7 +228,7 @@ export default function Home() {
 
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {/* Card 01: Connect */}
-            <article data-landing-reveal className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
+            <article data-landing-reveal data-landing-circuit-anchor className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-500">
@@ -255,7 +257,7 @@ export default function Home() {
             </article>
 
             {/* Card 02: Predict */}
-            <article data-landing-reveal className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
+            <article data-landing-reveal data-landing-circuit-anchor className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-500">
@@ -284,7 +286,7 @@ export default function Home() {
             </article>
 
             {/* Card 03: Improve */}
-            <article data-landing-reveal className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
+            <article data-landing-reveal data-landing-circuit-anchor className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-500">
@@ -319,7 +321,8 @@ export default function Home() {
       </section>
 
       {/* 3. Section #how-it-works: Hardware in the Field (Interactive Showcase + Annotated Frame) */}
-      <section id="how-it-works" className="scroll-mt-20 border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
+      <section id="how-it-works" className="relative isolate scroll-mt-20 border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
+        <LandingCircuit pattern="hardware" />
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
             <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
@@ -336,7 +339,7 @@ export default function Home() {
 
           <div className="mt-12 grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12">
             {/* Left Column (6 cols) — Product Photo & Annotated Hardware Callout Frame */}
-            <div data-landing-reveal className="lg:col-span-6 flex flex-col justify-between min-h-[460px] rounded-2xl border-2 border-amber-500/30 bg-[#151613] p-4 sm:p-6 text-stone-100 relative overflow-hidden shadow-2xl">
+            <div data-landing-reveal data-landing-circuit-anchor className="lg:col-span-6 flex flex-col justify-between min-h-[460px] rounded-2xl border-2 border-amber-500/30 bg-[#151613] p-4 sm:p-6 text-stone-100 relative overflow-hidden shadow-2xl">
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-800 pb-3">
                   <div>
@@ -422,15 +425,9 @@ export default function Home() {
             {/* Right Column (6 cols) — Installation Steps */}
             <div className="lg:col-span-6 flex flex-col justify-between py-2">
               <div className="relative space-y-6 sm:space-y-8">
-                {/* Vertical connecting line - mathematically centered through the middle of the dots */}
-                <div
-                  aria-hidden="true"
-                  className="absolute left-[28px] top-7 bottom-7 w-1 -translate-x-1/2 bg-amber-500/40 rounded-full"
-                />
-
                 {/* Step 01 */}
                 <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
+                  <div data-landing-circuit-anchor className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     01
                   </div>
                   <div className="flex-1 min-w-0">
@@ -446,7 +443,7 @@ export default function Home() {
 
                 {/* Step 02 */}
                 <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
+                  <div data-landing-circuit-anchor className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     02
                   </div>
                   <div className="flex-1 min-w-0">
@@ -462,7 +459,7 @@ export default function Home() {
 
                 {/* Step 03 */}
                 <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
+                  <div data-landing-circuit-anchor className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     03
                   </div>
                   <div className="flex-1 min-w-0">
@@ -478,7 +475,7 @@ export default function Home() {
 
                 {/* Step 04 */}
                 <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
+                  <div data-landing-circuit-anchor className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     04
                   </div>
                   <div className="flex-1 min-w-0">
@@ -500,7 +497,8 @@ export default function Home() {
 
 
       {/* 5. Section #specifications: Industrial Spec Sheet Table + Secondary Product Photo Slot */}
-      <section id="specifications" className="scroll-mt-20 border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
+      <section id="specifications" className="relative isolate scroll-mt-20 border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
+        <LandingCircuit pattern="specifications" />
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
             <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
@@ -517,7 +515,7 @@ export default function Home() {
 
           <div className="mt-12 grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
             {/* Left Column (7 cols) — Striped Industrial Specification Table */}
-            <div data-landing-reveal className="min-w-0 lg:col-span-7 overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+            <div data-landing-reveal data-landing-circuit-anchor className="min-w-0 lg:col-span-7 overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
               <table className="w-full min-w-[480px] text-left text-sm sm:text-base border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--canvas)]">
@@ -571,7 +569,7 @@ export default function Home() {
             </div>
 
             {/* Right Column (5 cols) — MCB Field Installation Photo Card */}
-            <div data-landing-reveal className="lg:col-span-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl flex flex-col justify-between">
+            <div data-landing-reveal data-landing-circuit-anchor className="lg:col-span-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
                   <h3 className="text-base font-bold text-[var(--text-primary)]">
@@ -628,7 +626,7 @@ export default function Home() {
           </div>
 
           {/* High-Contrast Bottom Callout Bar */}
-          <div className="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
+          <div data-landing-circuit-anchor className="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
             <div className="max-w-2xl text-center lg:text-left">
               <h3 data-landing-reveal className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
                 Ready to audit your facility AC circuits?
@@ -656,10 +654,11 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-[var(--border)] bg-[var(--surface)] px-6 py-12 sm:px-8">
+      <footer className="relative isolate border-t border-[var(--border)] bg-[var(--surface)] px-6 py-12 sm:px-8">
+        <LandingCircuit pattern="footer" />
         <div className="mx-auto max-w-[1280px]">
           <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
-            <div data-landing-reveal>
+            <div data-landing-reveal data-landing-circuit-anchor>
               <Brand />
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">
                 Commercial AC electrical monitoring and predictive maintenance. Non-invasive clamp telemetry with automated 7-day ARIMA anomaly detection.
@@ -731,7 +730,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div data-landing-reveal className="mt-10 flex flex-col gap-4 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
+          <div data-landing-reveal data-landing-circuit-anchor className="mt-10 flex flex-col gap-4 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-2">
               <Image
                 src={darkLogo}
