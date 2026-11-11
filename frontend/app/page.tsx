@@ -1,28 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import Link from "next/link";
 import Image from "next/image";
 import darkLogo from "../public/images/logo-text-dark.png";
 import lightLogo from "../public/images/logo-text-light.png";
 import { Brand } from "./components/brand";
+import { useLandingMotion } from "./components/landing-motion";
 import { ThemeToggle } from "./components/theme-toggle";
 
 export default function Home() {
+  const landingRef = useRef<HTMLElement>(null);
+  useLandingMotion(landingRef);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prototypeImageSrc, setPrototypeImageSrc] = useState("/images/esp32-sensor-prototype.jpeg");
 
   return (
-    <main className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--text-primary)] transition-colors duration-200">
+    <main ref={landingRef} className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--text-primary)] transition-colors duration-200">
       {/* 1. Sticky Top Header (Larger & Clearer with Mobile & Tablet Hamburger) */}
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--canvas)]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-20 max-w-[1280px] items-center justify-between px-4 sm:px-8">
-          <div className="shrink-0">
+        <div className="mx-auto flex h-20 max-w-[1344px] items-center justify-between px-6 sm:px-8">
+          <div data-landing-intro className="shrink-0">
             <Brand />
           </div>
 
-          <nav className="hidden items-center gap-6 xl:gap-8 text-sm xl:text-base font-medium text-[var(--text-secondary)] lg:flex">
+          <nav data-landing-intro className="hidden items-center gap-6 xl:gap-8 text-sm xl:text-base font-medium text-[var(--text-secondary)] lg:flex">
             <a className="whitespace-nowrap transition hover:text-[var(--text-primary)]" href="#overview">
               Overview
             </a>
@@ -35,7 +38,7 @@ export default function Home() {
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden items-center gap-3 xl:gap-4 lg:flex shrink-0">
+          <div data-landing-intro className="hidden items-center gap-3 xl:gap-4 lg:flex shrink-0">
             <ThemeToggle showLabel={false} />
             <Link
               href="/login"
@@ -52,7 +55,7 @@ export default function Home() {
           </div>
 
           {/* Mobile & Tablet Actions: ThemeToggle + Hamburger Button (< lg) */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div data-landing-intro className="flex items-center gap-2 lg:hidden">
             <ThemeToggle showLabel={false} />
             <button
               type="button"
@@ -124,231 +127,97 @@ export default function Home() {
         )}
       </header>
 
-      {/* 2. Split Asymmetric Industrial Hero */}
-      <section className="px-4 pt-10 pb-14 sm:px-8 sm:pt-16 sm:pb-24">
+      <section className="relative isolate overflow-hidden px-6 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24 lg:pt-28">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 1000 620"
+          fill="none"
+          className="pointer-events-none absolute -right-40 top-0 -z-10 w-[42rem] max-w-none text-amber-500 opacity-50 sm:-right-32 sm:w-[52rem] sm:opacity-60 lg:-right-36 lg:w-[66rem] lg:opacity-100"
+        >
+          <g stroke="currentColor" strokeWidth="2" opacity=".18">
+            <path d="M1000 116H776L700 192H586L534 244H420" />
+            <path d="M1000 296H512" />
+            <path d="M1000 338H808L716 430H584L526 488H408" />
+            <path d="M1000 380H850L748 482H634" />
+            <path d="M1000 492H904L824 572H712" />
+            <circle cx="414" cy="244" r="6" />
+            <circle cx="506" cy="296" r="6" />
+            <circle cx="402" cy="488" r="6" />
+            <circle cx="628" cy="482" r="6" />
+            <circle cx="706" cy="572" r="6" />
+          </g>
+          <g stroke="currentColor" strokeWidth="2" opacity=".24">
+            <path d="M675 240a66 66 0 1 1-27 18l24 21a34 34 0 1 0 14-10z" />
+            <path d="M726 356l38 38h56" />
+            <circle cx="826" cy="394" r="6" />
+          </g>
+          <path
+            data-landing-pulse
+            d="M962 296h24"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            opacity="0"
+          />
+        </svg>
+
         <div className="mx-auto max-w-[1280px]">
-          <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
-            {/* Left Column (7 cols) */}
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-500 max-w-full text-center sm:text-left leading-normal">
-                COMMERCIAL AC CIRCUIT MONITORING · SCT-013 + AUTO-ARIMA
-              </div>
+          <h1 data-landing-intro className="max-w-[14ch] text-balance text-[clamp(2.75rem,7vw,6rem)] font-semibold leading-[0.99] tracking-[-0.055em]">
+            Catch AC faults early.
+          </h1>
 
-              <h1 className="mt-5 text-3xl font-bold tracking-tight leading-[1.12] text-[var(--text-primary)] sm:text-5xl lg:text-6xl break-words">
-                Catch AC Compressor &amp; Cooling Faults Before the Breaker Trips.
-              </h1>
+          <p data-landing-intro className="mt-6 max-w-[54ch] text-base leading-relaxed text-[var(--text-secondary)] sm:mt-8 sm:text-xl">
+            Clamp our non-invasive current sensor onto your AC distribution panel.
+            Sentrix learns each unit&apos;s normal 7-day electrical rhythm in Amps and alerts your
+            maintenance team the moment power draw drifts outside safe bounds.
+          </p>
 
-              <p className="mt-5 max-w-2xl text-base sm:text-xl leading-relaxed text-[var(--text-secondary)]">
-                Clamp our non-invasive current sensor onto your AC distribution panel.
-                Sentrix learns each unit&apos;s normal 7-day electrical rhythm in Amps and alerts your
-                maintenance team the moment power draw drifts outside safe bounds.
-              </p>
-
-              <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Link
-                  href="/signup"
-                  className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-amber-500 px-6 text-base font-semibold text-[#17140d] shadow-md shadow-amber-500/20 transition hover:bg-amber-400 text-center"
-                >
-                  Start Monitoring Your AC Fleet →
-                </Link>
-                <a
-                  href="#how-it-works"
-                  className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 text-base font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] text-center"
-                >
-                  See How It Works
-                </a>
-              </div>
-
-              {/* 3 Quick Operational Facts Strip */}
-              <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-4 border-t border-[var(--border)] pt-6">
-                <div>
-                  <p className="font-mono text-2xl sm:text-4xl lg:text-5xl font-bold text-amber-500">1-Min</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
-                    RMS Current Sampling
-                  </p>
-                </div>
-                <div>
-                  <p className="font-mono text-2xl sm:text-4xl lg:text-5xl font-bold text-[var(--text-primary)]">7-Day</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
-                    Baseline Calibration
-                  </p>
-                </div>
-                <div>
-                  <p className="font-mono text-2xl sm:text-4xl lg:text-5xl font-bold text-emerald-500">0</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
-                    Wire Cutting Required
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column (5 cols) — Concrete AC Panel Readout */}
-            <div className="lg:col-span-5">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl">
-                {/* Panel Header */}
-                <div className="flex items-center justify-between border-b border-[var(--border)] pb-4">
-                  <div>
-                    <p className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                      Distribution Sub-Panel
-                    </p>
-                    <h2 className="mt-0.5 text-base font-bold text-[var(--text-primary)] font-mono">
-                      MAIN SERVER ROOM · MESH A1B2C3
-                    </h2>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-mono text-xs font-semibold text-emerald-500">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    ROOT ONLINE
-                  </span>
-                </div>
-
-                <div className="mt-5 space-y-4">
-                  {/* Circuit 1: Alert State */}
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-base font-bold text-[var(--text-primary)]">
-                          Chiller Unit 01 (MCB-A1)
-                        </p>
-                        <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-                          Target Setpoint: <strong className="text-[var(--text-primary)]">18°C</strong>
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono uppercase text-red-500 font-semibold block">
-                          Current Load
-                        </span>
-                        <p className="font-mono text-2xl font-bold text-red-500 leading-tight">
-                          21.4 A
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-red-500/20 pt-2.5">
-                      <span className="text-xs font-mono text-[var(--text-secondary)]">
-                        Safe ARIMA Range: <strong className="text-[var(--text-primary)]">11.8 - 16.5 A</strong>
-                      </span>
-                      <span className="rounded bg-red-500 px-2 py-0.5 font-mono text-xs font-bold text-white">
-                        OVERLOAD +4.9A: CHECK COIL / FILTER
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Circuit 2: Normal State */}
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-base font-bold text-[var(--text-primary)]">
-                          East Office Split AC (MCB-B3)
-                        </p>
-                        <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-                          Target Setpoint: <strong className="text-[var(--text-primary)]">23°C</strong>
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono uppercase text-[var(--text-muted)] block">
-                          Current Load
-                        </span>
-                        <p className="font-mono text-2xl font-bold text-emerald-500 leading-tight">
-                          9.6 A
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-2.5">
-                      <span className="text-xs font-mono text-[var(--text-secondary)]">
-                        Safe ARIMA Range: <strong className="text-[var(--text-primary)]">8.2 - 11.0 A</strong>
-                      </span>
-                      <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-500">
-                        WITHIN SAFE ZONE
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 24-Hour RMS Current & Safe-Zone SVG Graph */}
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-4">
-                    <div className="flex items-center justify-between text-xs font-mono text-[var(--text-muted)] mb-2">
-                      <span className="font-semibold text-[var(--text-primary)]">
-                        Chiller 01: 24-Hour RMS Current &amp; ARIMA Band
-                      </span>
-                      <span className="text-amber-500">ARIMA Band (11.8 - 16.5A)</span>
-                    </div>
-
-                    <div className="relative h-36 w-full overflow-hidden rounded-lg bg-[var(--surface)] p-2">
-                      <svg viewBox="0 0 500 130" preserveAspectRatio="none" className="h-full w-full">
-                        <defs>
-                          <linearGradient id="arimaBandFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.22" />
-                            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.08" />
-                          </linearGradient>
-                        </defs>
-
-                        {/* ARIMA Safe Zone Shaded Band */}
-                        <polygon
-                          points="0,68 125,65 250,62 375,64 500,65 500,44 375,44 250,42 125,45 0,46"
-                          fill="url(#arimaBandFill)"
-                        />
-                        {/* Upper Safe Limit Line */}
-                        <line x1="0" y1="45" x2="500" y2="44" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 4" />
-                        {/* Lower Safe Limit Line */}
-                        <line x1="0" y1="68" x2="500" y2="65" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="3 3" />
-
-                        {/* Normal Current Spline */}
-                        <path
-                          d="M 0 58 Q 62 52 125 56 T 250 54 T 340 52"
-                          fill="none"
-                          stroke="#10b981"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                        />
-
-                        {/* Anomaly Surge Spike */}
-                        <path
-                          d="M 340 52 Q 380 40 420 18 T 500 20"
-                          fill="none"
-                          stroke="#ef4444"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-
-                        {/* Red Anomaly Marker at Peak */}
-                        <circle cx="420" cy="18" r="5" fill="#ef4444" />
-                        <circle cx="420" cy="18" r="9" fill="#ef4444" opacity="0.3" />
-                      </svg>
-
-                      {/* Anomaly Callout Tag */}
-                      <div className="absolute top-2 right-2 sm:right-12 rounded bg-red-500 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold text-white shadow-sm">
-                        21.4 A Spiked Above Upper Limit
-                      </div>
-
-                      {/* X-Axis Time Labels */}
-                      <div className="absolute bottom-1 inset-x-2 flex justify-between font-mono text-xs text-[var(--text-muted)]">
-                        <span>00:00</span>
-                        <span>06:00</span>
-                        <span>12:00</span>
-                        <span>18:00</span>
-                        <span className="font-bold text-amber-500">24:00</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <Link
+              data-landing-intro
+              href="/signup"
+              className="inline-flex min-h-12 items-center justify-center rounded-lg bg-amber-500 px-6 py-3 text-center text-base font-semibold text-[#17140d] transition-colors hover:bg-amber-400"
+            >
+              Start Monitoring Your AC Fleet →
+            </Link>
+            <a
+              data-landing-intro
+              href="#how-it-works"
+              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-center text-base font-semibold transition-colors hover:bg-[var(--surface-hover)]"
+            >
+              See How It Works
+            </a>
           </div>
+
+          <dl className="mt-12 grid max-w-2xl grid-cols-3 items-start gap-3 sm:mt-16 sm:gap-8">
+            <div data-landing-intro className="flex flex-col-reverse gap-1.5">
+              <dt className="text-sm leading-snug text-[var(--text-secondary)]">RMS current sampling</dt>
+              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">1 min</dd>
+            </div>
+            <div data-landing-intro className="flex flex-col-reverse gap-1.5">
+              <dt className="text-sm leading-snug text-[var(--text-secondary)]">Baseline calibration</dt>
+              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">7 days</dd>
+            </div>
+            <div data-landing-intro className="flex flex-col-reverse gap-1.5">
+              <dt className="text-sm leading-snug text-[var(--text-secondary)]">Wires to cut</dt>
+              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">0</dd>
+            </div>
+          </dl>
         </div>
       </section>
 
       {/* 2.5 Section #overview: Smarter Air Conditioning · A Practical Climate Win */}
-      <section id="overview" className="border-t border-[var(--border)] bg-[var(--canvas)] px-6 py-16 sm:px-8 sm:py-24">
+      <section id="overview" className="scroll-mt-20 border-t border-[var(--border)] bg-[var(--canvas)] px-6 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
-            <p className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
+            <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
               START WHERE THE ENERGY GOES
             </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
+            <h2 data-landing-reveal className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
               Smarter air conditioning.
               <span className="block text-[var(--text-secondary)] font-normal">A practical climate win.</span>
             </h2>
-            <p className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
+            <p data-landing-reveal className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
               We&apos;re deliberately beginning with air conditioning—a practical way to focus our
               team and climate impact. The broader vision is a flexible platform that can
               support more machine types as Sentrix develops.
@@ -357,7 +226,7 @@ export default function Home() {
 
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {/* Card 01: Connect */}
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
+            <article data-landing-reveal className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-500">
@@ -386,7 +255,7 @@ export default function Home() {
             </article>
 
             {/* Card 02: Predict */}
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
+            <article data-landing-reveal className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-500">
@@ -415,7 +284,7 @@ export default function Home() {
             </article>
 
             {/* Card 03: Improve */}
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
+            <article data-landing-reveal className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 flex flex-col justify-between transition-colors hover:border-amber-500/40 hover:bg-[var(--surface-hover)] shadow-sm">
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-500">
@@ -450,16 +319,16 @@ export default function Home() {
       </section>
 
       {/* 3. Section #how-it-works: Hardware in the Field (Interactive Showcase + Annotated Frame) */}
-      <section id="how-it-works" className="border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
+      <section id="how-it-works" className="scroll-mt-20 border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
-            <p className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
+            <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
               HARDWARE DEPLOYMENT
             </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+            <h2 data-landing-reveal className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
               Physical Hardware in the Field
             </h2>
-            <p className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
+            <p data-landing-reveal className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
               Non-invasive clamp sensing, infrared remote capture, and local mesh relay engineered
               for clean industrial installation into existing electrical panels.
             </p>
@@ -467,7 +336,7 @@ export default function Home() {
 
           <div className="mt-12 grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12">
             {/* Left Column (6 cols) — Product Photo & Annotated Hardware Callout Frame */}
-            <div className="lg:col-span-6 flex flex-col justify-between min-h-[460px] rounded-2xl border-2 border-amber-500/30 bg-[#151613] p-4 sm:p-6 text-stone-100 relative overflow-hidden shadow-2xl">
+            <div data-landing-reveal className="lg:col-span-6 flex flex-col justify-between min-h-[460px] rounded-2xl border-2 border-amber-500/30 bg-[#151613] p-4 sm:p-6 text-stone-100 relative overflow-hidden shadow-2xl">
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-800 pb-3">
                   <div>
@@ -550,7 +419,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column (6 cols) — Vertical Connected Stepper With Visual Status Pills */}
+            {/* Right Column (6 cols) — Installation Steps */}
             <div className="lg:col-span-6 flex flex-col justify-between py-2">
               <div className="relative space-y-6 sm:space-y-8">
                 {/* Vertical connecting line - mathematically centered through the middle of the dots */}
@@ -560,19 +429,14 @@ export default function Home() {
                 />
 
                 {/* Step 01 */}
-                <div className="relative flex items-start gap-4 sm:gap-5 group rounded-xl border border-transparent p-3 hover:border-[var(--border)] hover:bg-[var(--surface)] transition">
+                <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
                   <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     01
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                        Snap Clamp onto AC Breaker Wire
-                      </h3>
-                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-amber-500">
-                        &lt; 2 Mins
-                      </span>
-                    </div>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                      Snap Clamp onto AC Breaker Wire
+                    </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
                       Clamp the SCT-013 split-core sensor around the single live MCB wire.
                       Zero wire cutting, zero rewiring, and zero electrical panel shutdown required.
@@ -581,19 +445,14 @@ export default function Home() {
                 </div>
 
                 {/* Step 02 */}
-                <div className="relative flex items-start gap-4 sm:gap-5 group rounded-xl border border-transparent p-3 hover:border-[var(--border)] hover:bg-[var(--surface)] transition">
+                <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
                   <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     02
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                        Pair via Phone Bluetooth (BLE)
-                      </h3>
-                      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-emerald-500">
-                        One-Time Setup
-                      </span>
-                    </div>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                      Pair via Phone Bluetooth (BLE)
+                    </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
                       Open the Sentrix onboarding tool, scan the node&apos;s Bluetooth MAC sticker,
                       enter the secure 6-digit pairing PIN, and push local Wi-Fi credentials.
@@ -602,19 +461,14 @@ export default function Home() {
                 </div>
 
                 {/* Step 03 */}
-                <div className="relative flex items-start gap-4 sm:gap-5 group rounded-xl border border-transparent p-3 hover:border-[var(--border)] hover:bg-[var(--surface)] transition">
+                <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
                   <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     03
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                        7-Day Silent Baseline Calibration
-                      </h3>
-                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-amber-500">
-                        168 Hours
-                      </span>
-                    </div>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                      7-Day Silent Baseline Calibration
+                    </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
                       For 168 hours, Sentrix continuously records 1-minute RMS current alongside target AC
                       temperatures, automatically fitting an hourly Auto-ARIMA diurnal profile.
@@ -623,19 +477,14 @@ export default function Home() {
                 </div>
 
                 {/* Step 04 */}
-                <div className="relative flex items-start gap-4 sm:gap-5 group rounded-xl border border-transparent p-3 hover:border-[var(--border)] hover:bg-[var(--surface)] transition">
+                <div data-landing-reveal className="relative flex items-start gap-4 sm:gap-5 p-3">
                   <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-bold text-[#17140d] ring-4 ring-[var(--canvas)] shadow-md">
                     04
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                        Live Safe-Zone Anomaly Alerts
-                      </h3>
-                      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-emerald-500">
-                        24/7 Protection
-                      </span>
-                    </div>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                      Live Safe-Zone Anomaly Alerts
+                    </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
                       Receive immediate dashboard warnings and push alerts the moment dirty filters,
                       coil icing, or failing compressor motor windings drive current above safe bounds.
@@ -651,16 +500,16 @@ export default function Home() {
 
 
       {/* 5. Section #specifications: Industrial Spec Sheet Table + Secondary Product Photo Slot */}
-      <section id="specifications" className="border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
+      <section id="specifications" className="scroll-mt-20 border-t border-[var(--border)] bg-[var(--surface)]/40 px-6 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
-            <p className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
+            <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
               TECHNICAL DATASHEET
             </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+            <h2 data-landing-reveal className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
               Industrial Hardware &amp; Field Installation
             </h2>
-            <p className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
+            <p data-landing-reveal className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
               Complete engineering specifications for the SCT-013 current conditioning stack,
               ESP-Mesh architecture, and Auto-ARIMA statistical bounds.
             </p>
@@ -668,7 +517,7 @@ export default function Home() {
 
           <div className="mt-12 grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
             {/* Left Column (7 cols) — Striped Industrial Specification Table */}
-            <div className="lg:col-span-7 overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+            <div data-landing-reveal className="min-w-0 lg:col-span-7 overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
               <table className="w-full min-w-[480px] text-left text-sm sm:text-base border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--canvas)]">
@@ -722,7 +571,7 @@ export default function Home() {
             </div>
 
             {/* Right Column (5 cols) — MCB Field Installation Photo Card */}
-            <div className="lg:col-span-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl flex flex-col justify-between">
+            <div data-landing-reveal className="lg:col-span-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
                   <h3 className="text-base font-bold text-[var(--text-primary)]">
@@ -781,15 +630,15 @@ export default function Home() {
           {/* High-Contrast Bottom Callout Bar */}
           <div className="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
             <div className="max-w-2xl text-center lg:text-left">
-              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+              <h3 data-landing-reveal className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
                 Ready to audit your facility AC circuits?
               </h3>
-              <p className="mt-2 text-base sm:text-lg text-[var(--text-secondary)]">
+              <p data-landing-reveal className="mt-2 text-base sm:text-lg text-[var(--text-secondary)]">
                 Deploy Sentrix non-invasive monitoring across your cooling panels in under 15 minutes.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+            <div data-landing-reveal className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <Link
                 href="/signup"
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-amber-500 px-6 text-base font-semibold text-[#17140d] shadow-md shadow-amber-500/20 transition hover:bg-amber-400 text-center"
@@ -807,17 +656,17 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-[var(--border)] bg-[var(--surface)] px-5 py-12 sm:px-8">
+      <footer className="border-t border-[var(--border)] bg-[var(--surface)] px-6 py-12 sm:px-8">
         <div className="mx-auto max-w-[1280px]">
           <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
-            <div>
+            <div data-landing-reveal>
               <Brand />
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">
                 Commercial AC electrical monitoring and predictive maintenance. Non-invasive clamp telemetry with automated 7-day ARIMA anomaly detection.
               </p>
             </div>
 
-            <div>
+            <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                 Architecture
               </h3>
@@ -840,7 +689,7 @@ export default function Home() {
               </ul>
             </div>
 
-            <div>
+            <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                 Operations
               </h3>
@@ -863,7 +712,7 @@ export default function Home() {
               </ul>
             </div>
 
-            <div>
+            <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                 Account
               </h3>
@@ -882,7 +731,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
+          <div data-landing-reveal className="mt-10 flex flex-col gap-4 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-2">
               <Image
                 src={darkLogo}
