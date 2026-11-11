@@ -4,8 +4,6 @@ import { useRef, useState } from "react";
 
 import Link from "next/link";
 import Image from "next/image";
-import darkLogo from "../public/images/logo-text-dark.png";
-import lightLogo from "../public/images/logo-text-light.png";
 import { Brand } from "./components/brand";
 import { LandingCircuit } from "./components/landing-circuit";
 import { useLandingMotion } from "./components/landing-motion";
@@ -730,19 +728,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div data-landing-reveal data-landing-circuit-anchor className="mt-10 flex flex-col gap-4 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
-            <span className="flex items-center gap-2">
-              <Image
-                src={darkLogo}
-                alt="Sentrix"
-                className="h-4 w-auto object-contain logo-dark-theme"
-              />
-              <Image
-                src={lightLogo}
-                alt="Sentrix"
-                className="h-4 w-auto object-contain logo-light-theme"
-              />
-            </span>
+          <div data-landing-reveal data-landing-circuit-anchor className="mt-10 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:text-right">
             <span>© 2026 Sentrix. All rights reserved.</span>
           </div>
         </div>
