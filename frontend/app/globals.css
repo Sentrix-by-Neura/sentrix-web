@@ -70,6 +70,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Hide landing entrances before hydration, with a fallback for stalled scripts. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  main:not([data-landing-motion-ready])
+    :is([data-landing-intro], [data-landing-reveal]):not(:focus-within) {
+    opacity: 0;
+    animation: landing-motion-fallback 0s 1.5s forwards;
+  }
+}
+
+@keyframes landing-motion-fallback {
+  to {
+    opacity: 1;
+  }
+}
+
 /* Dynamic theme brand logo handling */
 .logo-dark-theme {
   display: block;
