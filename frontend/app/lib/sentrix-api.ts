@@ -23,6 +23,10 @@ export type OperatingReading = {
   load_active: boolean | null;
 };
 export type BoundRow = { timestamp: string; lower_bound: number; upper_bound: number };
+export type TelemetryHistoryResponse = {
+  start: string; end: string; oldest: string | null; latest: string | null;
+  points: ReadingRow[]; bounds: BoundRow[];
+};
 
 export async function authenticatedSession(): Promise<Session> {
   if (!supabase) throw new Error("Sign-in is temporarily unavailable. Please try again later.");

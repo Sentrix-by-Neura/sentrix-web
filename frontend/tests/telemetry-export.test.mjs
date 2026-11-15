@@ -41,7 +41,7 @@ function fixture(zone = "Asia/Jakarta") {
 test("export uses the user's timezone, blocks duplicate clicks and releases the download URL", async () => {
   for (const zone of ["Asia/Jakarta", "America/New_York"]) {
     const f = fixture(zone);
-    assert.match(text(f.tree), /your device’s timezone/);
+    assert.doesNotMatch(text(f.tree), /your device’s timezone/);
     f.button.props.onClick(); f.render();
     assert.equal(f.button.props.disabled, true);
     assert.equal(f.button.props["aria-busy"], true);
