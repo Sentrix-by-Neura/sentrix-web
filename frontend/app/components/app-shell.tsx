@@ -9,6 +9,7 @@ import { useSentrix } from "../lib/sentrix-store";
 import { useTheme } from "../lib/theme-context";
 import { ThemeToggle } from "./theme-toggle";
 import { SentrixContextMenu } from "./context-menu";
+import { useDisclosure } from "../lib/use-disclosure";
 import { isSupabaseConfigured, supabase } from "../lib/supabase-browser";
 
 const NAV_LINKS = [
@@ -70,15 +71,16 @@ function MobileNavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function NotificationsBell() {
-  const { alerts, devices } = useSentrix();
-  const [open, setOpen] = useState(false);
+  const { alerts, devices, ready, error } = useSentrix();
+  const { open, setOpen, triggerRef, panelRef } = useDisclosure();
   const unresolved = alerts
     .filter((alert) => !alert.isResolved && !devices.find(d => d.id === alert.deviceId)?.archivedAt)
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   return (
-    <div className="relative">
+    <div className="sm:relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((current) => !current)}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)]"
@@ -96,11 +98,11 @@ function NotificationsBell() {
         )}
       </button>
       {open && (
-        <div className="surface-card absolute right-0 top-11 z-30 w-80 rounded-xl border border-[var(--border)] p-4 shadow-xl">
+        <div ref={panelRef} className="surface-card absolute inset-x-4 top-full z-30 mt-2 rounded-xl border border-[var(--border)] p-4 shadow-xl sm:left-auto sm:right-0 sm:top-11 sm:mt-0 sm:w-80">
           <p className="text-sm font-semibold">Notifications</p>
           {unresolved.length === 0 ? (
             <p className="mt-2 text-xs text-[var(--text-secondary)]">
-              No unresolved anomalies. All circuits are within bounds.
+              {error ? "Could not refresh alerts." : !ready ? "Loading alerts…" : "No unresolved alerts."}
             </p>
           ) : (
             <ul className="mt-3 space-y-2">
@@ -142,7 +144,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isDark, toggleTheme } = useTheme();
   const [showAccountModal, setShowAccountModal] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { open: mobileMenuOpen, setOpen: setMobileMenuOpen, triggerRef: mobileMenuTrigger, panelRef: mobileMenuPanel } = useDisclosure();
   const { userProfile, userId, ready, error, refreshData } = useSentrix();
 
   useEffect(() => {
@@ -261,6 +263,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               id="app-shell-mobile-nav-toggle"
+              ref={mobileMenuTrigger}
               onClick={() => setMobileMenuOpen((open) => !open)}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-amber-500/40 lg:hidden"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -284,7 +287,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Mobile & Tablet Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-[var(--border)] bg-[var(--surface)] px-4 py-4 shadow-2xl backdrop-blur-xl lg:hidden animate-in slide-in-from-top-2 duration-200">
+          <div ref={mobileMenuPanel} className="border-t border-[var(--border)] bg-[var(--surface)] px-4 py-4 shadow-2xl backdrop-blur-xl lg:hidden animate-in slide-in-from-top-2 duration-200">
             <Suspense fallback={<NavLinks />}>
               <MobileNavLinks onNavigate={() => setMobileMenuOpen(false)} />
             </Suspense>

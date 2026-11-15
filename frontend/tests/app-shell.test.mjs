@@ -26,6 +26,7 @@ function renderShell(session) {
       if (name === "./account-settings-modal") return { AccountSettingsModal: () => null };
       if (name === "./context-menu") return { SentrixContextMenu: () => null };
       if (name === "./theme-toggle") return { ThemeToggle: () => null };
+      if (name === "../lib/use-disclosure") return { useDisclosure: () => ({ open: false }) };
       if (name === "../lib/theme-context") return { useTheme: () => ({ isDark: true, toggleTheme() {} }) };
       if (name === "../lib/supabase-browser") return { isSupabaseConfigured: false, supabase: null };
       if (name === "../lib/sentrix-store") return { useSentrix: () => ({ userProfile: { name: "User" }, alerts: [], devices: [], refreshData() {}, error: null, ...session }) };
