@@ -20,11 +20,12 @@ interface TelemetryChartProps {
 
 const minute = 60_000;
 const timeframes = {
-  "1h": { label: "1 Hour", span: 60 * minute, maxGap: 3 * minute },
-  "24h": { label: "24 Hours", span: 24 * 60 * minute, maxGap: 15 * minute },
-  "7d": { label: "7 Days", span: 7 * 24 * 60 * minute, maxGap: 45 * minute },
-} satisfies Record<TelemetryRange, { label: string; span: number; maxGap: number }>;
+  "1h": { span: 60 * minute, maxGap: 3 * minute },
+  "24h": { span: 24 * 60 * minute, maxGap: 15 * minute },
+  "7d": { span: 7 * 24 * 60 * minute, maxGap: 45 * minute },
+} satisfies Record<TelemetryRange, { span: number; maxGap: number }>;
 
+const defaultSpan = timeframes["24h"].span;
 const minimumSpan = minute;
 const maximumSpan = 4 * timeframes["7d"].span;
 const chartMargin = { top: 10, right: 10, left: 0, bottom: 0 };
@@ -103,13 +104,13 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export function TelemetryChart({ deviceId }: TelemetryChartProps) {
-  const [timeframe, setTimeframe] = useState<TelemetryRange>("24h");
   const [viewport, setViewport] = useState<Viewport>({ end: null, zoomSpan: null });
   const [currentDomain, setCurrentDomain] = useState<CurrentDomain | null>(null);
   const [previewEnd, setPreviewEnd] = useState<number | null>(null);
+  const [pointerInteraction, setPointerInteraction] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; x: number; y: number; origin: number; end: number; moved: boolean } | null>(null);
-  const span = viewport.zoomSpan ?? timeframes[timeframe].span;
+  const span = viewport.zoomSpan ?? defaultSpan;
   const fetchRange = span <= timeframes["1h"].span ? "1h" : span <= timeframes["24h"].span ? "24h" : "7d";
   const windowCount = Math.ceil(span / timeframes[fetchRange].span);
   const { history, loading, error, retry } = useTelemetryHistory(deviceId, fetchRange, viewport.end, windowCount);
@@ -133,6 +134,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   }
 
   function startDrag(event: PointerEvent<HTMLDivElement>) {
+    setPointerInteraction(true);
     if (!canPan || !event.isPrimary || event.button !== 0) return;
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, origin: displayedEnd, end: displayedEnd, moved: false };
   }
@@ -174,12 +176,13 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
     const dy = wheelPixels(event.deltaY, event.deltaMode, bounds.height);
     if (!dx && !dy) return;
     event.preventDefault();
+    setPointerInteraction(true);
 
     const plotWidth = Math.max(1, bounds.width - yAxisWidth - chartMargin.right);
     const overAxis = event.clientX - bounds.left < yAxisWidth;
     if (event.shiftKey || Math.abs(dx) > Math.abs(dy)) {
       setViewport(previous => {
-        const width = previous.zoomSpan ?? timeframes[timeframe].span;
+        const width = previous.zoomSpan ?? defaultSpan;
         const edge = viewportEnd(previous.end, width, oldest, latest);
         const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
         const end = viewportEnd(edge + delta * width / plotWidth, width, oldest, latest);
@@ -203,7 +206,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
 
     const fraction = clamp((event.clientX - bounds.left - yAxisWidth) / plotWidth, 0, 1);
     setViewport(previous => {
-      const width = previous.zoomSpan ?? timeframes[timeframe].span;
+      const width = previous.zoomSpan ?? defaultSpan;
       const zoomSpan = clamp(Math.round(width * factor), minimumSpan, maximumSpan);
       if (zoomSpan === width) return previous;
       const edge = viewportEnd(previous.end, width, oldest, latest);
@@ -224,24 +227,9 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
     <section aria-label="Current history" className={`${styles.panel} space-y-5`}>
       <div className={styles.sectionHeader}>
         <h2>Current history</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <div aria-label="Chart timeframe" className={styles.ranges}>
-            {(Object.keys(timeframes) as TelemetryRange[]).map(id => (
-              <button
-                key={id}
-                type="button"
-                id={`toggle-timeframe-${id}`}
-                aria-pressed={timeframe === id}
-                onClick={() => { setTimeframe(id); resetZoom(); }}
-              >
-                {timeframes[id].label}
-              </button>
-            ))}
-          </div>
-          {(viewport.zoomSpan !== null || currentDomain !== null) && (
-            <button type="button" className={styles.control} onClick={resetZoom}>Reset zoom</button>
-          )}
-        </div>
+        {(viewport.zoomSpan !== null || currentDomain !== null) && (
+          <button type="button" className={styles.control} onClick={resetZoom}>Reset zoom</button>
+        )}
       </div>
 
       <div className={styles.legend}>
@@ -254,7 +242,12 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
         ref={frameRef}
         className={`relative h-80 w-full ${styles.chartFrame} ${canPan ? styles.panChart : ""}`}
         data-dragging={previewEnd !== null || undefined}
+        data-pointer-interaction={pointerInteraction || undefined}
+        onFocusCapture={event => {
+          if (event.target.matches(":focus-visible")) setPointerInteraction(false);
+        }}
         onKeyDownCapture={event => {
+          if (!["Shift", "Control", "Alt", "Meta"].includes(event.key)) setPointerInteraction(false);
           if (!canPan || !event.shiftKey || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
           event.preventDefault();
           event.stopPropagation();
