@@ -1,0 +1,25 @@
+name: Trigger Fork Sync
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  trigger-fork:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push latest main directly to fork
+        env:
+          FORK_SYNC_TOKEN: ${{ secrets.FORK_SYNC_TOKEN }}
+        run: |
+          if [ -z "$FORK_SYNC_TOKEN" ]; then
+            echo "::error::FORK_SYNC_TOKEN secret is not set in repository settings!"
+            exit 1
+          fi
+          git push --force "https://x-access-token:${FORK_SYNC_TOKEN}@github.com/Maiizo/sentrix.git" HEAD:refs/heads/main
