@@ -7,9 +7,7 @@ import { Brand } from "./brand";
 import { AccountDropdown } from "./account-dropdown";
 import { useSentrix } from "../lib/sentrix-store";
 import { useTheme } from "../lib/theme-context";
-import { ThemeToggle } from "./theme-toggle";
 import { SentrixContextMenu } from "./context-menu";
-import { useDisclosure } from "../lib/use-disclosure";
 import { isSupabaseConfigured, supabase } from "../lib/supabase-browser";
 
 const workspaceContainer = "mx-auto box-content max-w-6xl px-4 sm:px-6 lg:px-8";
@@ -35,79 +33,35 @@ function ActiveDashboardLink() {
   return <DashboardLink active={pathname.startsWith("/dashboard")} />;
 }
 
-function NotificationsBell() {
-  const { alerts, devices, ready, error } = useSentrix();
-  const { open, setOpen, triggerRef, panelRef } = useDisclosure();
-  const unresolved = alerts
-    .filter((alert) => !alert.isResolved && !devices.find(d => d.id === alert.deviceId)?.archivedAt)
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+function AlertsLink() {
+  const { alerts, devices } = useSentrix();
+  const unresolvedCount = alerts.filter(
+    alert => !alert.isResolved && !devices.find(device => device.id === alert.deviceId)?.archivedAt
+  ).length;
 
   return (
-    <div className="sm:relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)]"
-        aria-label={`Notifications (${unresolved.length} unresolved)`}
-        aria-expanded={open}
-      >
-        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-          <path d="M10 21h4" />
-        </svg>
-        {unresolved.length > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-semibold text-white ring-2 ring-[var(--canvas)]">
-            {unresolved.length}
-          </span>
-        )}
-      </button>
-      {open && (
-        <div ref={panelRef} className="surface-card absolute inset-x-4 top-full z-30 mt-2 rounded-xl border border-[var(--border)] p-4 shadow-xl sm:left-auto sm:right-0 sm:top-11 sm:mt-0 sm:w-80">
-          <p className="text-sm font-semibold">Notifications</p>
-          {unresolved.length === 0 ? (
-            <p className="mt-2 text-xs text-[var(--text-secondary)]">
-              {error ? "Could not refresh alerts." : !ready ? "Loading alerts…" : "No unresolved alerts."}
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {unresolved.slice(0, 3).map((alert) => (
-                <li key={alert.id} className="rounded-lg border border-[var(--border)] px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs font-medium">
-                      {devices.find((d) => d.id === alert.deviceId)?.name ?? "Unknown device"}
-                    </span>
-                    <span
-                      className={`font-mono text-[8px] font-semibold tracking-widest ${
-                        alert.severity === "CRITICAL" ? "text-red-500" : "text-amber-600 dark:text-amber-400"
-                      }`}
-                    >
-                      {alert.severity}
-                    </span>
-                  </div>
-                  <p className="mt-1 font-mono text-[10px] text-[var(--text-muted)]">
-                    {alert.actualValue} A vs {alert.expectedMin}–{alert.expectedMax} A expected
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/alerts"
-            onClick={() => setOpen(false)}
-            className="mt-3 inline-block text-xs font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
-          >
-            View all alerts →
-          </Link>
-        </div>
+    <Link
+      href="/alerts"
+      aria-label={unresolvedCount > 0 ? `Alerts (${unresolvedCount} unresolved)` : "Alerts"}
+      title="Alerts"
+      className="relative flex size-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+    >
+      <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        <path d="M10 21h4" />
+      </svg>
+      {unresolvedCount > 0 && (
+        <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-semibold text-white ring-2 ring-[var(--canvas)]">
+          {unresolvedCount}
+        </span>
       )}
-    </div>
+    </Link>
   );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const { userProfile, userId, ready, error, refreshData } = useSentrix();
 
   useEffect(() => {
@@ -152,8 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <ThemeToggle />
-            <NotificationsBell />
+            <AlertsLink />
             <div className="hidden h-8 w-px bg-[var(--border)] lg:block" />
 
             {userId && <AccountDropdown key={userId} {...userProfile} redirectOnLogout />}
@@ -166,7 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Context-aware Right-Click Menu */}
-      <SentrixContextMenu isDark={isDark} onToggleTheme={toggleTheme} />
+      <SentrixContextMenu />
     </div>
   );
 }

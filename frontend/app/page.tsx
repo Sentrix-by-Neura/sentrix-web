@@ -8,7 +8,6 @@ import type { User } from "@supabase/supabase-js";
 import { Brand } from "./components/brand";
 import { LandingCircuit } from "./components/landing-circuit";
 import { useLandingMotion } from "./components/landing-motion";
-import { ThemeToggle } from "./components/theme-toggle";
 import { AccountDropdown } from "./components/account-dropdown";
 import { useSentrix } from "./lib/sentrix-store";
 import { supabase } from "./lib/supabase-browser";
@@ -53,7 +52,6 @@ export default function Home() {
           </nav>
 
           <div data-landing-intro className="flex shrink-0 items-center gap-2 lg:gap-3 xl:gap-4">
-            <ThemeToggle showLabel={false} />
             {user ? (
               <AccountDropdown
                 key={user.id}

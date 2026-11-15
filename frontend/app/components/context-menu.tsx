@@ -7,11 +7,6 @@ import { scanSentrixHardware, type ScanResult } from "../lib/sentrix-bluetooth";
 import { useConfirm } from "./confirm-modal";
 import { BleOnboardingModal } from "../dashboard/[groupName]/ble-onboarding-modal";
 
-interface SentrixContextMenuProps {
-  isDark?: boolean;
-  onToggleTheme?: () => void;
-}
-
 type ContextType = "group" | "device" | "alert" | "default";
 
 interface MenuState {
@@ -185,7 +180,7 @@ function GroupPickerModal({
   );
 }
 
-function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenuProps) {
+function SentrixContextMenuContent() {
   const router = useRouter();
   const pathname = usePathname();
   const {
@@ -654,17 +649,6 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
             <span>Workspace Settings</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              closeMenu();
-              onToggleTheme?.();
-              showToast(`Switched to ${isDark ? "Light" : "Dark"} Theme`);
-            }}
-            className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
-          >
-            <span>Switch to {isDark ? "Light" : "Dark"} Theme</span>
-          </button>
         </div>
       </>
     );
@@ -753,10 +737,10 @@ function SentrixContextMenuContent({ isDark, onToggleTheme }: SentrixContextMenu
   );
 }
 
-export function SentrixContextMenu(props: SentrixContextMenuProps) {
+export function SentrixContextMenu() {
   return (
     <Suspense fallback={null}>
-      <SentrixContextMenuContent {...props} />
+      <SentrixContextMenuContent />
     </Suspense>
   );
 }

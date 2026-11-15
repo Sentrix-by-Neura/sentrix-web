@@ -3,6 +3,7 @@
 import { Suspense, useState, type FormEvent } from "react";
 import { AppShell } from "../components/app-shell";
 import { useSentrix } from "../lib/sentrix-store";
+import { useTheme } from "../lib/theme-context";
 
 function ProfileForm({ initialName }: { initialName: string }) {
   const { userProfile, updateUserProfile } = useSentrix();
@@ -17,7 +18,7 @@ function ProfileForm({ initialName }: { initialName: string }) {
     catch (error) { setResult(error instanceof Error ? error.message : "Could not save profile."); }
     finally { setPending(false); }
   }
-  return <form onSubmit={save} className="surface-card mt-6 space-y-5 rounded-xl border border-[var(--border)] p-6">
+  return <form onSubmit={save} className="surface-card space-y-5 rounded-xl border border-[var(--border)] p-6">
     <h2 className="text-base font-semibold">Profile</h2>
     <label className="block max-w-xl text-sm">Full name<input required maxLength={100} value={name} onChange={e => setName(e.target.value)} className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-3" /></label>
     <p className="text-sm">Email: {userProfile.email}</p>
@@ -26,9 +27,46 @@ function ProfileForm({ initialName }: { initialName: string }) {
     {result && <p role="status" className="text-sm">{result}</p>}
   </form>;
 }
+
+function AppearanceSettings() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <section aria-labelledby="appearance-heading" className="surface-card space-y-4 rounded-xl border border-[var(--border)] p-6">
+      <h2 id="appearance-heading" className="text-base font-semibold">Appearance</h2>
+      <fieldset className="flex gap-2">
+        <legend className="sr-only">Color theme</legend>
+        {(["light", "dark"] as const).map(option => (
+          <label key={option} className="cursor-pointer">
+            <input
+              type="radio"
+              name="color-theme"
+              value={option}
+              checked={theme === option}
+              onChange={() => setTheme(option)}
+              className="peer sr-only"
+            />
+            <span className="inline-flex min-h-10 min-w-20 items-center justify-center rounded-lg border border-[var(--border)] px-3 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] peer-checked:border-amber-600/60 peer-checked:bg-amber-500/10 peer-checked:text-[var(--text-primary)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber-500">
+              {option === "light" ? "Light" : "Dark"}
+            </span>
+          </label>
+        ))}
+      </fieldset>
+    </section>
+  );
+}
+
 function SettingsContent() {
   const { userProfile, userId } = useSentrix();
-  return <AppShell><h1 className="text-2xl font-semibold">Settings</h1><ProfileForm key={userId} initialName={userProfile.name} /></AppShell>;
+  return (
+    <AppShell>
+      <h1 className="text-2xl font-semibold">Settings</h1>
+      <div className="mt-6 space-y-6">
+        <ProfileForm key={userId} initialName={userProfile.name} />
+        <AppearanceSettings />
+      </div>
+    </AppShell>
+  );
 }
 export default function SettingsPage() {
   return <Suspense fallback={<p className="p-8">Loading settings…</p>}><SettingsContent /></Suspense>;
