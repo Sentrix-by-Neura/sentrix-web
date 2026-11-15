@@ -23,7 +23,7 @@ function renderShell(session) {
       if (name === "next/link") return { default: Link };
       if (name === "next/navigation") return { useRouter: () => ({ replace() {} }), usePathname: () => "/dashboard" };
       if (name === "./brand") return { Brand: () => createElement("a", { href: "/dashboard" }, "Sentrix") };
-      if (name === "./account-settings-modal") return { AccountSettingsModal: () => null };
+      if (name === "./account-dropdown") return { AccountDropdown: () => null };
       if (name === "./context-menu") return { SentrixContextMenu: () => null };
       if (name === "./theme-toggle") return { ThemeToggle: () => null };
       if (name === "../lib/use-disclosure") return { useDisclosure: () => ({ open: false }) };

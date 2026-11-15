@@ -71,6 +71,12 @@ body {
 }
 
 /* Hide landing entrances before hydration, with a fallback for stalled scripts. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-scroll-behavior="smooth"] {
+    scroll-behavior: smooth;
+  }
+}
+
 @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
   main:not([data-landing-motion-ready])
     :is([data-landing-intro], [data-landing-reveal]):not(:focus-within) {

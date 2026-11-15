@@ -16,6 +16,7 @@ export function useLandingMotion(landingRef: RefObject<HTMLElement | null>) {
     const landing = landingRef.current;
     if (!landing) return;
 
+    document.documentElement.dataset.scrollBehavior = "smooth";
     gsap.registerPlugin(ScrollTrigger);
     const motion = gsap.matchMedia();
 
@@ -81,6 +82,7 @@ export function useLandingMotion(landingRef: RefObject<HTMLElement | null>) {
 
     landing.setAttribute("data-landing-motion-ready", "");
     return () => {
+      delete document.documentElement.dataset.scrollBehavior;
       motion.revert();
       landing.removeAttribute("data-landing-motion-ready");
     };

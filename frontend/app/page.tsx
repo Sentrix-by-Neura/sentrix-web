@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 import Image from "next/image";
+import type { User } from "@supabase/supabase-js";
 import { Brand } from "./components/brand";
 import { LandingCircuit } from "./components/landing-circuit";
 import { useLandingMotion } from "./components/landing-motion";
 import { ThemeToggle } from "./components/theme-toggle";
+import { AccountDropdown } from "./components/account-dropdown";
+import { useSentrix } from "./lib/sentrix-store";
 import { supabase } from "./lib/supabase-browser";
 import { useDisclosure } from "./lib/use-disclosure";
 
@@ -15,12 +18,15 @@ export default function Home() {
   const landingRef = useRef<HTMLElement>(null);
   useLandingMotion(landingRef);
   const { open: mobileMenuOpen, setOpen: setMobileMenuOpen, triggerRef, panelRef } = useDisclosure();
-  const [signedIn, setSignedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const { userId, userProfile } = useSentrix();
+  const signedIn = Boolean(user);
   const [prototypeImageSrc, setPrototypeImageSrc] = useState("/images/esp32-sensor-prototype.jpeg");
 
   useEffect(() => {
     const subscription = supabase?.auth.onAuthStateChange((_event, session) => {
-      setSignedIn(Boolean(session?.user.email_confirmed_at || session?.user.confirmed_at));
+      const account = session?.user;
+      setUser(account?.email_confirmed_at || account?.confirmed_at ? account : null);
     }).data.subscription;
     return () => subscription?.unsubscribe();
   }, []);
@@ -46,32 +52,29 @@ export default function Home() {
             </a>
           </nav>
 
-          {/* Desktop Actions */}
-          <div data-landing-intro className="hidden items-center gap-3 xl:gap-4 lg:flex shrink-0">
+          <div data-landing-intro className="flex shrink-0 items-center gap-2 lg:gap-3 xl:gap-4">
             <ThemeToggle showLabel={false} />
-            {!signedIn && <Link
-              href="/login"
-              className="whitespace-nowrap rounded-lg px-3.5 xl:px-4 py-2.5 text-sm xl:text-base font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-            >
-              Log in
-            </Link>}
-            {signedIn && <Link
-              href="/dashboard"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-lg bg-amber-500 px-4 xl:px-5 text-sm xl:text-base font-semibold text-[#17140d] transition hover:bg-amber-400"
-            >
-              Open Dashboard
-            </Link>}
-          </div>
-
-          {/* Mobile & Tablet Actions: ThemeToggle + Hamburger Button (< lg) */}
-          <div data-landing-intro className="flex items-center gap-2 lg:hidden">
-            <ThemeToggle showLabel={false} />
+            {user ? (
+              <AccountDropdown
+                key={user.id}
+                name={user.id === userId && userProfile.email ? userProfile.name : user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
+                email={user.email ?? ""}
+                avatarUrl={user.user_metadata?.avatar_url}
+              />
+            ) : (
+              <Link
+                href="/login"
+                className="hidden whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] lg:inline-flex xl:px-4 xl:text-base"
+              >
+                Log in
+              </Link>
+            )}
             <button
               type="button"
               id="mobile-nav-toggle"
               ref={triggerRef}
               onClick={() => setMobileMenuOpen((open) => !open)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-amber-500/40 lg:hidden"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
@@ -116,22 +119,17 @@ export default function Home() {
               >
                 System Specs
               </a>
-              <div className="my-2 border-t border-[var(--border)] pt-3 flex flex-col sm:flex-row gap-2.5">
-                {!signedIn && <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-11 flex-1 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition"
-                >
-                  Log In
-                </Link>}
-                {signedIn && <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-11 flex-1 items-center justify-center rounded-lg bg-amber-500 text-sm font-semibold text-[#17140d] hover:bg-amber-400 transition"
-                >
-                  Open Dashboard
-                </Link>}
-              </div>
+              {!signedIn && (
+                <div className="my-2 border-t border-[var(--border)] pt-3">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)]"
+                  >
+                    Log In
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         )}

@@ -6,8 +6,6 @@
 :global(html):has(.page), :global(body):has(.page) { overflow-x: clip; }
 
 .page {
-  max-width: 72rem;
-  margin-inline: auto;
   font-family: var(--font-sans);
   color: var(--text-primary);
 }
