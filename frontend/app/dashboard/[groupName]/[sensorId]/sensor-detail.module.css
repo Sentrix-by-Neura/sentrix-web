@@ -80,8 +80,9 @@
 .ranges button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text-primary); }
 .panChart { cursor: grab; touch-action: pan-y; user-select: none; }
 .panChart[data-dragging] { cursor: grabbing; }
-.historyControls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
-.historyControls input { width: 100%; min-width: 0; accent-color: var(--sensor-accent); }
+.chartFrame :global(.recharts-surface):focus:not(:focus-visible),
+.chartFrame[data-dragging] :global(.recharts-surface):focus { outline: none; }
+.zoomAxis { cursor: ns-resize; }
 .legend { display: flex; flex-wrap: wrap; gap: 12px 24px; color: var(--text-secondary); font-size: .8125rem; }
 .legend > span { display: inline-flex; align-items: center; gap: 8px; }
 .rangeKey { width: 18px; height: 10px; background: var(--sensor-accent); opacity: .35; }

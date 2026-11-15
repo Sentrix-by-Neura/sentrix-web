@@ -192,41 +192,56 @@ export function useTelemetry(deviceId: string, range: TelemetryRange) {
 }
 
 type HistoryWindow = {
-  start: number; end: number; oldest: number | null; latest: number | null; points: TelemetryPoint[];
+  start: number; end: number; oldest: number | null; latest: number | null;
+  range: TelemetryRange; points: TelemetryPoint[];
 };
 
-export function useTelemetryHistory(deviceId: string, range: TelemetryRange, end: number | null) {
+export function useTelemetryHistory(deviceId: string, range: TelemetryRange, end: number | null, windowCount: number) {
   const { userId } = useSentrix();
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<{
     scope: string; key: string; history: HistoryWindow | null; error: string | null;
   }>();
-  const scope = `${userId}:${epoch}:${deviceId}:${range}`;
-  const key = `${scope}:${end}:${attempt}`;
+  const scope = `${userId}:${epoch}:${deviceId}`;
+  const key = `${scope}:${range}:${end}:${windowCount}:${attempt}`;
 
   useEffect(() => {
     if (!userId || !deviceId) return;
     const controller = new AbortController();
     const owner = epoch;
-    const query = new URLSearchParams({ range });
-    if (end !== null) query.set("end", new Date(end).toISOString());
+    const path = `/devices/${encodeURIComponent(deviceId)}/history`;
     let timer: ReturnType<typeof setTimeout>;
 
     async function load() {
       try {
         const session = await authenticatedSession();
         if (controller.signal.aborted || owner !== epoch || session.user.id !== userId) return;
-        const data = await apiRequest<TelemetryHistoryResponse>(
-          `/devices/${encodeURIComponent(deviceId)}/history?${query}`, { signal: controller.signal }, session
-        );
+        function loadWindow(until: number | null) {
+          const query = new URLSearchParams({ range });
+          if (until !== null) query.set("end", new Date(until).toISOString());
+          return apiRequest<TelemetryHistoryResponse>(`${path}?${query}`, { signal: controller.signal }, session);
+        }
+
+        const data = await loadWindow(end);
+        let start = Date.parse(data.start);
+        const oldest = data.oldest === null ? null : Date.parse(data.oldest);
+        const samples = new Map(joinTelemetry(data.points, data.bounds).map(point => [point.timestamp, point]));
+        for (let i = 1; i < windowCount && oldest !== null && start > oldest; i++) {
+          const previous = await loadWindow(start - 1);
+          const previousStart = Date.parse(previous.start);
+          if (previousStart >= start) break;
+          for (const point of joinTelemetry(previous.points, previous.bounds)) {
+            if (!samples.has(point.timestamp)) samples.set(point.timestamp, point);
+          }
+          start = previousStart;
+        }
         if (controller.signal.aborted || owner !== epoch) return;
         setResult({
           scope, key, error: null,
           history: {
-            start: Date.parse(data.start), end: Date.parse(data.end),
-            oldest: data.oldest === null ? null : Date.parse(data.oldest),
+            start, end: Date.parse(data.end), oldest, range,
             latest: data.latest === null ? null : Date.parse(data.latest),
-            points: joinTelemetry(data.points, data.bounds),
+            points: [...samples.values()].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp)),
           },
         });
       } catch (error) {
@@ -239,10 +254,9 @@ export function useTelemetryHistory(deviceId: string, range: TelemetryRange, end
       if (end === null && !controller.signal.aborted && owner === epoch) timer = setTimeout(load, 60000);
     }
 
-    if (end === null) void load();
-    else timer = setTimeout(load, 150);
+    timer = setTimeout(load, end === null && windowCount === 1 ? 0 : 150);
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [userId, deviceId, range, end, scope, key]);
+  }, [userId, deviceId, range, end, windowCount, scope, key]);
 
   return {
     history: result?.scope === scope ? result.history : null,
