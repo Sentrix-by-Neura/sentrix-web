@@ -115,6 +115,8 @@ function SensorAnalyticsContent() {
           <button
             type="button"
             id="delete-sensor-button"
+            title={device.archivedAt ? "Delete archived history" : "Delete sensor"}
+            aria-label={device.archivedAt ? "Delete archived history" : "Delete sensor"}
             onClick={async () => {
               const ok = await confirm({
                 title: device.archivedAt ? "Delete Archived History" : "Delete Sensor",
@@ -132,7 +134,6 @@ function SensorAnalyticsContent() {
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
             </svg>
-            {device.archivedAt ? "Delete History" : "Delete Sensor"}
           </button>
         </div>
       </div>

@@ -157,17 +157,14 @@ export default function DashboardPage() {
           ) : (
             <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1.5 text-sm font-semibold text-red-500">
               <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              Anomalies Detected
+              {unresolved.length} unresolved alert{unresolved.length === 1 ? "" : "s"} in recent history
             </span>
           )}
-          <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
-            {unresolved.length} unresolved alert{unresolved.length === 1 ? "" : "s"} in recent history
-            {unresolved.length > 0 && (
-              <Link href="/alerts" className="ml-2 text-amber-600 hover:text-amber-500 dark:text-amber-400">
-                Review →
-              </Link>
-            )}
-          </p>
+          {unresolved.length > 0 && (
+            <Link href="/alerts" className="mt-2 block w-fit text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400">
+              Review alerts →
+            </Link>
+          )}
         </article>
 
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
