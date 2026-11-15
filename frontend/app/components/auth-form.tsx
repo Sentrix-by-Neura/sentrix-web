@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Brand, BrandMark } from "./brand";
+import { Brand } from "./brand";
 import { isSupabaseConfigured, supabase } from "../lib/supabase-browser";
 
 type AuthFormProps = {
@@ -12,26 +12,16 @@ type AuthFormProps = {
 
 function AuthArtwork() {
   return (
-    <aside className="relative hidden min-h-screen overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] lg:flex lg:flex-col lg:justify-between lg:p-10 xl:p-14">
+    <aside className="relative hidden min-h-screen overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
       <div className="absolute -right-36 top-12 h-96 w-96 rounded-full bg-amber-500/[0.09] blur-[100px]" />
       <div className="absolute -left-36 bottom-8 h-80 w-80 rounded-full bg-orange-800/[0.08] blur-[100px]" />
       <div className="relative">
-        <Brand />
-      </div>
-      <div className="relative">
-        <div className="mb-5 flex items-center gap-2">
-          <BrandMark className="h-7 w-7 rounded-lg" />
-          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-amber-500">
-            Electrical monitoring
-          </span>
-        </div>
         <h2 className="max-w-lg text-4xl font-semibold leading-tight tracking-[-0.06em] text-[var(--text-primary)] xl:text-5xl">
           See the signal.
           <br />
           <span className="text-[var(--text-muted)]">Waste less cooling energy.</span>
         </h2>
       </div>
-      <div className="relative flex items-center justify-between font-mono text-[8px] uppercase tracking-widest text-[var(--text-muted)]" />
     </aside>
   );
 }
@@ -227,10 +217,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         ) : (
           /* Normal Auth Form */
           <div className="mx-auto flex w-full max-w-[390px] flex-1 flex-col justify-center py-12">
-            <div className="mb-7 lg:hidden">
-              <BrandMark className="h-9 w-9 rounded-xl" />
-            </div>
-
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.055em] text-[var(--text-primary)] sm:text-4xl">
               {isSignup ? "Create your account" : "Log in to Sentrix"}
             </h1>
@@ -288,14 +274,21 @@ export function AuthForm({ mode }: AuthFormProps) {
                 </div>
               </label>
               {isSignup && (
-                <label className="flex items-start gap-2.5 pt-1 text-[10px] leading-5 text-[var(--text-secondary)]">
+                <label className="flex items-start gap-2.5 pt-1 text-sm leading-5 text-[var(--text-secondary)]">
                   <input
                     required
                     type="checkbox"
                     className="mt-1 accent-amber-500"
                   />
                   <span>
-                    I agree to Sentrix’s Terms of Service and Privacy Policy.
+                    I agree to Sentrix’s{" "}
+                    <Link href="/terms" target="_blank" rel="noopener" className="underline underline-offset-2" aria-label="Terms of Service (opens in a new tab)">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" target="_blank" rel="noopener" className="underline underline-offset-2" aria-label="Privacy Policy (opens in a new tab)">
+                      Privacy Policy
+                    </Link>.
                   </span>
                 </label>
               )}
