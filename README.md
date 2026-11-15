@@ -12,13 +12,18 @@ Sentrix Web is a dashboard for AC electrical monitoring and predictive maintenan
 
 ## Run locally
 
-This Next.js app requires a running `sentrix-api` backend to load monitoring data and manage devices. Copy `.env.example` to `.env.local`, fill in the Supabase Auth values, and set `NEXT_PUBLIC_API_URL` to the API origin (typically `http://localhost:9000` for local development).
+1. Start the `sentrix-api` backend. The Next.js app needs it to load monitoring data and manage devices.
+2. From the repository root, copy `.env.example` to `.env.local`. Fill in the Supabase Auth values and set `NEXT_PUBLIC_API_URL` to the API origin, typically `http://localhost:9000`.
+3. Install dependencies from the repository root.
 
-From the repository root, run:
+   ```sh
+   pnpm i
+   ```
 
-```sh
-pnpm i
-pnpm dev
-```
+4. Start the development server.
 
-Open [http://localhost:3000](http://localhost:3000).
+   ```sh
+   pnpm dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000).
