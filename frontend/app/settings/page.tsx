@@ -22,7 +22,6 @@ function ProfileForm({ initialName }: { initialName: string }) {
     <h2 className="text-base font-semibold">Profile</h2>
     <label className="block max-w-xl text-sm">Full name<input required maxLength={100} value={name} onChange={e => setName(e.target.value)} className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-3" /></label>
     <p className="text-sm">Email: {userProfile.email}</p>
-    <p className="text-sm">Role: {userProfile.role}</p>
     <button type="submit" disabled={pending} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-50">{pending ? "Saving…" : "Save profile"}</button>
     {result && <p role="status" className="text-sm">{result}</p>}
   </form>;
