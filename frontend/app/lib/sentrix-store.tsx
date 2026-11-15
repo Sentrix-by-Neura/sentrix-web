@@ -227,7 +227,10 @@ export function useOperatingState(deviceId: string) {
     document.addEventListener("visibilitychange", load);
     return () => { cancelled = true; controller.abort(); clearInterval(timer); document.removeEventListener("visibilitychange", load); };
   }, [userId, deviceId, key]);
-  return result.key === key ? result : { reading: null, loading: !!userId, error: null };
+  if (result.key !== key) return { reading: null, loading: !!userId, error: null };
+
+  const { reading, loading, error } = result;
+  return { reading, loading, error };
 }
 const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
 type SentrixContextValue = StoreState & typeof actions;
