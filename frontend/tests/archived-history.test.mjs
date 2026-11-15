@@ -44,7 +44,8 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
 test("group cards label transferred devices as preserved history", () => {
   const html = renderRoute("dashboard/[groupName]/page.tsx");
   assert.match(html, /Transferred.*history only/);
-  assert.match(html, /View preserved history/);
+  assert.match(html, /href="\/dashboard\/server-room\/old-device"/);
+  assert.match(html, /aria-label="Delete archived history for Transferred sensor"/);
   assert.doesNotMatch(html, /Waiting for device/);
 });
 test("archived detail keeps its chart and removes live monitoring and alert controls", () => {

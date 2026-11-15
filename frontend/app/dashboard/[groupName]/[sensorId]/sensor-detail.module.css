@@ -6,8 +6,6 @@
 :global(html):has(.page), :global(body):has(.page) { overflow-x: clip; }
 
 .page {
-  max-width: 72rem;
-  margin-inline: auto;
   font-family: var(--font-sans);
   color: var(--text-primary);
 }
@@ -73,15 +71,17 @@
 .control:hover { background: var(--surface-hover); color: var(--text-primary); }
 .headerActions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; max-width: 100%; }
 .export { min-width: 0; max-width: 19rem; }
-.exportHint, .exportError { margin-top: 6px; color: var(--text-secondary); font-size: .8125rem; }
-.exportError { color: var(--sensor-danger); }
-.danger { color: var(--sensor-danger); }
+.exportError { margin-top: 6px; color: var(--sensor-danger); font-size: .8125rem; }
 .resolve { color: var(--sensor-accent-ink); background: var(--sensor-accent); border-color: var(--sensor-accent); }
 .resolve:hover { color: var(--sensor-accent-ink); background: var(--sensor-accent); }
 .ranges { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; }
 .ranges button { padding: 0 12px; border-radius: 5px; color: var(--text-secondary); font-size: .875rem; }
 .ranges button:hover { color: var(--text-primary); }
 .ranges button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text-primary); }
+.panChart { cursor: grab; touch-action: pan-y; user-select: none; }
+.panChart[data-dragging] { cursor: grabbing; }
+.historyControls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.historyControls input { width: 100%; min-width: 0; accent-color: var(--sensor-accent); }
 .legend { display: flex; flex-wrap: wrap; gap: 12px 24px; color: var(--text-secondary); font-size: .8125rem; }
 .legend > span { display: inline-flex; align-items: center; gap: 8px; }
 .rangeKey { width: 18px; height: 10px; background: var(--sensor-accent); opacity: .35; }

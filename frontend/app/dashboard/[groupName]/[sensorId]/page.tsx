@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Suspense } from "react";
 import { useSentrix, useTelemetry, useOperatingState, findGroup, hasRecentContact, type Device } from "../../../lib/sentrix-store";
 import { TelemetryChart } from "./telemetry-chart";
-import { useConfirm } from "../../../components/confirm-modal";
 import { OperatingMetrics } from "./operating-metrics";
 import { TelemetryExport } from "./telemetry-export";
 import styles from "./sensor-detail.module.css";
@@ -37,7 +36,6 @@ function DynamicSensorStatusBadge({ device }: { device: Device }) {
 }
 
 function SensorAnalyticsContent() {
-  const router = useRouter();
   const params = useParams();
   const rawGroup = typeof params?.groupName === "string" ? params.groupName : Array.isArray(params?.groupName) ? params.groupName[0] : "";
   const rawSensor = typeof params?.sensorId === "string" ? params.sensorId : Array.isArray(params?.sensorId) ? params.sensorId[0] : "";
@@ -45,8 +43,7 @@ function SensorAnalyticsContent() {
   const groupSlug = decodeURIComponent(rawGroup || "");
   const sensorId = decodeURIComponent(rawSensor || "");
 
-  const { ready, groups, devices, alerts, deleteDevice, submitAlertFeedback, resolveAlert } = useSentrix();
-  const confirm = useConfirm();
+  const { ready, groups, devices, alerts, submitAlertFeedback, resolveAlert } = useSentrix();
   const group = findGroup(groups, groupSlug);
   const groupDevices = devices.filter(d => d.groupId === group?.id);
   const device = groupDevices.find(d => d.id === sensorId || d.id === rawSensor)
@@ -87,7 +84,7 @@ function SensorAnalyticsContent() {
 
   return (
     <div className={`${styles.page} space-y-6`}>
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 text-sm text-[var(--text-secondary)]">
         <Link href="/dashboard" className="hover:text-[var(--text-primary)]">
           Dashboard
         </Link>
@@ -95,6 +92,8 @@ function SensorAnalyticsContent() {
         <Link href={`/dashboard/${group.slug}`} className="hover:text-[var(--text-primary)]">
           {group.name}
         </Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page" className="break-words font-medium text-[var(--text-primary)]">{device.name}</span>
       </nav>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -112,34 +111,12 @@ function SensorAnalyticsContent() {
 
         <div className={styles.headerActions}>
           <TelemetryExport key={device.id} deviceId={device.id} />
-          <button
-            type="button"
-            id="delete-sensor-button"
-            onClick={async () => {
-              const ok = await confirm({
-                title: device.archivedAt ? "Delete Archived History" : "Delete Sensor",
-                message: device.archivedAt ? "Permanently delete this archived sensor's telemetry, predictions, and alerts? This does not affect the sensor's current owner." : "Remove this device and permanently delete its telemetry, predictions, and alerts? Hold BOOT for 5 seconds and release before setting it up again.",
-                confirmText: device.archivedAt ? "Delete History" : "Delete Sensor",
-                type: "danger",
-              });
-              if (ok) {
-                try { await deleteDevice(device.id); } catch { return; }
-                router.push(`/dashboard/${group.slug}`);
-              }
-            }}
-            className={`${styles.control} ${styles.danger}`}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-            </svg>
-            {device.archivedAt ? "Delete History" : "Delete Sensor"}
-          </button>
         </div>
       </div>
 
       <OperatingMetrics device={device} {...operating} expectedMin={latestTelemetry?.lowerBound ?? null} expectedMax={latestTelemetry?.upperBound ?? null} />
 
-      <TelemetryChart deviceId={device.id} />
+      <TelemetryChart key={device.id} deviceId={device.id} />
 
       <section aria-label="Anomaly history" className={styles.panel}>
         <div className={styles.sectionHeader}>

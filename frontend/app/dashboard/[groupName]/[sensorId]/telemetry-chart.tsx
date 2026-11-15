@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState, type PointerEvent } from "react";
 import {
   Area,
   CartesianGrid,
@@ -11,17 +11,52 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useTelemetry, type TelemetryPoint, type TelemetryRange } from "../../../lib/sentrix-store";
+import { useTelemetryHistory, type TelemetryPoint, type TelemetryRange } from "../../../lib/sentrix-store";
 import styles from "./sensor-detail.module.css";
 
 interface TelemetryChartProps {
   deviceId: string;
 }
 
+const minute = 60_000;
+const timeframes = {
+  "1h": { label: "1 Hour", span: 60 * minute, maxGap: 3 * minute },
+  "24h": { label: "24 Hours", span: 24 * 60 * minute, maxGap: 15 * minute },
+  "7d": { label: "7 Days", span: 7 * 24 * 60 * minute, maxGap: 45 * minute },
+} satisfies Record<TelemetryRange, { label: string; span: number; maxGap: number }>;
+
+const windowDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+const axisDate = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+const axisTime = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+
+type ChartPoint = {
+  time: number; timestamp?: string; timeLabel?: string; rmsCurrent: number | null;
+  bounds: [number, number] | null; lowerBound: number | null; upperBound: number | null;
+  isAnomaly?: boolean; isolated?: boolean;
+};
+
+function makeChartPoints(points: TelemetryPoint[], start: number, maxGap: number) {
+  const items: ChartPoint[] = [];
+  const times = points.map(point => Math.max(start, Date.parse(point.timestamp)));
+  points.forEach((point, index) => {
+    const time = times[index];
+    const hasPrevious = time - times[index - 1] <= maxGap;
+    const hasNext = times[index + 1] - time <= maxGap;
+    if (index > 0 && !hasPrevious) {
+      items.push({ time: (time + times[index - 1]) / 2, rmsCurrent: null, bounds: null, lowerBound: null, upperBound: null });
+    }
+    items.push({
+      ...point, time, isolated: !hasPrevious && !hasNext,
+      bounds: point.lowerBound === null || point.upperBound === null ? null : [point.lowerBound, point.upperBound],
+    });
+  });
+  return items;
+}
+
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
-    payload: TelemetryPoint & { bounds: [number, number] };
+    payload: ChartPoint;
   }>;
   label?: string;
 }
@@ -29,14 +64,17 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0]?.payload;
-  if (!data) return null;
+  if (!data || data.rmsCurrent === null) return null;
+  const safeRange = data.lowerBound === null || data.upperBound === null
+    ? "Unknown"
+    : `${data.lowerBound.toFixed(2)}–${data.upperBound.toFixed(2)} A`;
 
   return (
     <div className={styles.tooltip}>
       <p>{data.timeLabel}{data.isAnomaly ? " (anomaly)" : ""}</p>
       <dl>
         <dt>Current</dt><dd>{data.rmsCurrent.toFixed(2)} A</dd>
-        <dt>Safe range</dt><dd>{data.lowerBound?.toFixed(2) ?? "Unknown"} to {data.upperBound?.toFixed(2) ?? "Unknown"} A</dd>
+        <dt>Safe range</dt><dd>{safeRange}</dd>
       </dl>
     </div>
   );
@@ -44,17 +82,54 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
 export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   const [timeframe, setTimeframe] = useState<TelemetryRange>("24h");
+  const [end, setEnd] = useState<number | null>(null);
+  const [previewEnd, setPreviewEnd] = useState<number | null>(null);
+  const drag = useRef<{ id: number; x: number; y: number; origin: number; end: number; moved: boolean } | null>(null);
+  const { span, maxGap } = timeframes[timeframe];
+  const { history, loading, error, retry } = useTelemetryHistory(deviceId, timeframe, end);
+  const latest = history?.latest ?? 0;
+  const earliestEnd = Math.min(latest, (history?.oldest ?? latest) + span);
+  const loadedEnd = history?.end ?? 0;
+  const displayedEnd = previewEnd ?? (loading && end !== null ? Math.max(earliestEnd, Math.min(latest, end)) : loadedEnd);
+  const displayedStart = displayedEnd - span;
+  const canPan = latest > earliestEnd;
 
-  const { points: rawData, loading, error } = useTelemetry(deviceId, timeframe);
+  function navigateTo(time: number) {
+    const next = Math.max(earliestEnd, Math.min(latest, Math.round(time)));
+    setEnd(next >= latest ? null : next);
+  }
 
-  // Map to chart items with dual-bound array for shaded Area
-  const chartData = rawData.map((pt) => ({
-    ...pt,
-    bounds: pt.lowerBound === null || pt.upperBound === null ? null : [pt.lowerBound, pt.upperBound],
-  }));
+  function startDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!canPan || !event.isPrimary || event.button !== 0) return;
+    drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, origin: displayedEnd, end: displayedEnd, moved: false };
+  }
 
-  // Find min/max for dynamic Y-Axis scale safely
-  const allValues = rawData
+  function moveDrag(event: PointerEvent<HTMLDivElement>) {
+    const current = drag.current;
+    if (!current || event.pointerId !== current.id) return;
+    const dx = event.clientX - current.x;
+    if (!current.moved) {
+      if (Math.abs(dx) < 8 || Math.abs(dx) <= Math.abs(event.clientY - current.y)) return;
+      event.currentTarget.setPointerCapture(current.id);
+      current.moved = true;
+    }
+    const width = Math.max(1, event.currentTarget.clientWidth - 50);
+    current.end = Math.max(earliestEnd, Math.min(latest, current.origin - dx * span / width));
+    setPreviewEnd(current.end);
+  }
+
+  function finishDrag(event: PointerEvent<HTMLDivElement>, commit: boolean) {
+    const current = drag.current;
+    if (!current || event.pointerId !== current.id) return;
+    drag.current = null;
+    if (!current.moved) return;
+    setPreviewEnd(null);
+    if (commit) navigateTo(current.end);
+  }
+
+  const chartData = useMemo(() => history ? makeChartPoints(history.points, history.start, maxGap) : [], [history, maxGap]);
+  const allValues = chartData
+    .filter(point => point.time >= displayedStart && point.time <= displayedEnd)
     .flatMap((d) => [d.rmsCurrent, d.lowerBound, d.upperBound])
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   const minY = allValues.length > 0 ? Math.max(0, Math.floor(Math.min(...allValues) - 1)) : 0;
@@ -65,21 +140,15 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       <div className={styles.sectionHeader}>
         <h2>Current history</h2>
         <div aria-label="Chart timeframe" className={styles.ranges}>
-          {(
-            [
-              { id: "1h", label: "1 Hour" },
-              { id: "24h", label: "24 Hours" },
-              { id: "7d", label: "7 Days" },
-            ] as const
-          ).map((item) => (
+          {(Object.keys(timeframes) as TelemetryRange[]).map(id => (
             <button
-              key={item.id}
+              key={id}
               type="button"
-              id={`toggle-timeframe-${item.id}`}
-              aria-pressed={timeframe === item.id}
-              onClick={() => setTimeframe(item.id)}
+              id={`toggle-timeframe-${id}`}
+              aria-pressed={timeframe === id}
+              onClick={() => setTimeframe(id)}
             >
-              {item.label}
+              {timeframes[id].label}
             </button>
           ))}
         </div>
@@ -91,17 +160,35 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
         <span><i aria-hidden="true" className={styles.anomalyKey} />Anomaly</span>
       </div>
 
-      <div className="h-80 w-full">
+      <div
+        className={`relative h-80 w-full ${canPan ? styles.panChart : ""}`}
+        data-dragging={previewEnd !== null || undefined}
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={event => finishDrag(event, true)}
+        onPointerCancel={event => finishDrag(event, false)}
+        onPointerLeave={event => {
+          if (!drag.current?.moved) finishDrag(event, false);
+        }}
+        onLostPointerCapture={event => {
+          if (event.target === event.currentTarget) finishDrag(event, false);
+        }}
+      >
         {chartData.length === 0 ? (
           <div role="status" className="flex h-full items-center justify-center text-sm text-[var(--text-secondary)]">
-            {error || (loading ? "Loading current history…" : "No readings in this timeframe.")}
+            {loading ? "Loading current history…" : error ? "Current history is unavailable." : "No readings in this window."}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
             <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
             <XAxis
-              dataKey="timeLabel"
+              dataKey="time"
+              type="number"
+              scale="time"
+              domain={[displayedStart, displayedEnd]}
+              allowDataOverflow
+              tickFormatter={value => (timeframe === "7d" ? axisDate : axisTime).format(value)}
               stroke="var(--chart-label)"
               fontSize={12}
               tickLine={false}
@@ -117,7 +204,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
               domain={[minY, maxY]}
               unit=" A"
             />
-            <Tooltip content={<CustomTooltip />} />
+            {previewEnd === null && <Tooltip content={<CustomTooltip />} />}
 
             {/* Shaded Auto-ARIMA Confidence Interval Area */}
             <Area
@@ -160,10 +247,10 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
               isAnimationActive={false}
               dot={(props) => {
                 const { cx, cy, payload } = props;
-                if (!payload?.isAnomaly || cx == null || cy == null) return <g key={`empty-${props.index}`} />;
+                if (!(payload?.isAnomaly || payload?.isolated) || cx == null || cy == null) return <g key={`empty-${props.index}`} />;
                 return (
                   <g key={`anomaly-${payload.timestamp}`}>
-                    <circle cx={cx} cy={cy} r={4.5} fill="var(--sensor-danger)" stroke="var(--surface)" strokeWidth={1.5} />
+                    <circle cx={cx} cy={cy} r={payload.isAnomaly ? 4.5 : 2.5} fill={payload.isAnomaly ? "var(--sensor-danger)" : "var(--chart-line)"} stroke="var(--surface)" strokeWidth={1.5} />
                   </g>
                 );
               }}
@@ -172,7 +259,40 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
         </ResponsiveContainer>
         )}
       </div>
-      {error && chartData.length > 0 && <p role="status" className={styles.message}>Could not refresh current history. {error}</p>}
+      {history?.oldest != null && (
+        <div className="space-y-2">
+          <p className="text-xs text-[var(--text-secondary)]">
+            {windowDate.formatRange(displayedStart, displayedEnd)}
+          </p>
+          {canPan && (
+            <div className={styles.historyControls}>
+              <button type="button" className={styles.control} disabled={displayedEnd <= earliestEnd} onClick={() => navigateTo(displayedEnd - span)}>
+                Earlier
+              </button>
+              <input
+                type="range"
+                aria-label="History position"
+                aria-valuetext={windowDate.format(displayedEnd)}
+                min={earliestEnd}
+                max={latest}
+                step="any"
+                value={displayedEnd}
+                onChange={event => navigateTo(event.currentTarget.valueAsNumber)}
+              />
+              <button type="button" className={styles.control} disabled={displayedEnd >= latest} onClick={() => navigateTo(displayedEnd + span)}>
+                Later
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {loading && chartData.length > 0 && <p role="status" className={styles.message}>Loading current history…</p>}
+      {error && (
+        <div className={styles.message}>
+          <p role="status">Could not refresh current history. {error}</p>
+          <button type="button" className={styles.control} onClick={retry}>Retry</button>
+        </div>
+      )}
     </section>
   );
 }

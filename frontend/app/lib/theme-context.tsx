@@ -13,7 +13,6 @@ type Theme = "dark" | "light";
 interface ThemeContextValue {
   theme: Theme;
   isDark: boolean;
-  toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
 }
 
@@ -54,16 +53,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {}
   }
 
-  function toggleTheme() {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }
-
   return (
     <ThemeContext.Provider
       value={{
         theme,
         isDark: theme === "dark",
-        toggleTheme,
         setTheme,
       }}
     >
@@ -78,7 +72,6 @@ export function useTheme() {
     return {
       theme: "dark" as Theme,
       isDark: true,
-      toggleTheme: () => {},
       setTheme: () => {},
     };
   }

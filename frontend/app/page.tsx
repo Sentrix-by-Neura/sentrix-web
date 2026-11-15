@@ -1,19 +1,34 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 import Image from "next/image";
+import type { User } from "@supabase/supabase-js";
 import { Brand } from "./components/brand";
 import { LandingCircuit } from "./components/landing-circuit";
 import { useLandingMotion } from "./components/landing-motion";
-import { ThemeToggle } from "./components/theme-toggle";
+import { AccountDropdown } from "./components/account-dropdown";
+import { useSentrix } from "./lib/sentrix-store";
+import { supabase } from "./lib/supabase-browser";
+import { useDisclosure } from "./lib/use-disclosure";
 
 export default function Home() {
   const landingRef = useRef<HTMLElement>(null);
   useLandingMotion(landingRef);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { open: mobileMenuOpen, setOpen: setMobileMenuOpen, triggerRef, panelRef } = useDisclosure();
+  const [user, setUser] = useState<User | null>(null);
+  const { userId, userProfile } = useSentrix();
+  const signedIn = Boolean(user);
   const [prototypeImageSrc, setPrototypeImageSrc] = useState("/images/esp32-sensor-prototype.jpeg");
+
+  useEffect(() => {
+    const subscription = supabase?.auth.onAuthStateChange((_event, session) => {
+      const account = session?.user;
+      setUser(account?.email_confirmed_at || account?.confirmed_at ? account : null);
+    }).data.subscription;
+    return () => subscription?.unsubscribe();
+  }, []);
 
   return (
     <main ref={landingRef} className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--text-primary)] transition-colors duration-200">
@@ -36,31 +51,28 @@ export default function Home() {
             </a>
           </nav>
 
-          {/* Desktop Actions */}
-          <div data-landing-intro className="hidden items-center gap-3 xl:gap-4 lg:flex shrink-0">
-            <ThemeToggle showLabel={false} />
-            <Link
-              href="/login"
-              className="whitespace-nowrap rounded-lg px-3.5 xl:px-4 py-2.5 text-sm xl:text-base font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-lg bg-amber-500 px-4 xl:px-5 text-sm xl:text-base font-semibold text-[#17140d] transition hover:bg-amber-400"
-            >
-              Open Dashboard
-            </Link>
-          </div>
-
-          {/* Mobile & Tablet Actions: ThemeToggle + Hamburger Button (< lg) */}
-          <div data-landing-intro className="flex items-center gap-2 lg:hidden">
-            <ThemeToggle showLabel={false} />
+          <div data-landing-intro className="flex shrink-0 items-center gap-2 lg:gap-3 xl:gap-4">
+            {user ? (
+              <AccountDropdown
+                key={user.id}
+                name={user.id === userId && userProfile.email ? userProfile.name : user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
+                email={user.email ?? ""}
+                avatarUrl={user.user_metadata?.avatar_url}
+              />
+            ) : (
+              <Link
+                href="/login"
+                className="hidden whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] lg:inline-flex xl:px-4 xl:text-base"
+              >
+                Log in
+              </Link>
+            )}
             <button
               type="button"
               id="mobile-nav-toggle"
+              ref={triggerRef}
               onClick={() => setMobileMenuOpen((open) => !open)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-amber-500/40 lg:hidden"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
@@ -82,7 +94,7 @@ export default function Home() {
 
         {/* Mobile & Tablet Dropdown Drawer Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-[var(--border)] bg-[var(--canvas)]/98 px-5 sm:px-8 py-5 shadow-2xl backdrop-blur-xl lg:hidden animate-in slide-in-from-top-2 duration-200">
+          <div ref={panelRef} className="border-t border-[var(--border)] bg-[var(--canvas)]/98 px-5 sm:px-8 py-5 shadow-2xl backdrop-blur-xl lg:hidden animate-in slide-in-from-top-2 duration-200">
             <nav className="mx-auto max-w-lg flex flex-col space-y-1">
               <a
                 href="#overview"
@@ -105,22 +117,17 @@ export default function Home() {
               >
                 System Specs
               </a>
-              <div className="my-2 border-t border-[var(--border)] pt-3 flex flex-col sm:flex-row gap-2.5">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-11 flex-1 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition"
-                >
-                  Log In
-                </Link>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-11 flex-1 items-center justify-center rounded-lg bg-amber-500 text-sm font-semibold text-[#17140d] hover:bg-amber-400 transition"
-                >
-                  Open Dashboard
-                </Link>
-              </div>
+              {!signedIn && (
+                <div className="my-2 border-t border-[var(--border)] pt-3">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)]"
+                  >
+                    Log In
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         )}
@@ -174,10 +181,10 @@ export default function Home() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               data-landing-intro
-              href="/signup"
+              href={signedIn ? "/dashboard" : "/signup"}
               className="inline-flex min-h-12 items-center justify-center rounded-lg bg-amber-500 px-6 py-3 text-center text-base font-semibold text-[#17140d] transition-colors hover:bg-amber-400"
             >
-              Start Monitoring Your AC Fleet →
+              {signedIn ? "Open Dashboard →" : "Start Monitoring Your AC Fleet →"}
             </Link>
             <a
               data-landing-intro
@@ -635,18 +642,18 @@ export default function Home() {
             </div>
 
             <div data-landing-reveal className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-              <Link
+              {!signedIn && <Link
                 href="/signup"
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-amber-500 px-6 text-base font-semibold text-[#17140d] shadow-md shadow-amber-500/20 transition hover:bg-amber-400 text-center"
               >
                 Create Facility Workspace →
-              </Link>
-              <Link
+              </Link>}
+              {signedIn && <Link
                 href="/dashboard"
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--canvas)] px-6 text-base font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] text-center"
               >
                 Open Live Dashboard
-              </Link>
+              </Link>}
             </div>
           </div>
         </div>
@@ -655,7 +662,7 @@ export default function Home() {
       <footer className="relative isolate border-t border-[var(--border)] bg-[var(--surface)] px-6 py-12 sm:px-8">
         <LandingCircuit pattern="footer" />
         <div className="mx-auto max-w-[1280px]">
-          <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+          <div className={`grid grid-cols-1 gap-10 sm:grid-cols-2 ${signedIn ? "lg:grid-cols-[1.5fr_1fr_1fr_1fr]" : "lg:grid-cols-[1.5fr_1fr_1fr]"}`}>
             <div data-landing-reveal data-landing-circuit-anchor>
               <Brand />
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -686,7 +693,7 @@ export default function Home() {
               </ul>
             </div>
 
-            <div data-landing-reveal>
+            {signedIn && <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                 Operations
               </h3>
@@ -707,22 +714,28 @@ export default function Home() {
                   </Link>
                 </li>
               </ul>
-            </div>
+            </div>}
 
             <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                Account
+                {signedIn ? "Legal" : "Account"}
               </h3>
               <ul className="mt-4 space-y-2.5">
-                <li>
+                {!signedIn && <li>
                   <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/login">
                     Operator Sign In
                   </Link>
-                </li>
-                <li>
+                </li>}
+                {!signedIn && <li>
                   <Link className="text-sm font-semibold text-amber-500 transition hover:underline" href="/signup">
                     Create Facility Workspace
                   </Link>
+                </li>}
+                <li>
+                  <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/terms">Terms of Service</Link>
+                </li>
+                <li>
+                  <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/privacy">Privacy Policy</Link>
                 </li>
               </ul>
             </div>

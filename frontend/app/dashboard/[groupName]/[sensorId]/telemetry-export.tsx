@@ -45,10 +45,9 @@ export function TelemetryExport({ deviceId }: { deviceId: string }) {
 
   return (
     <div className={styles.export}>
-      <button type="button" className={styles.control} onClick={() => { void download(); }} disabled={exporting} aria-busy={exporting} aria-describedby="export-timezone">
+      <button type="button" className={styles.control} onClick={() => { void download(); }} disabled={exporting} aria-busy={exporting}>
         {exporting ? "Exporting…" : "Export all data (CSV)"}
       </button>
-      <p id="export-timezone" className={styles.exportHint}>Uses your device’s timezone.</p>
       {error && <p role="alert" className={styles.exportError}>Could not export recorded data. {error}</p>}
     </div>
   );

@@ -107,7 +107,9 @@ test("operating readings poll visibly, retain data on failure and reject stale a
   await api.refreshData();
   api.useOperatingState("sensor-1"); const dispose = effect();
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(api.useOperatingState("sensor-1").reading.current_temperature, 27.5);
+  const operating = api.useOperatingState("sensor-1");
+  assert.equal(operating.reading.current_temperature, 27.5);
+  assert.equal(Object.hasOwn(operating, "key"), false);
   fail = true; tick(); await new Promise(resolve => setImmediate(resolve));
   assert.equal(api.useOperatingState("sensor-1").reading.target_temperature, 24);
   assert.match(box.error, /probe request failed/);

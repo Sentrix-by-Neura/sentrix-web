@@ -23,10 +23,9 @@ function renderShell(session) {
       if (name === "next/link") return { default: Link };
       if (name === "next/navigation") return { useRouter: () => ({ replace() {} }), usePathname: () => "/dashboard" };
       if (name === "./brand") return { Brand: () => createElement("a", { href: "/dashboard" }, "Sentrix") };
-      if (name === "./account-settings-modal") return { AccountSettingsModal: () => null };
+      if (name === "./account-dropdown") return { AccountDropdown: () => null };
       if (name === "./context-menu") return { SentrixContextMenu: () => null };
-      if (name === "./theme-toggle") return { ThemeToggle: () => null };
-      if (name === "../lib/theme-context") return { useTheme: () => ({ isDark: true, toggleTheme() {} }) };
+      if (name === "../lib/theme-context") return { useTheme: () => ({ isDark: true }) };
       if (name === "../lib/supabase-browser") return { isSupabaseConfigured: false, supabase: null };
       if (name === "../lib/sentrix-store") return { useSentrix: () => ({ userProfile: { name: "User" }, alerts: [], devices: [], refreshData() {}, error: null, ...session }) };
       throw new Error(`Unexpected dependency: ${name}`);
@@ -51,4 +50,18 @@ test("authenticated shell renders the route without the pending-session message"
   const html = renderShell({ ready: true, userId: "operator" });
   assert.match(html, /Route segment rendered/);
   assert.doesNotMatch(html, /Checking your session/);
+});
+
+test("the alert bell links directly to alerts and counts only current unresolved alerts", () => {
+  const html = renderShell({
+    ready: true,
+    userId: "operator",
+    alerts: [
+      { deviceId: "live", isResolved: false },
+      { deviceId: "live", isResolved: true },
+      { deviceId: "archived", isResolved: false },
+    ],
+    devices: [{ id: "live" }, { id: "archived", archivedAt: "2026-11-01" }],
+  });
+  assert.match(html, /<a href="\/alerts" aria-label="Alerts \(1 unresolved\)"/);
 });

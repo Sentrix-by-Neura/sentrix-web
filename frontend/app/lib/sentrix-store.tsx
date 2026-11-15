@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { supabase } from "./supabase-browser";
 import { apiRequest, authenticatedSession, joinTelemetry, type GroupRow, type DeviceRow, type AlertRow, type ReadingRow, type BoundRow, type OperatingReading } from "./sentrix-api";
+import type { TelemetryHistoryResponse } from "./sentrix-api";
 
 export type Group = { id: string; name: string; slug: string; meshId: string; description: string };
 export type DeviceStatus = "CALIBRATING" | "ACTIVE" | "OFFLINE";
@@ -190,6 +191,67 @@ export function useTelemetry(deviceId: string, range: TelemetryRange) {
   return result.key === key ? result : { points: [], loading: !!userId, error: null };
 }
 
+type HistoryWindow = {
+  start: number; end: number; oldest: number | null; latest: number | null; points: TelemetryPoint[];
+};
+
+export function useTelemetryHistory(deviceId: string, range: TelemetryRange, end: number | null) {
+  const { userId } = useSentrix();
+  const [attempt, setAttempt] = useState(0);
+  const [result, setResult] = useState<{
+    scope: string; key: string; history: HistoryWindow | null; error: string | null;
+  }>();
+  const scope = `${userId}:${epoch}:${deviceId}:${range}`;
+  const key = `${scope}:${end}:${attempt}`;
+
+  useEffect(() => {
+    if (!userId || !deviceId) return;
+    const controller = new AbortController();
+    const owner = epoch;
+    const query = new URLSearchParams({ range });
+    if (end !== null) query.set("end", new Date(end).toISOString());
+    let timer: ReturnType<typeof setTimeout>;
+
+    async function load() {
+      try {
+        const session = await authenticatedSession();
+        if (controller.signal.aborted || owner !== epoch || session.user.id !== userId) return;
+        const data = await apiRequest<TelemetryHistoryResponse>(
+          `/devices/${encodeURIComponent(deviceId)}/history?${query}`, { signal: controller.signal }, session
+        );
+        if (controller.signal.aborted || owner !== epoch) return;
+        setResult({
+          scope, key, error: null,
+          history: {
+            start: Date.parse(data.start), end: Date.parse(data.end),
+            oldest: data.oldest === null ? null : Date.parse(data.oldest),
+            latest: data.latest === null ? null : Date.parse(data.latest),
+            points: joinTelemetry(data.points, data.bounds),
+          },
+        });
+      } catch (error) {
+        if (!controller.signal.aborted && owner === epoch) {
+          setResult(previous => ({
+            scope, key, history: previous?.scope === scope ? previous.history : null, error: message(error),
+          }));
+        }
+      }
+      if (end === null && !controller.signal.aborted && owner === epoch) timer = setTimeout(load, 60000);
+    }
+
+    if (end === null) void load();
+    else timer = setTimeout(load, 150);
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, [userId, deviceId, range, end, scope, key]);
+
+  return {
+    history: result?.scope === scope ? result.history : null,
+    loading: !!userId && result?.key !== key,
+    error: result?.key === key ? result.error : null,
+    retry: () => setAttempt(value => value + 1),
+  };
+}
+
 export function hasRecentContact(device: Device) {
   const now = Date.now();
   const seen = device.lastSeen ? Date.parse(device.lastSeen) : NaN;
@@ -227,7 +289,10 @@ export function useOperatingState(deviceId: string) {
     document.addEventListener("visibilitychange", load);
     return () => { cancelled = true; controller.abort(); clearInterval(timer); document.removeEventListener("visibilitychange", load); };
   }, [userId, deviceId, key]);
-  return result.key === key ? result : { reading: null, loading: !!userId, error: null };
+  if (result.key !== key) return { reading: null, loading: !!userId, error: null };
+
+  const { reading, loading, error } = result;
+  return { reading, loading, error };
 }
 const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
 type SentrixContextValue = StoreState & typeof actions;
