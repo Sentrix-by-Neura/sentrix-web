@@ -31,10 +31,10 @@ export default function Home() {
   }, []);
 
   return (
-    <main ref={landingRef} className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--text-primary)] transition-colors duration-200">
+    <main ref={landingRef} className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--text-primary)] transition-colors duration-200 [--landing-navbar-height:calc(5rem+1px)]">
       {/* 1. Sticky Top Header (Larger & Clearer with Mobile & Tablet Hamburger) */}
-      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--canvas)]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-20 max-w-[1344px] items-center justify-between px-6 sm:px-8">
+      <header className="sticky top-0 z-50 h-[var(--landing-navbar-height)] border-b border-[var(--border)] bg-[var(--canvas)]/90 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-[1344px] items-center justify-between px-6 sm:px-8">
           <div data-landing-intro className="shrink-0">
             <Brand />
           </div>
@@ -94,7 +94,7 @@ export default function Home() {
 
         {/* Mobile & Tablet Dropdown Drawer Menu */}
         {mobileMenuOpen && (
-          <div ref={panelRef} className="border-t border-[var(--border)] bg-[var(--canvas)]/98 px-5 sm:px-8 py-5 shadow-2xl backdrop-blur-xl lg:hidden animate-in slide-in-from-top-2 duration-200">
+          <div ref={panelRef} className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--landing-navbar-height))] overflow-y-auto border-t border-[var(--border)] bg-[var(--canvas)]/98 px-5 py-5 shadow-2xl backdrop-blur-xl sm:px-8 lg:hidden animate-in slide-in-from-top-2 duration-200">
             <nav className="mx-auto max-w-lg flex flex-col space-y-1">
               <a
                 href="#overview"
@@ -133,7 +133,7 @@ export default function Home() {
         )}
       </header>
 
-      <section className="relative isolate overflow-hidden px-6 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24 lg:pt-28">
+      <section className="relative isolate grid min-h-[calc(100dvh-var(--landing-navbar-height))] items-center overflow-hidden px-6 py-8 sm:px-8 sm:py-12">
         <svg
           aria-hidden="true"
           viewBox="0 0 1000 620"
@@ -167,7 +167,7 @@ export default function Home() {
           />
         </svg>
 
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto w-full max-w-[1280px]">
           <h1 data-landing-intro className="max-w-[14ch] text-balance text-[clamp(2.75rem,7vw,6rem)] font-semibold leading-[0.99] tracking-[-0.055em]">
             Catch AC faults early.
           </h1>
