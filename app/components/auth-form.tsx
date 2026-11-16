@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Brand } from "./brand";
+import { useLanguage } from "../lib/language-context";
+import { LanguageToggle } from "./language-toggle";
 import { isSupabaseConfigured, supabase } from "../lib/supabase-browser";
 
 type AuthFormProps = {
@@ -11,15 +13,16 @@ type AuthFormProps = {
 };
 
 function AuthArtwork() {
+  const { t } = useLanguage();
   return (
     <aside className="relative hidden min-h-screen overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
       <div className="absolute -right-36 top-12 h-96 w-96 rounded-full bg-amber-500/[0.09] blur-[100px]" />
       <div className="absolute -left-36 bottom-8 h-80 w-80 rounded-full bg-orange-800/[0.08] blur-[100px]" />
       <div className="relative">
         <h2 className="max-w-lg text-4xl font-semibold leading-tight tracking-[-0.06em] text-[var(--text-primary)] xl:text-5xl">
-          See the signal.
+          {t("See the signal.")}
           <br />
-          <span className="text-[var(--text-muted)]">Waste less cooling energy.</span>
+          <span className="text-[var(--text-muted)]">{t("Waste less cooling energy.")}</span>
         </h2>
       </div>
     </aside>
@@ -27,6 +30,7 @@ function AuthArtwork() {
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
+  const { t } = useLanguage();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
@@ -139,13 +143,14 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <main className="grid min-h-screen bg-[var(--canvas)] text-[var(--text-primary)] transition-colors duration-200 lg:grid-cols-[minmax(420px,0.88fr)_minmax(0,1.12fr)]">
       <section className="flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-12 xl:px-20">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Brand />
+          <LanguageToggle />
           <Link
             href="/"
             className="text-xs text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
           >
-            Back to home
+            {t("Back to home")}
           </Link>
         </div>
 
@@ -160,26 +165,26 @@ export function AuthForm({ mode }: AuthFormProps) {
 
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-500 border border-amber-500/20">
-                Action Required
+                {t("Action Required")}
               </span>
             </div>
 
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.055em] text-[var(--text-primary)]">
-              Verify your email
+              {t("Verify your email")}
             </h1>
 
             <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-              We sent a verification link to{" "}
+              {t("We sent a verification link to")}{" "}
               <strong className="font-semibold text-[var(--text-primary)]">{submittedEmail}</strong>.
-              You must verify your email before you can log in.
+              {t("You must verify your email before you can log in.")}
             </p>
 
             <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-xs text-[var(--text-muted)] space-y-2">
-              <p className="font-medium text-[var(--text-secondary)]">Haven&apos;t received the email?</p>
+              <p className="font-medium text-[var(--text-secondary)]">{t("Haven't received the email?")}</p>
               <ul className="list-disc pl-4 space-y-1">
-                <li>Check your <strong>Spam</strong>, <strong>Junk</strong>, or <strong>Promotions</strong> folder.</li>
-                <li>Verify you typed your email address correctly.</li>
-                <li>Wait 1–2 minutes, or click below to resend.</li>
+                <li>{t("Check your Spam, Junk, or Promotions folder.")}</li>
+                <li>{t("Verify you typed your email address correctly.")}</li>
+                <li>{t("Wait 1–2 minutes, or click below to resend.")}</li>
               </ul>
             </div>
 
@@ -192,7 +197,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     : "border-red-500/30 bg-red-500/10 text-red-400"
                 }`}
               >
-                {resendFeedback}
+                {t(resendFeedback)}
               </p>
             )}
 
@@ -203,14 +208,14 @@ export function AuthForm({ mode }: AuthFormProps) {
                 onClick={() => handleResendVerification(submittedEmail)}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-amber-500 text-xs font-semibold text-[#17140d] transition hover:bg-amber-400 disabled:opacity-60"
               >
-                {resendStatus === "sending" ? "Resending email…" : "Resend Verification Email"}
+                {t(resendStatus === "sending" ? "Resending email…" : "Resend Verification Email")}
               </button>
 
               <Link
                 href="/login"
                 className="flex h-11 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
               >
-                Back to Log In
+                {t("Back to Log In")}
               </Link>
             </div>
           </div>
@@ -218,14 +223,14 @@ export function AuthForm({ mode }: AuthFormProps) {
           /* Normal Auth Form */
           <div className="mx-auto flex w-full max-w-[390px] flex-1 flex-col justify-center py-12">
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.055em] text-[var(--text-primary)] sm:text-4xl">
-              {isSignup ? "Create your account" : "Log in to Sentrix"}
+              {t(isSignup ? "Create your account" : "Log in to Sentrix")}
             </h1>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
               {isSignup && (
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
-                    Full name
+                    {t("Full name")}
                   </span>
                   <input
                     autoComplete="name"
@@ -238,7 +243,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               )}
               <label className="block">
                 <span className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
-                  Email
+                  {t("Email")}
                 </span>
                 <input
                   autoComplete="email"
@@ -251,7 +256,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
-                  Password
+                  {t("Password")}
                 </span>
                 <div className="relative">
                   <input
@@ -260,16 +265,16 @@ export function AuthForm({ mode }: AuthFormProps) {
                     minLength={8}
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    placeholder="At least 8 characters"
+                    placeholder={t("At least 8 characters")}
                     className="h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3.5 pr-16 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-amber-500/70 focus:ring-2 focus:ring-amber-500/10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
                     className="absolute inset-y-0 right-3 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={t(showPassword ? "Hide password" : "Show password")}
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {t(showPassword ? "Hide" : "Show")}
                   </button>
                 </div>
               </label>
@@ -281,13 +286,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                     className="mt-1 accent-amber-500"
                   />
                   <span>
-                    I agree to Sentrix’s{" "}
-                    <Link href="/terms" target="_blank" rel="noopener" className="underline underline-offset-2" aria-label="Terms of Service (opens in a new tab)">
-                      Terms of Service
+                    {t("I agree to Sentrix’s")}{" "}
+                    <Link href="/terms" target="_blank" rel="noopener" className="underline underline-offset-2" aria-label={t("Terms of Service (opens in a new tab)")}>
+                      {t("Terms of Service")}
                     </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" target="_blank" rel="noopener" className="underline underline-offset-2" aria-label="Privacy Policy (opens in a new tab)">
-                      Privacy Policy
+                    {t("and")}{" "}
+                    <Link href="/privacy" target="_blank" rel="noopener" className="underline underline-offset-2" aria-label={t("Privacy Policy (opens in a new tab)")}>
+                      {t("Privacy Policy")}
                     </Link>.
                   </span>
                 </label>
@@ -297,7 +302,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-amber-500 text-xs font-semibold text-[#17140d] transition hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60"
               >
-                {isSubmitting ? "Connecting…" : isSignup ? "Create Account" : "Log In"}
+                {t(isSubmitting ? "Connecting…" : isSignup ? "Create Account" : "Log In")}
                 {!isSubmitting && <span aria-hidden="true">→</span>}
               </button>
             </form>
@@ -309,13 +314,13 @@ export function AuthForm({ mode }: AuthFormProps) {
               >
                 <div className="flex items-start gap-2">
                   <span className="text-amber-500 shrink-0">⚠️</span>
-                  <p className="text-xs text-[var(--text-secondary)]">{formError}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{t(formError)}</p>
                 </div>
 
                 {unconfirmedLoginEmail && (
                   <div className="mt-3 border-t border-amber-500/20 pt-2 flex items-center justify-between gap-2">
                     <span className="text-[11px] text-[var(--text-muted)]">
-                      Didn&apos;t get or lost the link?
+                      {t("Didn't get or lost the link?")}
                     </span>
                     <button
                       type="button"
@@ -323,7 +328,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                       onClick={() => handleResendVerification(unconfirmedLoginEmail)}
                       className="text-[11px] font-semibold text-amber-500 hover:text-amber-400 underline disabled:opacity-50"
                     >
-                      {resendStatus === "sending" ? "Sending…" : "Resend Verification Email"}
+                      {t(resendStatus === "sending" ? "Sending…" : "Resend Verification Email")}
                     </button>
                   </div>
                 )}
@@ -334,19 +339,19 @@ export function AuthForm({ mode }: AuthFormProps) {
                       resendStatus === "sent" ? "text-emerald-400" : "text-red-400"
                     }`}
                   >
-                    {resendFeedback}
+                    {t(resendFeedback)}
                   </p>
                 )}
               </div>
             )}
 
             <p className="mt-6 text-center text-xs text-[var(--text-muted)]">
-              {isSignup ? "Already have an account?" : "New to Sentrix?"}{" "}
+              {t(isSignup ? "Already have an account?" : "New to Sentrix?")}{" "}
               <Link
                 href={isSignup ? "/login" : "/signup"}
                 className="font-medium text-amber-500 transition hover:text-amber-400"
               >
-                {isSignup ? "Log in" : "Create an account"}
+                {t(isSignup ? "Log in" : "Create an account")}
               </Link>
             </p>
           </div>

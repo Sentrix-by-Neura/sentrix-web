@@ -4,23 +4,24 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/app-shell";
 import { useSentrix } from "../lib/sentrix-store";
+import { T, useLanguage, type Language } from "../lib/language-context";
 
 type DateFilter = "all" | "24h" | "7d";
 type StatusFilter = "all" | "unresolved" | "resolved";
 
-function formatRelativeTime(isoString: string): string {
+function formatRelativeTime(isoString: string, language: Language): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
   const diffMins = Math.floor(diffMs / 60_000);
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return language === "id" ? "Baru saja" : "Just now";
+  if (diffMins < 60) return language === "id" ? `${diffMins} menit lalu` : `${diffMins}m ago`;
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return language === "id" ? `${diffHours} jam lalu` : `${diffHours}h ago`;
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return language === "id" ? `${diffDays} hari lalu` : `${diffDays}d ago`;
 }
 
-function formatExactDate(isoString: string): string {
-  return new Date(isoString).toLocaleString("en-GB", {
+function formatExactDate(isoString: string, language: Language): string {
+  return new Date(isoString).toLocaleString(language === "id" ? "id-ID" : "en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -30,6 +31,7 @@ function formatExactDate(isoString: string): string {
 }
 
 function AlertsContent() {
+  const { t, language } = useLanguage();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
   const {
@@ -94,7 +96,7 @@ function AlertsContent() {
     return (
       <AppShell>
         <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
-          Loading…
+          {t("Loading…")}
         </p>
       </AppShell>
     );
@@ -108,18 +110,18 @@ function AlertsContent() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-[-0.045em] text-[var(--text-primary)] sm:text-2xl">
-                Alerts
+                {t("Alerts")}
               </h1>
               {unresolvedCount > 0 && (
                 <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
-                  {unresolvedCount} Unresolved
+                  {unresolvedCount} {t("Unresolved")}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-[var(--text-muted)]">Showing up to the latest 200 alerts. Filters apply to this recent history.</p>
+        <p className="text-sm text-[var(--text-muted)]">{t("Showing up to the latest 200 alerts. Filters apply to this recent history.")}</p>
         {/* Transient Notification Toast */}
         {toastMessage && (
           <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-500 shadow-lg animate-in fade-in slide-in-from-top-2">
@@ -146,7 +148,7 @@ function AlertsContent() {
                 htmlFor="filter-date"
                 className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
               >
-                Time Range
+                {t("Time Range")}
               </label>
               <select
                 id="filter-date"
@@ -154,9 +156,9 @@ function AlertsContent() {
                 onChange={(e) => setDateFilter(e.target.value as DateFilter)}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] focus:border-amber-500 focus:outline-none"
               >
-                <option value="all">All Dates</option>
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
+                <option value="all">{t("All Dates")}</option>
+                <option value="24h">{t("Last 24 Hours")}</option>
+                <option value="7d">{t("Last 7 Days")}</option>
               </select>
             </div>
 
@@ -166,7 +168,7 @@ function AlertsContent() {
                 htmlFor="filter-group"
                 className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
               >
-                Facility Group
+                {t("Facility Group")}
               </label>
               <select
                 id="filter-group"
@@ -174,7 +176,7 @@ function AlertsContent() {
                 onChange={(e) => setGroupFilter(e.target.value)}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] focus:border-amber-500 focus:outline-none"
               >
-                <option value="all">All Groups ({groups.length})</option>
+                <option value="all">{t("All Groups")} ({groups.length})</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.name}
@@ -189,7 +191,7 @@ function AlertsContent() {
                 htmlFor="filter-status"
                 className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
               >
-                Resolution Status
+                {t("Resolution Status")}
               </label>
               <select
                 id="filter-status"
@@ -197,16 +199,16 @@ function AlertsContent() {
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] focus:border-amber-500 focus:outline-none"
               >
-                <option value="unresolved">Unresolved Active Alerts</option>
-                <option value="resolved">Resolved History</option>
-                <option value="all">All Statuses</option>
+                <option value="unresolved">{t("Unresolved Active Alerts")}</option>
+                <option value="resolved">{t("Resolved History")}</option>
+                <option value="all">{t("All Statuses")}</option>
               </select>
             </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[11px] text-[var(--text-muted)] font-mono">
             <span>
-              Showing {filteredAlerts.length} of {alerts.length} total alerts
+              {t("Showing")} {filteredAlerts.length} {t("of")} {alerts.length} {t("total alerts")}
             </span>
             {(dateFilter !== "all" || groupFilter !== "all" || statusFilter !== "unresolved") && (
               <button
@@ -218,7 +220,7 @@ function AlertsContent() {
                 }}
                 className="text-amber-500 hover:underline"
               >
-                Reset Filters
+                {t("Reset Filters")}
               </button>
             )}
           </div>
@@ -231,7 +233,7 @@ function AlertsContent() {
               ✓
             </div>
             <h3 className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
-              No matching alerts
+              {t("No matching alerts")}
             </h3>
           </div>
         ) : (
@@ -246,8 +248,8 @@ function AlertsContent() {
                 ? (alert.actualValue - alert.expectedMax).toFixed(1)
                 : (alert.expectedMin - alert.actualValue).toFixed(1);
               const deviationText = isOverMax
-                ? `Spiked +${deviationAmps}A above expected bounds (${alert.actualValue}A vs max ${alert.expectedMax}A)`
-                : `Dropped -${deviationAmps}A below expected bounds (${alert.actualValue}A vs min ${alert.expectedMin}A)`;
+                ? `${t("Spiked")} +${deviationAmps}A ${t("above expected bounds")} (${alert.actualValue}A ${t("vs max")} ${alert.expectedMax}A)`
+                : `${t("Dropped")} -${deviationAmps}A ${t("below expected bounds")} (${alert.actualValue}A ${t("vs min")} ${alert.expectedMin}A)`;
 
               return (
                 <div
@@ -272,17 +274,17 @@ function AlertsContent() {
                               : "bg-red-500/10 text-red-500 border border-red-500/20"
                           }`}
                         >
-                          {device?.archivedAt ? "Archived" : alert.isResolved ? "✓ Resolved" : "Active Anomaly"}
+                          {t(device?.archivedAt ? "Archived" : alert.isResolved ? "✓ Resolved" : "Active Anomaly")}
                         </span>
                       </div>
 
                       {/* Timestamp */}
                       <div className="flex items-center gap-2 font-mono text-xs text-[var(--text-muted)]">
                         <span className="text-[var(--text-primary)] font-medium">
-                          {formatRelativeTime(alert.timestamp)}
+                          {formatRelativeTime(alert.timestamp, language)}
                         </span>
                         <span>·</span>
-                        <span>{formatExactDate(alert.timestamp)}</span>
+                        <span>{formatExactDate(alert.timestamp, language)}</span>
                       </div>
                     </div>
 
@@ -299,7 +301,7 @@ function AlertsContent() {
                               📍 {group.name}
                             </Link>
                           ) : (
-                            <span className="text-[var(--text-muted)]">Facility Group</span>
+                            <span className="text-[var(--text-muted)]">{t("Facility Group")}</span>
                           )}
                           <span className="text-[var(--text-muted)]">/</span>
                           {device && group ? (
@@ -311,7 +313,7 @@ function AlertsContent() {
                             </Link>
                           ) : (
                             <span className="font-semibold text-[var(--text-primary)]">
-                              {device?.name ?? "AC Circuit"}
+                              {device?.name ?? t("AC Circuit")}
                             </span>
                           )}
                           {device && (
@@ -331,7 +333,7 @@ function AlertsContent() {
                       <div className="lg:col-span-5 flex items-center justify-start lg:justify-end gap-3 rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-3">
                         <div className="text-left">
                           <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-muted)]">
-                            Measured Current
+                            {t("Measured Current")}
                           </p>
                           <p className="font-mono text-lg font-bold text-red-500">
                             {alert.actualValue.toFixed(2)} A
@@ -340,7 +342,7 @@ function AlertsContent() {
                         <div className="h-8 w-px bg-[var(--border)]" />
                         <div className="text-left">
                           <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-muted)]">
-                            Expected Safe Range
+                            {t("Expected Safe Range")}
                           </p>
                           <p className="font-mono text-xs font-semibold text-[var(--text-secondary)]">
                             {alert.expectedMin.toFixed(1)} A – {alert.expectedMax.toFixed(1)} A
@@ -350,7 +352,7 @@ function AlertsContent() {
                     </div>
 
                     {/* Card Bottom: Human-in-the-Loop Validation & Actions */}
-                    {device?.archivedAt ? <p className="mt-5 border-t border-[var(--border)] pt-4 text-sm text-[var(--text-secondary)]">Archived sensor history</p> : <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
+                    {device?.archivedAt ? <p className="mt-5 border-t border-[var(--border)] pt-4 text-sm text-[var(--text-secondary)]">{t("Archived sensor history")}</p> : <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-4">
                       {/* Only 2 Feedback Options: "Valid Issue" and "False Alarm" */}
                       <div className="flex flex-wrap items-center gap-2">
                         {alert.userFeedback === null ? (
@@ -360,14 +362,14 @@ function AlertsContent() {
                               onClick={() => { void submitAlertFeedback(alert.id, true).catch(() => {}); }}
                               className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-500 hover:border-emerald-500/40 transition"
                             >
-                              Valid Issue
+                              {t("Valid Issue")}
                             </button>
                             <button
                               type="button"
                               onClick={() => { void submitAlertFeedback(alert.id, false).catch(() => {}); }}
                               className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/40 transition"
                             >
-                              False Alarm
+                              {t("False Alarm")}
                             </button>
                           </div>
                         ) : (
@@ -379,14 +381,14 @@ function AlertsContent() {
                                   : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
                               }`}
                             >
-                              {alert.userFeedback === true ? "✓ Feedback: Valid Issue" : "✕ Feedback: False Alarm"}
+                              {t(alert.userFeedback === true ? "✓ Feedback: Valid Issue" : "✕ Feedback: False Alarm")}
                             </span>
                             <button
                               type="button"
                               onClick={() => { void submitAlertFeedback(alert.id, !alert.userFeedback).catch(() => {}); }}
                               className="font-mono text-[10px] text-[var(--text-muted)] hover:text-amber-500 underline"
                             >
-                              Change
+                              {t("Change")}
                             </button>
                           </div>
                         )}
@@ -399,16 +401,16 @@ function AlertsContent() {
                             type="button"
                             onClick={async () => {
                               try { await resolveAlert(alert.id); } catch { return; }
-                              showToast(`Alert #${alert.id.slice(-4)} marked as resolved.`);
+                              showToast(t("Alert #{id} marked as resolved.").replace("{id}", alert.id.slice(-4)));
                             }}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-[#20170a] hover:bg-amber-400 transition"
                           >
                             <span>✓</span>
-                            <span>Mark as Resolved</span>
+                            <span>{t("Mark as Resolved")}</span>
                           </button>
                         ) : (
                           <span className="font-mono text-xs text-emerald-500">
-                            Resolved
+                            {t("Resolved")}
                           </span>
                         )}
                       </div>
@@ -430,7 +432,7 @@ export default function AlertsPage() {
       fallback={
         <AppShell>
           <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
-            Loading…
+            <T>Loading…</T>
           </p>
         </AppShell>
       }

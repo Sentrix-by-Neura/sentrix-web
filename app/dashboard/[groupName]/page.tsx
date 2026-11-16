@@ -7,14 +7,16 @@ import { useSentrix, findGroup, hasRecentContact, type Device } from "../../lib/
 import { scanSentrixHardware, type ScanResult } from "../../lib/sentrix-bluetooth";
 import { BleOnboardingModal } from "./ble-onboarding-modal";
 import { useConfirm } from "../../components/confirm-modal";
+import { T, useLanguage } from "../../lib/language-context";
 
 function StatusBadge({ device }: { device: Device }) {
-  if (device.archivedAt) return <span className="text-xs text-[var(--text-secondary)]">Transferred — history only</span>;
+  const { t } = useLanguage();
+  if (device.archivedAt) return <span className="text-xs text-[var(--text-secondary)]">{t("Transferred — history only")}</span>;
   if (hasRecentContact(device) && device.status === "ACTIVE") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
-        Monitoring active
+        {t("Monitoring active")}
       </span>
     );
   }
@@ -23,7 +25,7 @@ function StatusBadge({ device }: { device: Device }) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-amber-600 dark:text-amber-400">
         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-        Calibrating
+        {t("Calibrating")}
       </span>
     );
   }
@@ -31,12 +33,13 @@ function StatusBadge({ device }: { device: Device }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-hover)] px-2.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[var(--text-muted)]">
       <span className="h-1.5 w-1.5 rounded-full bg-neutral-400" />
-      Unavailable
+      {t("Unavailable")}
     </span>
   );
 }
 
 function LocationDetailContent() {
+  const { t } = useLanguage();
   const params = useParams();
   const groupSlug = typeof params?.groupName === "string" ? params.groupName : "";
   const { ready, groups, devices, deleteDevice } = useSentrix();
@@ -51,7 +54,7 @@ function LocationDetailContent() {
   if (!ready) {
     return (
       <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
-        Loading…
+        {t("Loading…")}
       </p>
     );
   }
@@ -61,15 +64,15 @@ function LocationDetailContent() {
   if (!group) {
     return (
       <div className="py-24 text-center">
-        <h1 className="text-lg font-semibold text-[var(--text-primary)]">Location Not Found</h1>
+        <h1 className="text-lg font-semibold text-[var(--text-primary)]">{t("Location Not Found")}</h1>
         <p className="mb-4 mt-1 text-xs text-[var(--text-muted)]">
-          No location group found matching “{groupSlug}”.
+          {t("No location group found matching")} “{groupSlug}”.
         </p>
         <Link
           href="/dashboard"
           className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
         >
-          ← Return to Global Overview
+          {t("← Return to Global Overview")}
         </Link>
       </div>
     );
@@ -80,9 +83,9 @@ function LocationDetailContent() {
   return (
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+      <nav aria-label={t("Breadcrumb")} className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
         <Link href="/dashboard" className="transition hover:text-[var(--text-primary)]">
-          Dashboard
+          {t("Dashboard")}
         </Link>
         <span>/</span>
         <span className="font-medium text-[var(--text-primary)]">{group.name}</span>
@@ -100,15 +103,15 @@ function LocationDetailContent() {
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-amber-500 px-4 text-xs font-semibold text-[#20170a] shadow-sm shadow-amber-500/20 transition hover:bg-amber-400"
         >
           <span aria-hidden="true" className="text-base font-bold leading-none">+</span>
-          Add Device
+          {t("Add Device")}
         </button>
       </div>
 
       {/* Sensors Card Grid Section */}
-      <section aria-label="Sensors" className="space-y-4">
+      <section aria-label={t("Sensors")} className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <h2 className="eyebrow">Sensors</h2>
+            <h2 className="eyebrow">{t("Sensors")}</h2>
             <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
               {groupDevices.length.toString().padStart(2, "0")}
             </span>
@@ -121,14 +124,14 @@ function LocationDetailContent() {
               ⚡
             </div>
             <h3 className="mt-4 text-sm font-semibold text-[var(--text-primary)]">
-              No sensors connected
+              {t("No sensors connected")}
             </h3>
             <button
               type="button"
               onClick={openBleModal}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-[#20170a] hover:bg-amber-400"
             >
-              + Add First Device
+              {t("+ Add First Device")}
             </button>
           </div>
         ) : (
@@ -158,8 +161,8 @@ function LocationDetailContent() {
                     <button
                       type="button"
                       id={`delete-device-${device.id}`}
-                      title={device.archivedAt ? `Delete archived history for ${device.name}` : `Delete ${device.name}`}
-                      aria-label={device.archivedAt ? `Delete archived history for ${device.name}` : `Delete ${device.name}`}
+                      title={`${t(device.archivedAt ? "Delete archived history for" : "Delete")} ${device.name}`}
+                      aria-label={`${t(device.archivedAt ? "Delete archived history for" : "Delete")} ${device.name}`}
                       onClick={async () => {
                         const ok = await confirm({
                           title: device.archivedAt ? "Delete Archived History" : "Delete Sensor",
@@ -202,7 +205,7 @@ export default function GroupLocationPage() {
     <Suspense
       fallback={
         <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
-          Loading location…
+          <T>Loading location…</T>
         </p>
       }
     >

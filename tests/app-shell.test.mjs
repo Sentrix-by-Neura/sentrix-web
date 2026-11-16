@@ -19,6 +19,8 @@ function renderShell(session) {
   runInNewContext(outputText, {
     exports,
     require: name => {
+      if (name.endsWith("language-context")) return { useLanguage: () => ({ t: text => text, language: "en" }) };
+      if (name.endsWith("language-toggle")) return { LanguageToggle: () => null };
       if (name === "react" || name === "react/jsx-runtime") return require(name);
       if (name === "next/link") return { default: Link };
       if (name === "next/navigation") return { useRouter: () => ({ replace() {} }), usePathname: () => "/dashboard" };

@@ -27,6 +27,7 @@ function fixture(zone = "Asia/Jakarta") {
     document: { body: { appendChild() {} }, createElement() { return { click() { downloads.push({ href: this.href, download: this.download }); }, remove() {} }; } },
     setTimeout: fn => { timers.push(fn); },
     require: name => {
+      if (name.endsWith("language-context")) return { useLanguage: () => ({ t: text => text, language: "en" }) };
       if (name === "react") return react;
       if (name.endsWith(".module.css")) return { default: {} };
       if (name.endsWith("sentrix-api")) return { telemetryCsv: (...args) => new Promise((resolve, reject) => calls.push({ args, resolve, reject })) };

@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { useTelemetryHistory, type TelemetryPoint, type TelemetryRange } from "../../../lib/sentrix-store";
 import styles from "./sensor-detail.module.css";
+import { useLanguage } from "../../../lib/language-context";
 
 interface TelemetryChartProps {
   deviceId: string;
@@ -47,11 +48,6 @@ function wheelPixels(delta: number, mode: number, pageHeight: number) {
   return delta * (mode === 1 ? 16 : mode === 2 ? pageHeight : 1);
 }
 
-const windowDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
-const axisDate = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
-const axisDateTime = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-const axisTime = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
-
 type ChartPoint = {
   time: number; timestamp?: string; timeLabel?: string; rmsCurrent: number | null;
   bounds: [number, number] | null; lowerBound: number | null; upperBound: number | null;
@@ -85,6 +81,7 @@ interface CustomTooltipProps {
 }
 
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
+  const { t, language } = useLanguage();
   if (!active || !payload || !payload.length) return null;
   const data = payload[0]?.payload;
   if (!data || data.rmsCurrent === null) return null;
@@ -94,16 +91,26 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
   return (
     <div className={styles.tooltip}>
-      <p>{data.timeLabel}{data.isAnomaly ? " (anomaly)" : ""}</p>
+      <p>{new Date(data.time).toLocaleString(language === "id" ? "id-ID" : "en-GB")}{data.isAnomaly ? ` (${t("anomaly")})` : ""}</p>
       <dl>
-        <dt>Current</dt><dd>{data.rmsCurrent.toFixed(2)} A</dd>
-        <dt>Safe range</dt><dd>{safeRange}</dd>
+        <dt>{t("Current")}</dt><dd>{data.rmsCurrent.toFixed(2)} A</dd>
+        <dt>{t("Safe range")}</dt><dd>{t(safeRange)}</dd>
       </dl>
     </div>
   );
 }
 
 export function TelemetryChart({ deviceId }: TelemetryChartProps) {
+  const { t, language } = useLanguage();
+  const { windowDate, axisDate, axisDateTime, axisTime } = useMemo(() => {
+    const locale = language === "id" ? "id-ID" : "en-GB";
+    return {
+      windowDate: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
+      axisDate: new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }),
+      axisDateTime: new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+      axisTime: new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }),
+    };
+  }, [language]);
   const [viewport, setViewport] = useState<Viewport>({ end: null, zoomSpan: null });
   const [currentDomain, setCurrentDomain] = useState<CurrentDomain | null>(null);
   const [previewEnd, setPreviewEnd] = useState<number | null>(null);
@@ -224,18 +231,18 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   }, []);
 
   return (
-    <section aria-label="Current history" className={`${styles.panel} space-y-5`}>
+    <section aria-label={t("Current history")} className={`${styles.panel} space-y-5`}>
       <div className={styles.sectionHeader}>
-        <h2>Current history</h2>
+        <h2>{t("Current history")}</h2>
         {(viewport.zoomSpan !== null || currentDomain !== null) && (
-          <button type="button" className={styles.control} onClick={resetZoom}>Reset zoom</button>
+          <button type="button" className={styles.control} onClick={resetZoom}>{t("Reset zoom")}</button>
         )}
       </div>
 
       <div className={styles.legend}>
-        <span><i aria-hidden="true" className={styles.currentKey} />Current</span>
-        <span><i aria-hidden="true" className={styles.rangeKey} />Safe range</span>
-        <span><i aria-hidden="true" className={styles.anomalyKey} />Anomaly</span>
+        <span><i aria-hidden="true" className={styles.currentKey} />{t("Current")}</span>
+        <span><i aria-hidden="true" className={styles.rangeKey} />{t("Safe range")}</span>
+        <span><i aria-hidden="true" className={styles.anomalyKey} />{t("Anomaly")}</span>
       </div>
 
       <div
@@ -351,7 +358,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
         )}
         {visiblePoints.length === 0 && previewEnd === null && (
           <div role="status" className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-[var(--text-secondary)]">
-            {loading ? "Loading current history…" : error ? "Current history is unavailable." : "No readings in this window."}
+            {t(loading ? "Loading current history…" : error ? "Current history is unavailable." : "No readings in this window.")}
           </div>
         )}
       </div>
@@ -360,11 +367,11 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
           {windowDate.formatRange(displayedStart, displayedEnd)}
         </p>
       )}
-      {loading && visiblePoints.length > 0 && <p role="status" className={styles.message}>Loading current history…</p>}
+      {loading && visiblePoints.length > 0 && <p role="status" className={styles.message}>{t("Loading current history…")}</p>}
       {error && (
         <div className={styles.message}>
-          <p role="status">Could not refresh current history. {error}</p>
-          <button type="button" className={styles.control} onClick={retry}>Retry</button>
+          <p role="status">{t("Could not refresh current history.")} {t(error)}</p>
+          <button type="button" className={styles.control} onClick={retry}>{t("Retry")}</button>
         </div>
       )}
     </section>

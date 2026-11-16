@@ -12,8 +12,11 @@ import { AccountDropdown } from "./components/account-dropdown";
 import { useSentrix } from "./lib/sentrix-store";
 import { supabase } from "./lib/supabase-browser";
 import { useDisclosure } from "./lib/use-disclosure";
+import { useLanguage } from "./lib/language-context";
+import { LanguageToggle } from "./components/language-toggle";
 
 export default function Home() {
+  const { t } = useLanguage();
   const landingRef = useRef<HTMLElement>(null);
   useLandingMotion(landingRef);
   const { open: mobileMenuOpen, setOpen: setMobileMenuOpen, triggerRef, panelRef } = useDisclosure();
@@ -41,17 +44,18 @@ export default function Home() {
 
           <nav data-landing-intro className="hidden items-center gap-6 xl:gap-8 text-sm xl:text-base font-medium text-[var(--text-secondary)] lg:flex">
             <a className="whitespace-nowrap transition hover:text-[var(--text-primary)]" href="#overview">
-              Overview
+              {t("Overview")}
             </a>
             <a className="whitespace-nowrap transition hover:text-[var(--text-primary)]" href="#how-it-works">
-              How It Works
+              {t("How It Works")}
             </a>
             <a className="whitespace-nowrap transition hover:text-[var(--text-primary)]" href="#specifications">
-              System Specs
+              {t("System Specs")}
             </a>
           </nav>
 
           <div data-landing-intro className="flex shrink-0 items-center gap-2 lg:gap-3 xl:gap-4">
+            <LanguageToggle />
             {user ? (
               <AccountDropdown
                 key={user.id}
@@ -64,7 +68,7 @@ export default function Home() {
                 href="/login"
                 className="hidden whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] lg:inline-flex xl:px-4 xl:text-base"
               >
-                Log in
+                {t("Log in")}
               </Link>
             )}
             <button
@@ -73,7 +77,7 @@ export default function Home() {
               ref={triggerRef}
               onClick={() => setMobileMenuOpen((open) => !open)}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-amber-500/40 lg:hidden"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-label={t(mobileMenuOpen ? "Close menu" : "Open menu")}
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
@@ -101,21 +105,21 @@ export default function Home() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-lg px-3.5 py-2.5 text-base font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 transition"
               >
-                Overview
+                {t("Overview")}
               </a>
               <a
                 href="#how-it-works"
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-lg px-3.5 py-2.5 text-base font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 transition"
               >
-                How It Works
+                {t("How It Works")}
               </a>
               <a
                 href="#specifications"
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-lg px-3.5 py-2.5 text-base font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 transition"
               >
-                System Specs
+                {t("System Specs")}
               </a>
               {!signedIn && (
                 <div className="my-2 border-t border-[var(--border)] pt-3">
@@ -124,7 +128,7 @@ export default function Home() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)]"
                   >
-                    Log In
+                    {t("Log In")}
                   </Link>
                 </div>
               )}
@@ -169,13 +173,11 @@ export default function Home() {
 
         <div className="mx-auto w-full max-w-[1280px]">
           <h1 data-landing-intro className="max-w-[14ch] text-balance text-[clamp(2.75rem,7vw,6rem)] font-semibold leading-[0.99] tracking-[-0.055em]">
-            Catch AC faults early.
+            {t("Catch AC faults early.")}
           </h1>
 
           <p data-landing-intro className="mt-6 max-w-[54ch] text-base leading-relaxed text-[var(--text-secondary)] sm:mt-8 sm:text-xl">
-            Clamp our non-invasive current sensor onto your AC distribution panel.
-            Sentrix learns each unit&apos;s normal 7-day electrical rhythm in Amps and alerts your
-            maintenance team the moment power draw drifts outside safe bounds.
+            {t("Clamp our non-invasive current sensor onto your AC distribution panel. Sentrix learns each unit's normal 7-day electrical rhythm in Amps and alerts your maintenance team the moment power draw drifts outside safe bounds.")}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -184,28 +186,28 @@ export default function Home() {
               href={signedIn ? "/dashboard" : "/signup"}
               className="inline-flex min-h-12 items-center justify-center rounded-lg bg-amber-500 px-6 py-3 text-center text-base font-semibold text-[#17140d] transition-colors hover:bg-amber-400"
             >
-              {signedIn ? "Open Dashboard →" : "Start Monitoring Your AC Fleet →"}
+              {t(signedIn ? "Open Dashboard →" : "Start Monitoring Your AC Fleet →")}
             </Link>
             <a
               data-landing-intro
               href="#how-it-works"
               className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-center text-base font-semibold transition-colors hover:bg-[var(--surface-hover)]"
             >
-              See How It Works
+              {t("See How It Works")}
             </a>
           </div>
 
           <dl className="mt-12 grid max-w-2xl grid-cols-3 items-start gap-3 sm:mt-16 sm:gap-8">
             <div data-landing-intro className="flex flex-col-reverse gap-1.5">
-              <dt className="text-sm leading-snug text-[var(--text-secondary)]">RMS current sampling</dt>
-              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">1 min</dd>
+              <dt className="text-sm leading-snug text-[var(--text-secondary)]">{t("RMS current sampling")}</dt>
+              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">{t("1 min")}</dd>
             </div>
             <div data-landing-intro className="flex flex-col-reverse gap-1.5">
-              <dt className="text-sm leading-snug text-[var(--text-secondary)]">Baseline calibration</dt>
-              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">7 days</dd>
+              <dt className="text-sm leading-snug text-[var(--text-secondary)]">{t("Baseline calibration")}</dt>
+              <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">{t("7 days")}</dd>
             </div>
             <div data-landing-intro className="flex flex-col-reverse gap-1.5">
-              <dt className="text-sm leading-snug text-[var(--text-secondary)]">Wires to cut</dt>
+              <dt className="text-sm leading-snug text-[var(--text-secondary)]">{t("Wires to cut")}</dt>
               <dd className="text-2xl font-semibold tracking-tight sm:text-4xl">0</dd>
             </div>
           </dl>
@@ -218,16 +220,14 @@ export default function Home() {
         <div className="mx-auto max-w-[1280px]">
           <div data-landing-circuit-anchor className="max-w-2xl">
             <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
-              START WHERE THE ENERGY GOES
+              {t("START WHERE THE ENERGY GOES")}
             </p>
             <h2 data-landing-reveal className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
-              Smarter air conditioning.
-              <span className="block text-[var(--text-secondary)] font-normal">A practical climate win.</span>
+              {t("Smarter air conditioning.")}
+              <span className="block text-[var(--text-secondary)] font-normal">{t("A practical climate win.")}</span>
             </h2>
             <p data-landing-reveal className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
-              We&apos;re deliberately beginning with air conditioning—a practical way to focus our
-              team and climate impact. The broader vision is a flexible platform that can
-              support more machine types as Sentrix develops.
+              {t("We're deliberately beginning with air conditioning—a practical way to focus our team and climate impact. The broader vision is a flexible platform that can support more machine types as Sentrix develops.")}
             </p>
           </div>
 
@@ -242,22 +242,21 @@ export default function Home() {
                     </svg>
                   </div>
                   <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                    01 / CONNECT
+                    {t("01 / CONNECT")}
                   </span>
                 </div>
 
                 <h3 className="mt-6 text-xl font-bold text-[var(--text-primary)]">
-                  Start with the AC you have
+                  {t("Start with the AC you have")}
                 </h3>
                 <p className="mt-2.5 text-base leading-relaxed text-[var(--text-secondary)]">
-                  Air conditioners are our first use case. We&apos;re keeping the initial product focused
-                  while building a foundation that can grow to other machine types over time.
+                  {t("Air conditioners are our first use case. We're keeping the initial product focused while building a foundation that can grow to other machine types over time.")}
                 </p>
               </div>
 
               <div className="mt-6 border-t border-[var(--border)] pt-4 font-mono text-sm font-medium text-amber-500 flex items-center gap-2">
                 <span className="text-amber-500 font-bold">↗</span>
-                Phase 01 · Air conditioning
+                {t("Phase 01 · Air conditioning")}
               </div>
             </article>
 
@@ -271,22 +270,21 @@ export default function Home() {
                     </svg>
                   </div>
                   <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                    02 / PREDICT
+                    {t("02 / PREDICT")}
                   </span>
                 </div>
 
                 <h3 className="mt-6 text-xl font-bold text-[var(--text-primary)]">
-                  Find cooling that costs more
+                  {t("Find cooling that costs more")}
                 </h3>
                 <p className="mt-2.5 text-base leading-relaxed text-[var(--text-secondary)]">
-                  Compare each unit&apos;s operating pattern over time to flag unusual energy draw,
-                  extended runtimes, and potential maintenance needs.
+                  {t("Compare each unit's operating pattern over time to flag unusual energy draw, extended runtimes, and potential maintenance needs.")}
                 </p>
               </div>
 
               <div className="mt-6 border-t border-[var(--border)] pt-4 font-mono text-sm font-medium text-amber-500 flex items-center gap-2">
                 <span className="text-amber-500 font-bold">↗</span>
-                Anomalies worth investigating
+                {t("Anomalies worth investigating")}
               </div>
             </article>
 
@@ -303,22 +301,21 @@ export default function Home() {
                     </svg>
                   </div>
                   <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                    03 / IMPROVE
+                    {t("03 / IMPROVE")}
                   </span>
                 </div>
 
                 <h3 className="mt-6 text-xl font-bold text-[var(--text-primary)]">
-                  Connect efficiency to climate
+                  {t("Connect efficiency to climate")}
                 </h3>
                 <p className="mt-2.5 text-base leading-relaxed text-[var(--text-secondary)]">
-                  Turn measured energy changes into an estimated emissions impact using a grid factor
-                  your team can verify and update.
+                  {t("Turn measured energy changes into an estimated emissions impact using a grid factor your team can verify and update.")}
                 </p>
               </div>
 
               <div className="mt-6 border-t border-[var(--border)] pt-4 font-mono text-sm font-medium text-amber-500 flex items-center gap-2">
                 <span className="text-amber-500 font-bold">↗</span>
-                Transparent, configurable estimates
+                {t("Transparent, configurable estimates")}
               </div>
             </article>
           </div>
@@ -331,14 +328,13 @@ export default function Home() {
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
             <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
-              HARDWARE DEPLOYMENT
+              {t("HARDWARE DEPLOYMENT")}
             </p>
             <h2 data-landing-reveal className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-              Physical Hardware in the Field
+              {t("Physical Hardware in the Field")}
             </h2>
             <p data-landing-reveal className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
-              Non-invasive clamp sensing, infrared remote capture, and local mesh relay engineered
-              for clean industrial installation into existing electrical panels.
+              {t("Non-invasive clamp sensing, infrared remote capture, and local mesh relay engineered for clean industrial installation into existing electrical panels.")}
             </p>
           </div>
 
@@ -350,15 +346,15 @@ export default function Home() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs uppercase tracking-wider text-amber-400 font-bold">
-                        SENTRIX KIT
+                        {t("SENTRIX KIT")}
                       </span>
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-400">
                       
-                        Prototype
+                        {t("Prototype")}
                       </span>
                     </div>
                     <p className="mt-0.5 font-mono text-[11px] text-stone-400">
-                      Non-invasive edge node hardware
+                      {t("Non-invasive edge node hardware")}
                     </p>
                   </div>
                 </div>
@@ -370,7 +366,7 @@ export default function Home() {
                       src={prototypeImageSrc}
                       fill
                       sizes="(min-width: 1400px) 580px, (min-width: 1024px) 50vw, 100vw"
-                      alt="Sentrix ESP32 IoT Sensor Node Prototype"
+                      alt={t("Sentrix ESP32 IoT Sensor Node Prototype")}
                       onError={() => setPrototypeImageSrc("/images/esp32-sensor-prototype.jpg")}
                       className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     />
@@ -387,7 +383,7 @@ export default function Home() {
                   {/* Technical Spec Caption under photo (outside image to avoid obscuring hardware on mobile) */}
                   <div className="mt-2.5 flex items-center justify-between gap-2 px-1 font-mono text-xs">
                     <span className="text-stone-300 font-medium truncate">
-                      Sentrix Edge Node Assembly
+                      {t("Sentrix Edge Node Assembly")}
                     </span>
                     <span className="shrink-0 rounded bg-stone-800/80 px-2 py-0.5 text-[10px] sm:text-xs text-amber-400 font-semibold uppercase tracking-wider">
                       ESP-WROOM-32
@@ -402,7 +398,7 @@ export default function Home() {
                       01
                     </span>
                     <p className="font-mono text-xs sm:text-sm text-stone-200">
-                      SCT-013 Clamp <span className="text-stone-400 font-normal">(Up to 100A AC — Non-Invasive)</span>
+                      {t("SCT-013 Clamp")} <span className="text-stone-400 font-normal">{t("(Up to 100A AC — Non-Invasive)")}</span>
                     </p>
                   </div>
 
@@ -411,7 +407,7 @@ export default function Home() {
                       02
                     </span>
                     <p className="font-mono text-xs sm:text-sm text-stone-200">
-                      Infrared (IR) Receiver <span className="text-stone-400 font-normal">(Captures AC Remote Setpoint °C)</span>
+                      {t("Infrared (IR) Receiver")} <span className="text-stone-400 font-normal">{t("(Captures AC Remote Setpoint °C)")}</span>
                     </p>
                   </div>
 
@@ -420,7 +416,7 @@ export default function Home() {
                       03
                     </span>
                     <p className="font-mono text-sm text-stone-200">
-                      ESP32 Mesh Node <span className="text-stone-400 font-normal">(NimBLE Onboarding + Local Wi-Fi Relay)</span>
+                      {t("ESP32 Mesh Node")} <span className="text-stone-400 font-normal">{t("(NimBLE Onboarding + Local Wi-Fi Relay)")}</span>
                     </p>
                   </div>
                 </div>
@@ -437,11 +433,10 @@ export default function Home() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                      Snap Clamp onto AC Breaker Wire
+                      {t("Snap Clamp onto AC Breaker Wire")}
                     </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
-                      Clamp the SCT-013 split-core sensor around the single live MCB wire.
-                      Zero wire cutting, zero rewiring, and zero electrical panel shutdown required.
+                      {t("Clamp the SCT-013 split-core sensor around the single live MCB wire. Zero wire cutting, zero rewiring, and zero electrical panel shutdown required.")}
                     </p>
                   </div>
                 </div>
@@ -453,11 +448,10 @@ export default function Home() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                      Pair via Phone Bluetooth (BLE)
+                      {t("Pair via Phone Bluetooth (BLE)")}
                     </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
-                      Open the Sentrix onboarding tool, scan the node&apos;s Bluetooth MAC sticker,
-                      enter the secure 6-digit pairing PIN, and push local Wi-Fi credentials.
+                      {t("Open the Sentrix onboarding tool, scan the node's Bluetooth MAC sticker, enter the secure 6-digit pairing PIN, and push local Wi-Fi credentials.")}
                     </p>
                   </div>
                 </div>
@@ -469,11 +463,10 @@ export default function Home() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                      7-Day Silent Baseline Calibration
+                      {t("7-Day Silent Baseline Calibration")}
                     </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
-                      For 168 hours, Sentrix continuously records 1-minute RMS current alongside target AC
-                      temperatures, automatically fitting an hourly Auto-ARIMA diurnal profile.
+                      {t("For 168 hours, Sentrix continuously records 1-minute RMS current alongside target AC temperatures, automatically fitting an hourly Auto-ARIMA diurnal profile.")}
                     </p>
                   </div>
                 </div>
@@ -485,11 +478,10 @@ export default function Home() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                      Live Safe-Zone Anomaly Alerts
+                      {t("Live Safe-Zone Anomaly Alerts")}
                     </h3>
                     <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">
-                      Receive immediate dashboard warnings and push alerts the moment dirty filters,
-                      coil icing, or failing compressor motor windings drive current above safe bounds.
+                      {t("Receive immediate dashboard warnings and push alerts the moment dirty filters, coil icing, or failing compressor motor windings drive current above safe bounds.")}
                     </p>
                   </div>
                 </div>
@@ -507,14 +499,13 @@ export default function Home() {
         <div className="mx-auto max-w-[1280px]">
           <div className="max-w-2xl">
             <p data-landing-reveal className="font-mono text-xs font-semibold uppercase tracking-wider text-amber-500">
-              TECHNICAL DATASHEET
+              {t("TECHNICAL DATASHEET")}
             </p>
             <h2 data-landing-reveal className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-              Industrial Hardware &amp; Field Installation
+              {t("Industrial Hardware & Field Installation")}
             </h2>
             <p data-landing-reveal className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
-              Complete engineering specifications for the SCT-013 current conditioning stack,
-              ESP-Mesh architecture, and Auto-ARIMA statistical bounds.
+              {t("Complete engineering specifications for the SCT-013 current conditioning stack, ESP-Mesh architecture, and Auto-ARIMA statistical bounds.")}
             </p>
           </div>
 
@@ -525,48 +516,48 @@ export default function Home() {
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--canvas)]">
                     <th className="py-4 px-5 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                      System Parameter
+                      {t("System Parameter")}
                     </th>
                     <th className="py-4 px-5 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                      Engineering Specification
+                      {t("Engineering Specification")}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   <tr className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] transition">
-                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">Current Sensor</td>
+                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">{t("Current Sensor")}</td>
                     <td className="py-3.5 px-5 font-mono text-sm text-[var(--text-secondary)]">
-                      SCT-013 Split-Core CT (0 - 100A AC, Non-Invasive)
+                      {t("SCT-013 Split-Core CT (0 - 100A AC, Non-Invasive)")}
                     </td>
                   </tr>
                   <tr className="bg-[var(--surface-hover)]/40 hover:bg-[var(--surface-hover)] transition">
-                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">Edge Controller</td>
+                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">{t("Edge Controller")}</td>
                     <td className="py-3.5 px-5 font-mono text-sm text-[var(--text-secondary)]">
-                      ESP32 ADC + 1.65V DC Bias Conditioning + HLK-PM01 AC-DC
+                      {t("ESP32 ADC + 1.65V DC Bias Conditioning + HLK-PM01 AC-DC")}
                     </td>
                   </tr>
                   <tr className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] transition">
-                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">AC Setpoint Sensor</td>
+                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">{t("AC Setpoint Sensor")}</td>
                     <td className="py-3.5 px-5 font-mono text-sm text-[var(--text-secondary)]">
-                      Infrared (IR) Remote Code Interceptor (38kHz)
+                      {t("Infrared (IR) Remote Code Interceptor (38kHz)")}
                     </td>
                   </tr>
                   <tr className="bg-[var(--surface-hover)]/40 hover:bg-[var(--surface-hover)] transition">
-                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">Local Networking</td>
+                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">{t("Local Networking")}</td>
                     <td className="py-3.5 px-5 font-mono text-sm text-[var(--text-secondary)]">
-                      ESP-Mesh Auto-Root Election + Bluetooth LE Provisioning
+                      {t("ESP-Mesh Auto-Root Election + Bluetooth LE Provisioning")}
                     </td>
                   </tr>
                   <tr className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] transition">
-                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">Forecasting Engine</td>
+                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">{t("Forecasting Engine")}</td>
                     <td className="py-3.5 px-5 font-mono text-sm text-[var(--text-secondary)]">
-                      Auto-ARIMA (168-Hour Calibration, 24h Diurnal Seasonality)
+                      {t("Auto-ARIMA (168-Hour Calibration, 24h Diurnal Seasonality)")}
                     </td>
                   </tr>
                   <tr className="bg-[var(--surface-hover)]/40 hover:bg-[var(--surface-hover)] transition">
-                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">Sampling &amp; Alerts</td>
+                    <td className="py-3.5 px-5 font-medium text-[var(--text-primary)]">{t("Sampling & Alerts")}</td>
                     <td className="py-3.5 px-5 font-mono text-sm text-[var(--text-secondary)]">
-                      1-Minute RMS Intervals · Web Push &amp; Dashboard Feed
+                      {t("1-Minute RMS Intervals · Web Push & Dashboard Feed")}
                     </td>
                   </tr>
                 </tbody>
@@ -578,10 +569,10 @@ export default function Home() {
               <div>
                 <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
                   <h3 className="text-base font-bold text-[var(--text-primary)]">
-                    MCB Breaker Installation Rule
+                    {t("MCB Breaker Installation Rule")}
                   </h3>
                   <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-500">
-                    SINGLE WIRE ONLY
+                    {t("SINGLE WIRE ONLY")}
                   </span>
                 </div>
 
@@ -594,11 +585,11 @@ export default function Home() {
 
                     {/* Neutral Wire (Bypassing clamp) */}
                     <path d="M 120 180 L 120 20" stroke="#38bdf8" strokeWidth="3" />
-                    <text x="130" y="110" fill="#38bdf8" fontSize="9" fontFamily="monospace">NEUTRAL</text>
+                    <text x="130" y="110" fill="#38bdf8" fontSize="9" fontFamily="monospace">{t("NEUTRAL")}</text>
 
                     {/* Live Wire (Passing THROUGH clamp) */}
                     <path d="M 65 180 L 65 20" stroke="#f59e0b" strokeWidth="4" />
-                    <text x="25" y="110" fill="#f59e0b" fontSize="9" fontFamily="monospace">LIVE</text>
+                    <text x="25" y="110" fill="#f59e0b" fontSize="9" fontFamily="monospace">{t("LIVE")}</text>
 
                     {/* SCT-013 Clamp Enclosing Live Wire Only */}
                     <rect x="35" y="70" width="60" height="60" rx="8" fill="#20221c" stroke="#10b981" strokeWidth="2.5" />
@@ -611,19 +602,19 @@ export default function Home() {
 
                     {/* Explanatory callout */}
                     <rect x="180" y="50" width="190" height="95" rx="6" fill="#191d16" stroke="#343a2c" />
-                    <text x="195" y="75" fill="#10b981" fontSize="11" fontFamily="monospace" fontWeight="bold">CRITICAL PRINCIPLE:</text>
-                    <text x="195" y="95" fill="#e5e5dc" fontSize="10">Clamp around 1 wire</text>
-                    <text x="195" y="110" fill="#e5e5dc" fontSize="10">(Live or Neutral),</text>
-                    <text x="195" y="125" fill="#ef4444" fontSize="10" fontWeight="bold">never both together.</text>
+                    <text x="195" y="75" fill="#10b981" fontSize="11" fontFamily="monospace" fontWeight="bold">{t("CRITICAL PRINCIPLE:")}</text>
+                    <text x="195" y="95" fill="#e5e5dc" fontSize="10">{t("Clamp around 1 wire")}</text>
+                    <text x="195" y="110" fill="#e5e5dc" fontSize="10">{t("(Live or Neutral),")}</text>
+                    <text x="195" y="125" fill="#ef4444" fontSize="10" fontWeight="bold">{t("never both together.")}</text>
                   </svg>
                 </div>
 
                 <div className="mt-4 rounded-lg bg-[var(--canvas)] p-3 border border-[var(--border)] text-sm">
                   <p className="font-semibold text-emerald-500">
-                    Golden Rule of AC Current Sensing:
+                    {t("Golden Rule of AC Current Sensing:")}
                   </p>
                   <p className="mt-1 text-sm text-[var(--text-secondary)] leading-relaxed">
-                    Always clamp around a single phase conductor (Live or Neutral). Clamping both conductors cancels out the magnetic flux, causing a zero current reading.
+                    {t("Always clamp around a single phase conductor (Live or Neutral). Clamping both conductors cancels out the magnetic flux, causing a zero current reading.")}
                   </p>
                 </div>
               </div>
@@ -634,10 +625,10 @@ export default function Home() {
           <div data-landing-circuit-anchor className="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
             <div className="max-w-2xl text-center lg:text-left">
               <h3 data-landing-reveal className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-                Ready to audit your facility AC circuits?
+                {t("Ready to audit your facility AC circuits?")}
               </h3>
               <p data-landing-reveal className="mt-2 text-base sm:text-lg text-[var(--text-secondary)]">
-                Deploy Sentrix non-invasive monitoring across your cooling panels in under 15 minutes.
+                {t("Deploy Sentrix non-invasive monitoring across your cooling panels in under 15 minutes.")}
               </p>
             </div>
 
@@ -646,13 +637,13 @@ export default function Home() {
                 href="/signup"
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-amber-500 px-6 text-base font-semibold text-[#17140d] shadow-md shadow-amber-500/20 transition hover:bg-amber-400 text-center"
               >
-                Create Facility Workspace →
+                {t("Create Facility Workspace →")}
               </Link>}
               {signedIn && <Link
                 href="/dashboard"
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--canvas)] px-6 text-base font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-hover)] text-center"
               >
-                Open Live Dashboard
+                {t("Open Live Dashboard")}
               </Link>}
             </div>
           </div>
@@ -666,28 +657,28 @@ export default function Home() {
             <div data-landing-reveal data-landing-circuit-anchor>
               <Brand />
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">
-                Commercial AC electrical monitoring and predictive maintenance. Non-invasive clamp telemetry with automated 7-day ARIMA anomaly detection.
+                {t("Commercial AC electrical monitoring and predictive maintenance. Non-invasive clamp telemetry with automated 7-day ARIMA anomaly detection.")}
               </p>
             </div>
 
             <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                Architecture
+                {t("Architecture")}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 <li>
                   <a className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="#overview">
-                    Climate Overview
+                    {t("Climate Overview")}
                   </a>
                 </li>
                 <li>
                   <a className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="#how-it-works">
-                    Hardware Deployment
+                    {t("Hardware Deployment")}
                   </a>
                 </li>
                 <li>
                   <a className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="#specifications">
-                    Technical Specifications
+                    {t("Technical Specifications")}
                   </a>
                 </li>
               </ul>
@@ -695,22 +686,22 @@ export default function Home() {
 
             {signedIn && <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                Operations
+                {t("Operations")}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 <li>
                   <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/dashboard">
-                    Live Panel Dashboard
+                    {t("Live Panel Dashboard")}
                   </Link>
                 </li>
                 <li>
                   <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/alerts">
-                    Active Anomaly Alerts
+                    {t("Active Anomaly Alerts")}
                   </Link>
                 </li>
                 <li>
                   <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/settings">
-                    Facility Settings
+                    {t("Facility Settings")}
                   </Link>
                 </li>
               </ul>
@@ -718,31 +709,31 @@ export default function Home() {
 
             <div data-landing-reveal>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                {signedIn ? "Legal" : "Account"}
+                {t(signedIn ? "Legal" : "Account")}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 {!signedIn && <li>
                   <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/login">
-                    Operator Sign In
+                    {t("Operator Sign In")}
                   </Link>
                 </li>}
                 {!signedIn && <li>
                   <Link className="text-sm font-semibold text-amber-500 transition hover:underline" href="/signup">
-                    Create Facility Workspace
+                    {t("Create Facility Workspace")}
                   </Link>
                 </li>}
                 <li>
-                  <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/terms">Terms of Service</Link>
+                  <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/terms">{t("Terms of Service")}</Link>
                 </li>
                 <li>
-                  <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/privacy">Privacy Policy</Link>
+                  <Link className="text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]" href="/privacy">{t("Privacy Policy")}</Link>
                 </li>
               </ul>
             </div>
           </div>
 
           <div data-landing-reveal data-landing-circuit-anchor className="mt-10 border-t border-[var(--border)] pt-6 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] sm:text-right">
-            <span>© 2026 Sentrix. All rights reserved.</span>
+            <span>{t("© 2026 Sentrix. All rights reserved.")}</span>
           </div>
         </div>
       </footer>

@@ -4,9 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Brand } from "../../components/brand";
+import { T, useLanguage } from "../../lib/language-context";
+import { LanguageToggle } from "../../components/language-toggle";
 import { isSupabaseConfigured, supabase } from "../../lib/supabase-browser";
 
 function CallbackContent() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -98,10 +101,10 @@ function CallbackContent() {
         <div className="space-y-4">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
           <h2 className="text-xl font-semibold text-[var(--text-primary)]">
-            Verifying your email...
+            {t("Verifying your email...")}
           </h2>
           <p className="text-sm text-[var(--text-muted)]">
-            Please wait while Sentrix validates your confirmation token.
+            {t("Please wait while Sentrix validates your confirmation token.")}
           </p>
         </div>
       )}
@@ -114,17 +117,17 @@ function CallbackContent() {
             </svg>
           </div>
           <h2 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Email Verified!
+            {t("Email Verified!")}
           </h2>
           <p className="text-sm text-[var(--text-secondary)]">
-            Your Sentrix account is now verified and active. Taking you to your dashboard...
+            {t("Your Sentrix account is now verified and active. Taking you to your dashboard...")}
           </p>
           <div className="pt-2">
             <Link
               href="/dashboard"
               className="inline-flex h-11 items-center justify-center rounded-lg bg-amber-500 px-6 text-xs font-semibold text-[#17140d] transition hover:bg-amber-400"
             >
-              Go to Dashboard →
+              {t("Go to Dashboard →")}
             </Link>
           </div>
         </div>
@@ -138,17 +141,17 @@ function CallbackContent() {
             </svg>
           </div>
           <h2 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Verification Incomplete
+            {t("Verification Incomplete")}
           </h2>
           <p className="text-xs text-[var(--text-muted)] max-w-sm">
-            {callbackError || errorMessage || "The verification link may have expired or was already used."}
+            {t(callbackError || errorMessage || "The verification link may have expired or was already used.")}
           </p>
           <div className="pt-3">
             <Link
               href="/login"
               className="inline-flex h-10 items-center justify-center rounded-lg bg-amber-500 px-5 text-xs font-semibold text-[#17140d] transition hover:bg-amber-400"
             >
-              Back to Login
+              {t("Back to Login")}
             </Link>
           </div>
         </div>
@@ -160,14 +163,15 @@ function CallbackContent() {
 export default function AuthCallbackPage() {
   return (
     <main className="min-h-screen bg-[var(--canvas)] text-[var(--text-primary)] px-6 py-10 flex flex-col items-center">
-      <div className="w-full max-w-md flex justify-start mb-6">
+      <div className="w-full max-w-md flex justify-between mb-6">
         <Brand />
+        <LanguageToggle />
       </div>
       <Suspense
         fallback={
           <div className="py-20 text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-amber-500 border-t-transparent mb-3" />
-            <p className="text-xs text-[var(--text-muted)]">Verifying session...</p>
+            <p className="text-xs text-[var(--text-muted)]"><T>Verifying session...</T></p>
           </div>
         }
       >

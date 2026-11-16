@@ -18,6 +18,8 @@ function renderCallback({ configured = true, query = "" } = {}) {
   runInNewContext(outputText, {
     exports,
     require: name => {
+      if (name.endsWith("language-context")) return { useLanguage: () => ({ t: text => text, language: "en" }), T: ({ children }) => children };
+      if (name.endsWith("language-toggle")) return { LanguageToggle: () => null };
       if (name === "react" || name === "react/jsx-runtime") return require(name);
       if (name === "next/navigation") return {
         useRouter: () => ({ replace() {} }),

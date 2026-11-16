@@ -6,6 +6,7 @@ import { useId, useState } from "react";
 import { supabase } from "../lib/supabase-browser";
 import { useDisclosure } from "../lib/use-disclosure";
 import { ProfileAvatar } from "./profile-avatar";
+import { useLanguage } from "../lib/language-context";
 
 export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = false }: {
   name: string;
@@ -13,6 +14,7 @@ export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = fal
   avatarUrl?: string;
   redirectOnLogout?: boolean;
 }) {
+  const { t } = useLanguage();
   const router = useRouter();
   const panelId = useId();
   const { open, setOpen, triggerRef, panelRef } = useDisclosure();
@@ -40,7 +42,7 @@ export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = fal
       <button
         ref={triggerRef}
         type="button"
-        aria-label="Account menu"
+        aria-label={t("Account menu")}
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen(!open)}
@@ -63,7 +65,7 @@ export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = fal
             onClick={() => setOpen(false)}
             className="mt-1 block rounded-lg px-2.5 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
           >
-            Settings
+            {t("Settings")}
           </Link>
           <button
             type="button"
@@ -71,9 +73,9 @@ export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = fal
             disabled={signingOut}
             className="block w-full rounded-lg px-2.5 py-2 text-left text-sm text-red-600 hover:bg-[var(--surface-hover)] disabled:opacity-60 dark:text-red-400"
           >
-            {signingOut ? "Logging out…" : "Log out"}
+            {t(signingOut ? "Logging out…" : "Log out")}
           </button>
-          {error && <p role="alert" className="px-2.5 pb-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p role="alert" className="px-2.5 pb-2 text-xs text-red-600 dark:text-red-400">{t(error)}</p>}
         </div>
       )}
     </div>

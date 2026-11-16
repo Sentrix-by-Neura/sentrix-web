@@ -28,6 +28,7 @@ function fixture({ claimError, authError } = {}) {
     useEffect(fn, deps) { const index = cursor++; const previous = cells[index]; if (!previous || deps?.some((d, i) => d !== previous.deps[i])) { const entry = { deps }; cells[index] = entry; effects.push(() => { previous?.cleanup?.(); entry.cleanup = fn(); }); } },
   };
   runInNewContext(outputText, { exports, queueMicrotask, Date, Error, AbortController, setInterval: fn => { timers.add(fn); return fn; }, clearInterval: fn => timers.delete(fn), require: name => {
+    if (name.endsWith("language-context")) return { useLanguage: () => ({ t: text => text, language: "en" }) };
     if (name === "react") return hooks;
     if (name === "react/jsx-runtime") return require(name);
     if (name.endsWith("sentrix-store")) return {

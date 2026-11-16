@@ -17,6 +17,7 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
   const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } });
   const exports = {};
   runInNewContext(outputText, { exports, Date, require: name => {
+    if (name.endsWith("language-context")) return { useLanguage: () => ({ t: text => text, language: "en" }), T: ({ children }) => children };
     if (name === "react" || name === "react/jsx-runtime") return require(name);
     if (name === "next/link") return { default: ({ children, href, ...props }) => createElement("a", { href, ...props }, children) };
     if (name === "next/navigation") return { useParams: () => ({ groupName: group.slug, sensorId }), useRouter: () => ({ push() {} }) };

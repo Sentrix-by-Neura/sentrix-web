@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLanguage } from "../lib/language-context";
 
 export type ConfirmOptions = {
   title: string;
@@ -22,6 +23,7 @@ type ConfirmContextType = (options: ConfirmOptions) => Promise<boolean>;
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     options: ConfirmOptions;
@@ -102,7 +104,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             {/* Close X Button */}
             <button
               type="button"
-              aria-label="Close dialog"
+              aria-label={t("Close dialog")}
               onClick={() => handleClose(false)}
               className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition"
             >
@@ -173,13 +175,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   id="confirm-modal-title"
                   className="text-base font-semibold tracking-tight text-[var(--text-primary)]"
                 >
-                  {current.title}
+                  {t(current.title)}
                 </h3>
                 <div
                   id="confirm-modal-description"
                   className="text-xs leading-relaxed text-[var(--text-muted)]"
                 >
-                  {current.message}
+                  {typeof current.message === "string" ? t(current.message) : current.message}
                 </div>
               </div>
             </div>
@@ -192,7 +194,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   onClick={() => handleClose(false)}
                   className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition"
                 >
-                  {current.cancelText ?? "Cancel"}
+                  {t(current.cancelText ?? "Cancel")}
                 </button>
               )}
               <button
@@ -207,7 +209,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                       : "bg-blue-600 text-white hover:bg-blue-500"
                 }`}
               >
-                {current.confirmText ?? (hasCancel ? "Confirm" : "OK")}
+                {t(current.confirmText ?? (hasCancel ? "Confirm" : "OK"))}
               </button>
             </div>
           </div>

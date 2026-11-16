@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useLanguage } from "../../lib/language-context";
 import { useSentrix, useTelemetry, type Group, type DeviceClaim } from "../../lib/sentrix-store";
 import { authenticateSentrixHardware, scanSentrixHardware, scanSentrixWifi, provisionSentrixHardware, validateSentrixNetwork, type ScanResult, type SentrixHardware } from "../../lib/sentrix-bluetooth";
 
@@ -9,6 +10,7 @@ const buttonClass = "min-h-11 rounded-lg bg-amber-500 px-4 py-2 text-sm font-sem
 const setupSteps = ["Sensor", "PIN", "Wi-Fi", "Finish"];
 
 export function BleOnboardingModal({ group, onClose, initialScan }: { group: Group; onClose: () => void; initialScan?: Promise<ScanResult> }) {
+  const { t } = useLanguage();
   const { claimDevice, getDeviceClaim, devices, refreshData, userId } = useSentrix();
   const [step, setStep] = useState<"scan" | "pin" | "wifi" | "saved">("scan");
   const [hardware, setHardware] = useState<SentrixHardware | null>(null);
@@ -116,7 +118,7 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
     setScanningWifi(true); setWifiMessage("");
     try {
       const names = await scanSentrixWifi(hardware, pin);
-      if (mounted.current) { setNetworks(names); setWifiMessage(names.length ? `${names.length} network${names.length === 1 ? "" : "s"} found.` : "No networks found. Enter the network name manually."); }
+      if (mounted.current) { setNetworks(names); setWifiMessage(names.length ? "" : "No networks found. Enter the network name manually."); }
     } catch (error) { if (mounted.current) setWifiMessage(error instanceof Error ? error.message : "Wi-Fi scan failed. Enter the network name manually."); }
     finally { if (mounted.current) setScanningWifi(false); }
   }
@@ -150,42 +152,42 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/55 p-4" onKeyDown={e => { if (e.key === "Escape" && !busy) onClose(); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="setup-title" className="surface-card max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--border)] p-5 shadow-2xl sm:p-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 id="setup-title" className="text-lg font-semibold">Set up sensor in {group.name}</h2>
-          <button type="button" aria-label="Close setup" disabled={busy} onClick={onClose} className="min-h-11 min-w-11 rounded-lg p-2 focus-visible:outline-2 focus-visible:outline-amber-500 disabled:opacity-50">×</button>
+          <h2 id="setup-title" className="text-lg font-semibold">{t("Set up sensor in")} {group.name}</h2>
+          <button type="button" aria-label={t("Close setup")} disabled={busy} onClick={onClose} className="min-h-11 min-w-11 rounded-lg p-2 focus-visible:outline-2 focus-visible:outline-amber-500 disabled:opacity-50">×</button>
         </div>
-        <ol aria-label="Setup progress" className="mt-4 grid grid-cols-4 gap-2">
+        <ol aria-label={t("Setup progress")} className="mt-4 grid grid-cols-4 gap-2">
           {setupSteps.map((label, index) => {
             const complete = index < currentStep || setupComplete;
             const current = index === currentStep && !setupComplete;
             return <li key={label} aria-current={current ? "step" : undefined} className={`flex items-center gap-1.5 border-b-2 pb-3 text-xs ${current ? "border-amber-500 font-semibold" : complete ? "border-[var(--text-secondary)] text-[var(--text-secondary)]" : "border-[var(--border)] text-[var(--text-secondary)]"}`}>
               {complete ? <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m3 8 3 3 7-7" /></svg> : <span aria-hidden="true">{index + 1}</span>}
-              {label}{complete && <span className="sr-only"> complete</span>}
+              {t(label)}{complete && <span className="sr-only"> {t("complete")}</span>}
             </li>;
           })}
         </ol>
-        {error && <p role="alert" className="mt-4 text-sm text-red-500">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-sm text-red-500">{t(error)}</p>}
         {step === "scan" && <div className="mt-5 space-y-4 text-sm">
-          <p>Keep the sensor powered and nearby. Bluetooth is available during initial setup and deliberate recovery only.</p>
-          <p>For a configured sensor, hold BOOT for 5 seconds until the LED shows two long flashes, then release. Its firmware and website registration remain intact.</p>
-          <button type="button" autoFocus onClick={scan} disabled={busy} className={buttonClass}>{busy ? "Finding sensor…" : "Find sensor"}</button>
+          <p>{t("Keep the sensor powered and nearby. Bluetooth is available during initial setup and deliberate recovery only.")}</p>
+          <p>{t("For a configured sensor, hold BOOT for 5 seconds until the LED shows two long flashes, then release. Its firmware and website registration remain intact.")}</p>
+          <button type="button" autoFocus onClick={scan} disabled={busy} className={buttonClass}>{t(busy ? "Finding sensor…" : "Find sensor")}</button>
         </div>}
         {step === "pin" && <form onSubmit={authenticate} className="mt-5 space-y-4">
           <p className="text-sm text-[var(--text-secondary)]">{hardware?.macAddress}</p>
-          <label className="block text-sm">Sensor name<input autoFocus required maxLength={100} value={name} onChange={e => setName(e.target.value)} className={inputClass} /></label>
-          <label className="block text-sm">Hardware PIN<input type="password" inputMode="numeric" autoComplete="off" required pattern="[0-9]{6}" maxLength={6} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ""))} aria-describedby="pin-help" className={inputClass} /></label>
-          <p id="pin-help" className="text-sm text-[var(--text-muted)]">Enter the six-digit PIN printed on your hardware.</p>
-          <button type="submit" disabled={busy || pin.length !== 6} className={buttonClass}>{busy ? "Checking PIN…" : "Verify hardware"}</button>
+          <label className="block text-sm">{t("Sensor name")}<input autoFocus required maxLength={100} value={name} onChange={e => setName(e.target.value)} className={inputClass} /></label>
+          <label className="block text-sm">{t("Hardware PIN")}<input type="password" inputMode="numeric" autoComplete="off" required pattern="[0-9]{6}" maxLength={6} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ""))} aria-describedby="pin-help" className={inputClass} /></label>
+          <p id="pin-help" className="text-sm text-[var(--text-muted)]">{t("Enter the six-digit PIN printed on your hardware.")}</p>
+          <button type="submit" disabled={busy || pin.length !== 6} className={buttonClass}>{t(busy ? "Checking PIN…" : "Verify hardware")}</button>
         </form>}
         {step === "wifi" && <form onSubmit={provision} className="mt-5 space-y-4">
-          <p className="text-sm">Connect the sensor to a 2.4 GHz Wi-Fi network.</p>
-          <p className="text-xs text-[var(--text-secondary)]">Setup assigns this sensor to {group.name}. Previous account history stays private.</p>
+          <p className="text-sm">{t("Connect the sensor to a 2.4 GHz Wi-Fi network.")}</p>
+          <p className="text-xs text-[var(--text-secondary)]">{t("Setup assigns this sensor to {name}. Previous account history stays private.").replace("{name}", group.name)}</p>
           <div>
             <div className="flex items-center justify-between gap-3">
-              <p id="nearby-networks" className="text-sm font-medium">Nearby networks</p>
-              <button type="button" onClick={scanWifi} disabled={busy || scanningWifi} className="min-h-11 rounded-lg px-2 text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-amber-500 disabled:cursor-wait disabled:opacity-50">{scanningWifi ? "Scanning…" : "Scan Wi-Fi"}</button>
+              <p id="nearby-networks" className="text-sm font-medium">{t("Nearby networks")}</p>
+              <button type="button" onClick={scanWifi} disabled={busy || scanningWifi} className="min-h-11 rounded-lg px-2 text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-amber-500 disabled:cursor-wait disabled:opacity-50">{t(scanningWifi ? "Scanning…" : "Scan Wi-Fi")}</button>
             </div>
             <div role="status" className="flex min-h-6 items-center gap-2 text-xs text-[var(--text-secondary)]">
-              {scanningWifi ? <><span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[var(--border)] border-t-amber-600 motion-reduce:animate-none" />Scanning nearby networks…</> : wifiMessage}
+              {scanningWifi ? <><span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[var(--border)] border-t-amber-600 motion-reduce:animate-none" />{t("Scanning nearby networks…")}</> : wifiMessage ? t(wifiMessage) : networks.length ? `${networks.length} ${t(networks.length === 1 ? "network found." : "networks found.")}` : ""}
             </div>
             {networks.length > 0 && <div role="group" aria-labelledby="nearby-networks" className="mt-3 flex flex-wrap gap-2">
               {networks.map(network => <button key={network} type="button" aria-pressed={ssid === network} disabled={busy} onClick={() => setSsid(network)} className={`inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border px-4 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:opacity-50 ${ssid === network ? "border-amber-600 bg-amber-500/10" : "border-[var(--border)] hover:border-[var(--text-muted)]"}`}>
@@ -195,29 +197,29 @@ export function BleOnboardingModal({ group, onClose, initialScan }: { group: Gro
             </div>}
           </div>
           <div>
-            <label htmlFor="wifi-network" className="block text-sm">Wi-Fi network</label>
+            <label htmlFor="wifi-network" className="block text-sm">{t("Wi-Fi network")}</label>
             <input id="wifi-network" autoFocus required value={ssid} onChange={e => setSsid(e.target.value)} aria-describedby="wifi-network-help" className={inputClass} />
-            <p id="wifi-network-help" className="mt-2 text-xs text-[var(--text-secondary)]">Choose a network above or enter its name manually.</p>
+            <p id="wifi-network-help" className="mt-2 text-xs text-[var(--text-secondary)]">{t("Choose a network above or enter its name manually.")}</p>
           </div>
           <div>
-            <label htmlFor="wifi-password" className="block text-sm">Wi-Fi password</label>
+            <label htmlFor="wifi-password" className="block text-sm">{t("Wi-Fi password")}</label>
             <div className="relative">
               <input id="wifi-password" type={showPassword ? "text" : "password"} autoComplete="off" value={password} onChange={e => setPassword(e.target.value)} aria-describedby="wifi-password-help" className={`${inputClass} pr-14`} />
-              <button type="button" aria-label={showPassword ? "Hide Wi-Fi password" : "Show Wi-Fi password"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)} className="absolute right-0 bottom-0 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-amber-500">
+              <button type="button" aria-label={t(showPassword ? "Hide Wi-Fi password" : "Show Wi-Fi password")} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)} className="absolute right-0 bottom-0 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-amber-500">
                 <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />{showPassword && <path d="m3 3 18 18" />}</svg>
               </button>
             </div>
-            <p id="wifi-password-help" className="mt-2 text-xs text-[var(--text-secondary)]">Leave empty only for an open network.</p>
+            <p id="wifi-password-help" className="mt-2 text-xs text-[var(--text-secondary)]">{t("Leave empty only for an open network.")}</p>
           </div>
-          <button type="submit" disabled={busy || scanningWifi} className={`${buttonClass} w-full`}>{busy ? "Registering and saving settings…" : "Register and connect"}</button>
+          <button type="submit" disabled={busy || scanningWifi} className={`${buttonClass} w-full`}>{t(busy ? "Registering and saving settings…" : "Register and connect")}</button>
         </form>}
         {step === "saved" && <div className="mt-5 space-y-4 text-sm">
-          <p role="status" className="font-semibold">{claimExpired ? "Setup confirmation expired" : telemetrySeen ? "Telemetry received" : backendSeen ? "Backend contact confirmed; waiting for telemetry" : claimedId ? "Registration confirmed; waiting for backend contact" : "Wi-Fi settings saved; waiting for device confirmation"}</p>
-          {claimExpired ? <p>Check this group first in case registration already completed. If the sensor is still missing, hold BOOT for 5 seconds and release, then set it up again in this group.</p> : <>
-            <p>{claimedId ? "The sensor is registered. " : "Keep the sensor powered while registration is confirmed. "}It restarts with Bluetooth off and reconnects using saved Wi-Fi settings. Readings start after Go confirmation; the first batch can take over a minute. This page updates automatically.</p>
-            {!backendSeen && <p>If it keeps waiting, check Wi-Fi, the MQTT service, and the backend deployment. You can return to the group; the sensor can finish registration without this page.</p>}
+          <p role="status" className="font-semibold">{t(claimExpired ? "Setup confirmation expired" : telemetrySeen ? "Telemetry received" : backendSeen ? "Backend contact confirmed; waiting for telemetry" : claimedId ? "Registration confirmed; waiting for backend contact" : "Wi-Fi settings saved; waiting for device confirmation")}</p>
+          {claimExpired ? <p>{t("Check this group first in case registration already completed. If the sensor is still missing, hold BOOT for 5 seconds and release, then set it up again in this group.")}</p> : <>
+            <p>{t(claimedId ? "The sensor is registered." : "Keep the sensor powered while registration is confirmed.")} {t("It restarts with Bluetooth off and reconnects using saved Wi-Fi settings. Readings start after Go confirmation; the first batch can take over a minute. This page updates automatically.")}</p>
+            {!backendSeen && <p>{t("If it keeps waiting, check Wi-Fi, the MQTT service, and the backend deployment. You can return to the group; the sensor can finish registration without this page.")}</p>}
           </>}
-          <button type="button" onClick={onClose} className={buttonClass}>Return to group</button>
+          <button type="button" onClick={onClose} className={buttonClass}>{t("Return to group")}</button>
         </div>}
       </section>
     </div>

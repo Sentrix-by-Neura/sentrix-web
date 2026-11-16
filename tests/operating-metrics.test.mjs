@@ -19,7 +19,7 @@ runInNewContext(ts.transpileModule(storeSource, { compilerOptions: { module: ts.
 const source = readFileSync(new URL("../app/dashboard/[groupName]/[sensorId]/operating-metrics.tsx", import.meta.url), "utf8");
 const component = {};
 runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
-  exports: component, Date, Number, require: name => name.endsWith("sentrix-store") ? store : name.endsWith(".module.css") ? { default: {} } : require(name),
+  exports: component, Date, Number, require: name => name.endsWith("language-context") ? { useLanguage: () => ({ t: text => text, language: "en" }) } : name.endsWith("sentrix-store") ? store : name.endsWith(".module.css") ? { default: {} } : require(name),
 });
 const render = (changes = {}) => renderToStaticMarkup(createElement(component.OperatingMetrics, { device, reading, loading: false, error: null, expectedMin: 0.1, expectedMax: 3, ...changes }));
 

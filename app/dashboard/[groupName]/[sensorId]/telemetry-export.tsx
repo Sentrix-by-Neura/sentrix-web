@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { telemetryCsv } from "../../../lib/sentrix-api";
 import styles from "./sensor-detail.module.css";
+import { useLanguage } from "../../../lib/language-context";
 
 export function TelemetryExport({ deviceId }: { deviceId: string }) {
+  const { t } = useLanguage();
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pending = useRef<AbortController | null>(null);
@@ -46,9 +48,9 @@ export function TelemetryExport({ deviceId }: { deviceId: string }) {
   return (
     <div className={styles.export}>
       <button type="button" className={styles.control} onClick={() => { void download(); }} disabled={exporting} aria-busy={exporting}>
-        {exporting ? "Exporting…" : "Export all data (CSV)"}
+        {t(exporting ? "Exporting…" : "Export all data (CSV)")}
       </button>
-      {error && <p role="alert" className={styles.exportError}>Could not export recorded data. {error}</p>}
+      {error && <p role="alert" className={styles.exportError}>{t("Could not export recorded data.")} {t(error)}</p>}
     </div>
   );
 }

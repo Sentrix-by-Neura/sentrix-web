@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, type ReactNode } from "react";
 import { Brand } from "./brand";
 import { AccountDropdown } from "./account-dropdown";
+import { LanguageToggle } from "./language-toggle";
+import { useLanguage } from "../lib/language-context";
 import { useSentrix } from "../lib/sentrix-store";
 import { useTheme } from "../lib/theme-context";
 import { SentrixContextMenu } from "./context-menu";
@@ -13,6 +15,7 @@ import { isSupabaseConfigured, supabase } from "../lib/supabase-browser";
 const workspaceContainer = "mx-auto box-content max-w-6xl px-4 sm:px-6 lg:px-8";
 
 function DashboardLink({ active = false }: { active?: boolean }) {
+  const { t } = useLanguage();
   return (
     <Link
       href="/dashboard"
@@ -23,7 +26,7 @@ function DashboardLink({ active = false }: { active?: boolean }) {
           : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
       }`}
     >
-      Dashboard
+      {t("Dashboard")}
     </Link>
   );
 }
@@ -34,6 +37,7 @@ function ActiveDashboardLink() {
 }
 
 function AlertsLink() {
+  const { t } = useLanguage();
   const { alerts, devices } = useSentrix();
   const unresolvedCount = alerts.filter(
     alert => !alert.isResolved && !devices.find(device => device.id === alert.deviceId)?.archivedAt
@@ -42,8 +46,8 @@ function AlertsLink() {
   return (
     <Link
       href="/alerts"
-      aria-label={unresolvedCount > 0 ? `Alerts (${unresolvedCount} unresolved)` : "Alerts"}
-      title="Alerts"
+      aria-label={unresolvedCount > 0 ? `${t("Alerts")} (${unresolvedCount} ${t("unresolved")})` : t("Alerts")}
+      title={t("Alerts")}
       className="relative flex size-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
     >
       <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -60,6 +64,7 @@ function AlertsLink() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const router = useRouter();
   const { isDark } = useTheme();
   const { userProfile, userId, ready, error, refreshData } = useSentrix();
@@ -96,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-6">
             <Brand href="/dashboard" />
             <nav
-              aria-label="Main navigation"
+              aria-label={t("Main navigation")}
               className="hidden items-center gap-1 lg:flex"
             >
               <Suspense fallback={<DashboardLink />}>
@@ -106,6 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageToggle />
             <AlertsLink />
             <div className="hidden h-8 w-px bg-[var(--border)] lg:block" />
 
@@ -114,8 +120,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className={`${workspaceContainer} pb-16 pt-6 sm:pt-8`}>
-        {(!ready || !userId) && <p role="status" className="mb-4 text-sm">{error || "Checking your session…"}</p>}
-        {error && <div role="alert" className="mb-4 rounded-lg border border-red-500/30 p-4 text-sm text-red-500">{error} <button type="button" onClick={() => { void refreshData(); }} className="underline">Retry</button></div>}{children}
+        {(!ready || !userId) && <p role="status" className="mb-4 text-sm">{t(error || "Checking your session…")}</p>}
+        {error && <div role="alert" className="mb-4 rounded-lg border border-red-500/30 p-4 text-sm text-red-500">{t(error)} <button type="button" onClick={() => { void refreshData(); }} className="underline">{t("Retry")}</button></div>}{children}
       </main>
 
       {/* Context-aware Right-Click Menu */}

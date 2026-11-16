@@ -9,13 +9,15 @@ import { OperatingMetrics } from "./operating-metrics";
 import { TelemetryExport } from "./telemetry-export";
 import styles from "./sensor-detail.module.css";
 import "./tokens.css";
+import { T, useLanguage } from "../../../lib/language-context";
 
 function DynamicSensorStatusBadge({ device }: { device: Device }) {
-  if (device.archivedAt) return <span className={styles.status}>Transferred, history only</span>;
+  const { t } = useLanguage();
+  if (device.archivedAt) return <span className={styles.status}>{t("Transferred, history only")}</span>;
   if (hasRecentContact(device) && device.status === "CALIBRATING") {
     return (
       <span className={styles.status} data-state="calibrating">
-        Calibrating
+        {t("Calibrating")}
       </span>
     );
   }
@@ -23,19 +25,20 @@ function DynamicSensorStatusBadge({ device }: { device: Device }) {
   if (hasRecentContact(device) && device.status === "ACTIVE") {
     return (
       <span className={styles.status} data-state="connected">
-        Connected
+        {t("Connected")}
       </span>
     );
   }
 
   return (
     <span className={styles.status} data-state="unavailable">
-      Unavailable
+      {t("Unavailable")}
     </span>
   );
 }
 
 function SensorAnalyticsContent() {
+  const { t, language } = useLanguage();
   const params = useParams();
   const rawGroup = typeof params?.groupName === "string" ? params.groupName : Array.isArray(params?.groupName) ? params.groupName[0] : "";
   const rawSensor = typeof params?.sensorId === "string" ? params.sensorId : Array.isArray(params?.sensorId) ? params.sensorId[0] : "";
@@ -56,7 +59,7 @@ function SensorAnalyticsContent() {
   if (!ready) {
     return (
       <p className={`${styles.page} py-24 text-center text-sm text-[var(--text-secondary)]`}>
-        Loading…
+        {t("Loading…")}
       </p>
     );
   }
@@ -64,15 +67,15 @@ function SensorAnalyticsContent() {
   if (!group || !device || device.groupId !== group.id) {
     return (
       <div className={`${styles.page} py-24 text-center`}>
-        <h1 className="text-lg font-semibold text-[var(--text-primary)]">Sensor Not Found</h1>
+        <h1 className="text-lg font-semibold text-[var(--text-primary)]">{t("Sensor Not Found")}</h1>
         <p className="mb-4 mt-1 text-xs text-[var(--text-muted)]">
-          The requested sensor could not be located.
+          {t("The requested sensor could not be located.")}
         </p>
         <Link
           href={group ? `/dashboard/${group.slug}` : "/dashboard"}
           className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
-          Return to {group ? group.name : "Dashboard"}
+          {t("Return to")} {group ? group.name : t("Dashboard")}
         </Link>
       </div>
     );
@@ -84,9 +87,9 @@ function SensorAnalyticsContent() {
 
   return (
     <div className={`${styles.page} space-y-6`}>
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 text-sm text-[var(--text-secondary)]">
+      <nav aria-label={t("Breadcrumb")} className="flex flex-wrap items-center gap-x-2 text-sm text-[var(--text-secondary)]">
         <Link href="/dashboard" className="hover:text-[var(--text-primary)]">
-          Dashboard
+          {t("Dashboard")}
         </Link>
         <span aria-hidden="true">/</span>
         <Link href={`/dashboard/${group.slug}`} className="hover:text-[var(--text-primary)]">
@@ -118,21 +121,21 @@ function SensorAnalyticsContent() {
 
       <TelemetryChart key={device.id} deviceId={device.id} />
 
-      <section aria-label="Anomaly history" className={styles.panel}>
+      <section aria-label={t("Anomaly history")} className={styles.panel}>
         <div className={styles.sectionHeader}>
           <div className="flex items-center gap-2">
-            <h2>Anomaly history</h2>
+            <h2>{t("Anomaly history")}</h2>
           </div>
           <Link
             href="/alerts"
           >
-            All alerts
+            {t("All alerts")}
           </Link>
         </div>
 
         {localAlerts.length === 0 ? (
           <div className={styles.empty}>
-            No anomalies recorded.
+            {t("No anomalies recorded.")}
           </div>
         ) : (
           <div>
@@ -146,7 +149,7 @@ function SensorAnalyticsContent() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <time dateTime={alert.timestamp}>
-                      {new Date(alert.timestamp).toLocaleString("en-GB", {
+                      {new Date(alert.timestamp).toLocaleString(language === "id" ? "id-ID" : "en-GB", {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",
@@ -155,19 +158,19 @@ function SensorAnalyticsContent() {
                     </time>
                     {alert.isResolved && (
                       <span className="text-[var(--sensor-positive)]">
-                        Resolved
+                        {t("Resolved")}
                       </span>
                     )}
                   </div>
                   <p className="tabular-nums">
-                    <strong>{alert.actualValue.toFixed(2)} A</strong> <span className="text-[var(--text-secondary)]">(range {alert.expectedMin.toFixed(2)} to {alert.expectedMax.toFixed(2)} A)</span>
+                    <strong>{alert.actualValue.toFixed(2)} A</strong> <span className="text-[var(--text-secondary)]">({t("range")} {alert.expectedMin.toFixed(2)} {t("to")} {alert.expectedMax.toFixed(2)} A)</span>
                   </p>
                 </div>
 
                 <div className={styles.alertActions}>
                   {device.archivedAt ? null : alert.userFeedback !== null ? (
                     <span className="text-[var(--text-secondary)]">
-                      {alert.userFeedback ? "Valid Issue" : "False Alarm"}
+                      {t(alert.userFeedback ? "Valid Issue" : "False Alarm")}
                     </span>
                   ) : (
                     <>
@@ -176,14 +179,14 @@ function SensorAnalyticsContent() {
                         onClick={() => { void submitAlertFeedback(alert.id, true).catch(() => {}); }}
                         className={styles.control}
                       >
-                        Valid Issue
+                        {t("Valid Issue")}
                       </button>
                       <button
                         type="button"
                         onClick={() => { void submitAlertFeedback(alert.id, false).catch(() => {}); }}
                         className={styles.control}
                       >
-                        False Alarm
+                        {t("False Alarm")}
                       </button>
                     </>
                   )}
@@ -193,7 +196,7 @@ function SensorAnalyticsContent() {
                       onClick={() => { void resolveAlert(alert.id).catch(() => {}); }}
                       className={`${styles.control} ${styles.resolve}`}
                     >
-                      Resolve
+                      {t("Resolve")}
                     </button>
                   )}
                 </div>
@@ -211,7 +214,7 @@ export default function SensorDetailPage() {
     <Suspense
       fallback={
         <p className={`${styles.page} py-24 text-center text-sm text-[var(--text-secondary)]`}>
-          Loading…
+          <T>Loading…</T>
         </p>
       }
     >

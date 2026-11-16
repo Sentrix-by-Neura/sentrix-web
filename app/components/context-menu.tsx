@@ -6,6 +6,7 @@ import { useSentrix, type Group } from "../lib/sentrix-store";
 import { scanSentrixHardware, type ScanResult } from "../lib/sentrix-bluetooth";
 import { useConfirm } from "./confirm-modal";
 import { BleOnboardingModal } from "../dashboard/[groupName]/ble-onboarding-modal";
+import { useLanguage } from "../lib/language-context";
 
 type ContextType = "group" | "device" | "alert" | "default";
 
@@ -26,6 +27,7 @@ function QuickCreateGroupModal({
   onClose: () => void;
   onCreated?: (groupName: string) => void;
 }) {
+  const { t } = useLanguage();
   const { createGroup } = useSentrix();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -54,7 +56,7 @@ function QuickCreateGroupModal({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold tracking-tight text-[var(--text-primary)]">
-            Create Location Group
+            {t("Create Location Group")}
           </h2>
           <button
             type="button"
@@ -65,47 +67,47 @@ function QuickCreateGroupModal({
           </button>
         </div>
         <p className="text-xs text-[var(--text-muted)]">
-          Group your AC sensors by floor, server rack, or facility zone for synchronized telemetry.
+          {t("Group your AC sensors by floor, server rack, or facility zone for synchronized telemetry.")}
         </p>
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
-            Group Name
+            {t("Group Name")}
           </span>
           <input
             autoFocus
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Server Room AC Mesh"
+            placeholder={t("e.g. Server Room AC Mesh")}
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-amber-500 placeholder:text-[var(--text-muted)]"
           />
         </label>
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
-            Description (Optional)
+            {t("Description (Optional)")}
           </span>
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. 3-phase commercial cooling circuit"
+            placeholder={t("e.g. 3-phase commercial cooling circuit")}
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-amber-500 placeholder:text-[var(--text-muted)]"
           />
         </label>
-        {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+        {error && <p role="alert" className="text-sm text-red-500">{t(error)}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg border border-[var(--border)] px-3.5 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             disabled={pending}
             type="submit"
             className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-[#20170a] hover:bg-amber-400 transition"
           >
-            Create Group
+            {t("Create Group")}
           </button>
         </div>
       </form>
@@ -123,6 +125,7 @@ function GroupPickerModal({
   onClose: () => void;
   onSelect: (group: Group) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150"
@@ -133,7 +136,7 @@ function GroupPickerModal({
       <div className="surface-card w-full max-w-sm rounded-2xl border border-[var(--border)] p-5 sm:p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold tracking-tight text-[var(--text-primary)]">
-            Select Facility Group
+            {t("Select Facility Group")}
           </h2>
           <button
             type="button"
@@ -144,7 +147,7 @@ function GroupPickerModal({
           </button>
         </div>
         <p className="text-xs text-[var(--text-muted)]">
-          Choose which facility group the new AC node should join:
+          {t("Choose which facility group the new AC node should join:")}
         </p>
         <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
           {groups.map((group) => (
@@ -162,7 +165,7 @@ function GroupPickerModal({
                   Mesh: {group.meshId.slice(0, 8)}…
                 </p>
               </div>
-              <span className="text-xs text-amber-500 font-semibold">Select →</span>
+              <span className="text-xs text-amber-500 font-semibold">{t("Select →")}</span>
             </button>
           ))}
         </div>
@@ -172,7 +175,7 @@ function GroupPickerModal({
             onClick={onClose}
             className="rounded-lg border border-[var(--border)] px-3.5 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
           >
-            Cancel
+            {t("Cancel")}
           </button>
         </div>
       </div>
@@ -181,6 +184,7 @@ function GroupPickerModal({
 }
 
 function SentrixContextMenuContent() {
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const {
@@ -235,12 +239,12 @@ function SentrixContextMenuContent() {
           document.execCommand("copy");
           document.body.removeChild(textarea);
         }
-        showToast(`${label} copied to clipboard`);
+        showToast(`${t(label)} ${t("copied to clipboard")}`);
       } catch {
-        showToast(`Failed to copy ${label}`);
+        showToast(`${t("Failed to copy")} ${t(label)}`);
       }
     },
-    [showToast]
+    [showToast, t]
   );
 
   // Global contextmenu listener on window
@@ -381,7 +385,7 @@ function SentrixContextMenuContent() {
         return (
           <>
             <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
-              GROUP · {group.name}
+              {t("GROUP")} · {group.name}
             </div>
             <div className="py-1">
               <button
@@ -392,7 +396,7 @@ function SentrixContextMenuContent() {
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
               >
-                <span>+ Add AC Sensor to {group.name}</span>
+                <span>{t("+ Add AC Sensor to")} {group.name}</span>
               </button>
               <button
                 type="button"
@@ -402,7 +406,7 @@ function SentrixContextMenuContent() {
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
-                <span>Open Location Mesh →</span>
+                <span>{t("Open Location Mesh →")}</span>
               </button>
               <button
                 type="button"
@@ -413,7 +417,7 @@ function SentrixContextMenuContent() {
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
                 <span className="truncate">
-                  Copy Mesh ID ({group.meshId.slice(0, 8)}…)
+                  {t("Copy Mesh ID")} ({group.meshId.slice(0, 8)}…)
                 </span>
               </button>
               <div className="my-1 border-t border-[var(--border)]" />
@@ -423,19 +427,19 @@ function SentrixContextMenuContent() {
                   closeMenu();
                   const ok = await confirm({
                     title: "Delete Location Group",
-                    message: `Are you sure you want to delete "${group.name}" ? Remove its devices first; only an empty group can be deleted.`,
+                    message: t('Are you sure you want to delete "{name}" ? Remove its devices first; only an empty group can be deleted.').replace("{name}", group.name),
                     confirmText: "Delete Group",
                     cancelText: "Cancel",
                     type: "danger",
                   });
                   if (ok) {
                     try { await deleteGroup(group.id); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
-                    showToast(`Group "${group.name}" deleted`);
+                    showToast(t('Group "{name}" deleted').replace("{name}", group.name));
                   }
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
               >
-                <span>Delete Group</span>
+                <span>{t("Delete Group")}</span>
               </button>
             </div>
           </>
@@ -450,7 +454,7 @@ function SentrixContextMenuContent() {
         return (
           <>
             <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
-              AC NODE · {device.name}
+              {t("AC NODE")} · {device.name}
             </div>
             <div className="py-1">
               <button
@@ -461,7 +465,7 @@ function SentrixContextMenuContent() {
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
-                <span>View Auto-ARIMA Analytics →</span>
+                <span>{t("View Auto-ARIMA Analytics →")}</span>
               </button>
               {group && (
                 <button
@@ -472,7 +476,7 @@ function SentrixContextMenuContent() {
                   }}
                   className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
                 >
-                  <span>+ Add Another Device to {group.name}</span>
+                  <span>{t("+ Add Another Device to")} {group.name}</span>
                 </button>
               )}
               <button
@@ -484,7 +488,7 @@ function SentrixContextMenuContent() {
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
                 <span className="truncate">
-                  Copy MAC Address ({device.macAddress})
+                  {t("Copy MAC Address")} ({device.macAddress})
                 </span>
               </button>
 
@@ -502,12 +506,12 @@ function SentrixContextMenuContent() {
                   });
                   if (ok) {
                     try { await deleteDevice(device.id); } catch (error) { showToast(error instanceof Error ? error.message : "Request failed."); return; }
-                    showToast(`Sensor "${device.name}" deleted`);
+                    showToast(t('Sensor "{name}" deleted').replace("{name}", device.name));
                   }
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
               >
-                <span>{device.archivedAt ? "Delete History" : "Delete Sensor"}</span>
+                <span>{t(device.archivedAt ? "Delete History" : "Delete Sensor")}</span>
               </button>
             </div>
           </>
@@ -518,11 +522,11 @@ function SentrixContextMenuContent() {
     if (menuState.type === "alert" && menuState.id) {
       const alert = alerts.find((a) => a.id === menuState.id);
       if (alert) {
-        if (devices.find(d => d.id === alert.deviceId)?.archivedAt) return <p className="px-3 py-2 text-xs text-[var(--text-secondary)]">Archived sensor history</p>;
+        if (devices.find(d => d.id === alert.deviceId)?.archivedAt) return <p className="px-3 py-2 text-xs text-[var(--text-secondary)]">{t("Archived sensor history")}</p>;
         return (
           <>
             <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
-              ANOMALY · {alert.severity} ({alert.actualValue}A)
+              {t("ANOMALY")} · {t(alert.severity)} ({alert.actualValue}A)
             </div>
             <div className="py-1">
               <button
@@ -534,7 +538,7 @@ function SentrixContextMenuContent() {
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
-                <span>Feedback: Valid Issue (True Positive)</span>
+                <span>{t("Feedback: Valid Issue (True Positive)")}</span>
               </button>
               <button
                 type="button"
@@ -545,7 +549,7 @@ function SentrixContextMenuContent() {
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
-                <span>Feedback: False Alarm (False Positive)</span>
+                <span>{t("Feedback: False Alarm (False Positive)")}</span>
               </button>
 
               <button
@@ -561,7 +565,7 @@ function SentrixContextMenuContent() {
                 }}
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
               >
-                <span>{alert.isResolved ? "Already Resolved ✓" : "Mark as Resolved ✓"}</span>
+                <span>{t(alert.isResolved ? "Already Resolved ✓" : "Mark as Resolved ✓")}</span>
               </button>
             </div>
           </>
@@ -573,7 +577,7 @@ function SentrixContextMenuContent() {
     return (
       <>
         <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
-          SENTRIX QUICK SHORTCUTS
+          {t("SENTRIX QUICK SHORTCUTS")}
         </div>
         <div className="py-1">
           {/* Contextual BLE shortcut when on a group page */}
@@ -586,7 +590,7 @@ function SentrixContextMenuContent() {
               }}
               className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
             >
-              <span>+ Add AC Sensor to this Group</span>
+              <span>{t("+ Add AC Sensor to this Group")}</span>
             </button>
           ) : groups.length > 0 ? (
             <button
@@ -597,7 +601,7 @@ function SentrixContextMenuContent() {
               }}
               className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
             >
-              <span>+ Add AC Sensor…</span>
+              <span>{t("+ Add AC Sensor…")}</span>
             </button>
           ) : null}
 
@@ -610,7 +614,7 @@ function SentrixContextMenuContent() {
             }}
             className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
           >
-            <span>+ Create New Location Group</span>
+            <span>{t("+ Create New Location Group")}</span>
           </button>
 
 
@@ -626,7 +630,7 @@ function SentrixContextMenuContent() {
             }}
             className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
           >
-            <span>Global Overview</span>
+            <span>{t("Global Overview")}</span>
           </button>
           <button
             type="button"
@@ -636,7 +640,7 @@ function SentrixContextMenuContent() {
             }}
             className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
           >
-            <span>Anomaly Feed</span>
+            <span>{t("Anomaly Feed")}</span>
           </button>
           <button
             type="button"
@@ -646,7 +650,7 @@ function SentrixContextMenuContent() {
             }}
             className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer"
           >
-            <span>Workspace Settings</span>
+            <span>{t("Workspace Settings")}</span>
           </button>
 
         </div>
@@ -677,7 +681,7 @@ function SentrixContextMenuContent() {
                 className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)] hover:text-amber-500 rounded-lg transition-colors cursor-pointer group"
                 role="menuitem"
               >
-                <span className="truncate">Copy Selected Text</span>
+                <span className="truncate">{t("Copy Selected Text")}</span>
                 <span className="font-mono text-[10px] text-[var(--text-muted)] group-hover:text-amber-500">
                   Ctrl+C
                 </span>
@@ -689,7 +693,7 @@ function SentrixContextMenuContent() {
           {renderMenuItems()}
 
           <div className="px-3 py-1 border-t border-[var(--border)] font-mono text-[9px] text-[var(--text-muted)] text-center select-none">
-            Shift + Right-Click for browser menu
+            {t("Shift + Right-Click for browser menu")}
           </div>
         </div>
       )}
@@ -707,7 +711,7 @@ function SentrixContextMenuContent() {
       {showCreateGroupModal && (
         <QuickCreateGroupModal
           onClose={() => setShowCreateGroupModal(false)}
-          onCreated={(groupName) => showToast(`Group "${groupName}" created`)}
+          onCreated={(groupName) => showToast(t('Group "{name}" created').replace("{name}", groupName))}
         />
       )}
 
@@ -730,7 +734,7 @@ function SentrixContextMenuContent() {
           className="surface-card fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl border border-amber-500/30 px-4 py-2.5 font-mono text-xs text-[var(--text-primary)] shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150"
         >
           <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-          <span>{toastMessage}</span>
+          <span>{t(toastMessage)}</span>
         </div>
       )}
     </>

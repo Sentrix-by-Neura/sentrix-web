@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useSentrix, hasRecentContact, type Alert } from "../lib/sentrix-store";
 import { useConfirm } from "../components/confirm-modal";
+import { useLanguage } from "../lib/language-context";
 
 type AnomalyWindow = "24h" | "7d";
 
@@ -29,6 +30,7 @@ function anomalyStats(alerts: Alert[], window: AnomalyWindow) {
 const pad = (n: number) => n.toString().padStart(2, "0");
 
 function CreateGroupModal({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const { createGroup } = useSentrix();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -55,10 +57,10 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
         onSubmit={handleSubmit}
         className="surface-card w-full max-w-sm rounded-2xl border border-[var(--border)] p-5 shadow-2xl sm:p-6"
       >
-        <h2 className="text-base font-semibold tracking-tight text-[var(--text-primary)]">Add Group</h2>
+        <h2 className="text-base font-semibold tracking-tight text-[var(--text-primary)]">{t("Add Group")}</h2>
         <label className="mt-4 block">
           <span className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
-            Group Name
+            {t("Group Name")}
           </span>
           <input
             maxLength={100}
@@ -66,18 +68,18 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             name="name"
             autoFocus
             required
-            placeholder="e.g. Server Room AC"
+            placeholder={t("e.g. Server Room AC")}
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-amber-500"
           />
         </label>
-        {error && <p role="alert" className="mt-3 text-sm text-red-500">{error}</p>}
+        {error && <p role="alert" className="mt-3 text-sm text-red-500">{t(error)}</p>}
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg border border-[var(--border)] px-3.5 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             disabled={pending}
@@ -85,7 +87,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             type="submit"
             className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-[#20170a] hover:bg-amber-400 transition"
           >
-            Add Group
+            {t("Add Group")}
           </button>
         </div>
       </form>
@@ -94,6 +96,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const { ready, groups, devices, alerts, deleteGroup } = useSentrix();
   const [anomalyWindow, setAnomalyWindow] = useState<AnomalyWindow>("24h");
   const [showCreate, setShowCreate] = useState(false);
@@ -102,7 +105,7 @@ export default function DashboardPage() {
   if (!ready) {
     return (
       <p className="py-24 text-center font-mono text-xs text-[var(--text-muted)]">
-        Loading workspace…
+        {t("Loading workspace…")}
       </p>
     );
   }
@@ -119,7 +122,7 @@ export default function DashboardPage() {
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 md:mb-8">
         <div>
-          <h1 className="text-xl font-semibold tracking-[-0.045em] sm:text-2xl">Global Overview</h1>
+          <h1 className="text-xl font-semibold tracking-[-0.045em] sm:text-2xl">{t("Global Overview")}</h1>
         </div>
         <button
           id="create-group-button"
@@ -128,48 +131,48 @@ export default function DashboardPage() {
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-amber-500 px-4 text-xs font-semibold text-[#20170a] shadow-sm shadow-amber-500/20 transition hover:bg-amber-400"
         >
           <span aria-hidden="true" className="text-base leading-none">+</span>
-          Add Group
+          {t("Add Group")}
         </button>
       </div>
 
-      <section className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3" aria-label="Global health overview">
+      <section className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3" aria-label={t("Global health overview")}>
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
-          <h2 className="eyebrow">Device contact</h2>
+          <h2 className="eyebrow">{t("Device contact")}</h2>
           <p className="mt-2 font-mono text-2xl leading-none tracking-[-0.06em] sm:text-[1.75rem]">
             <span className="text-emerald-600 dark:text-emerald-400">{pad(online)}</span>
-            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Recent contact</span>
+            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">{t("Recent contact")}</span>
             <span className="mx-2 text-[var(--text-muted)]">/</span>
             <span className={offline ? "text-red-500" : ""}>{pad(offline)}</span>
-            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">Awaiting contact</span>
+            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">{t("Awaiting contact")}</span>
           </p>
           <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
-            {currentDevices.length} sensors registered
+            {currentDevices.length} {t("sensors registered")}
           </p>
         </article>
 
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
-          <h2 className="eyebrow">System status</h2>
+          <h2 className="eyebrow">{t("System status")}</h2>
           {unresolved.length === 0 ? (
             <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b98199]" />
-              No unresolved recent alerts
+              {t("No unresolved recent alerts")}
             </span>
           ) : (
             <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1.5 text-sm font-semibold text-red-500">
               <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              {unresolved.length} unresolved alert{unresolved.length === 1 ? "" : "s"} in recent history
+              {unresolved.length} {t(unresolved.length === 1 ? "unresolved alert in recent history" : "unresolved alerts in recent history")}
             </span>
           )}
           {unresolved.length > 0 && (
             <Link href="/alerts" className="mt-2 block w-fit text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400">
-              Review alerts →
+              {t("Review alerts →")}
             </Link>
           )}
         </article>
 
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="eyebrow">Recent anomalies</h2>
+            <h2 className="eyebrow">{t("Recent anomalies")}</h2>
             <div className="inline-flex rounded-md border border-[var(--border)] bg-[var(--canvas)] p-0.5">
               {(["24h", "7d"] as const).map((option) => (
                 <button
@@ -183,7 +186,7 @@ export default function DashboardPage() {
                       : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
                 >
-                  {option}
+                  {t(option)}
                 </button>
               ))}
             </div>
@@ -193,28 +196,28 @@ export default function DashboardPage() {
             {current !== previous && (
               <span
                 className={`text-base ${current > previous ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}
-                aria-label={current > previous ? "Trending up" : "Trending down"}
+                aria-label={t(current > previous ? "Trending up" : "Trending down")}
               >
                 {current > previous ? "↑" : "↓"}
               </span>
             )}
           </p>
           <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
-            vs {previous} in the previous {anomalyWindow}
+            {t("vs")} {previous} {t("in the previous")} {t(anomalyWindow)}
           </p>
         </article>
       </section>
 
-      <section className="mt-8 md:mt-10" aria-label="Groups">
+      <section className="mt-8 md:mt-10" aria-label={t("Groups")}>
         <div className="mb-4 flex items-center gap-2.5">
-          <h2 className="eyebrow">Groups</h2>
+          <h2 className="eyebrow">{t("Groups")}</h2>
           <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
             {pad(groups.length)}
           </span>
         </div>
         {groups.length === 0 ? (
           <div className="surface-card rounded-xl border border-[var(--border)] px-5 py-12 text-center text-sm text-[var(--text-muted)]">
-            No groups yet. Click &ldquo;+ Add Group&rdquo; to create one.
+            {t('No groups yet. Click “+ Add Group” to create one.')}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -242,14 +245,14 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
-                        title={`Delete ${group.name}`}
-                        aria-label={`Delete ${group.name}`}
+                        title={`${t("Delete")} ${group.name}`}
+                        aria-label={`${t("Delete")} ${group.name}`}
                         onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const ok = await confirm({
                             title: "Delete Group",
-                            message: `Are you sure you want to delete "${group.name}" ? The group must be empty before it can be deleted.`,
+                            message: t('Are you sure you want to delete "{name}" ? The group must be empty before it can be deleted.').replace("{name}", group.name),
                             confirmText: "Delete Group",
                             type: "danger",
                           });
@@ -269,13 +272,13 @@ export default function DashboardPage() {
                   <Link href={`/dashboard/${group.slug}`} className="mt-auto block pt-3">
                     <div className="flex items-end justify-between border-t border-[var(--border)] pt-3">
                       <div>
-                        <p className="eyebrow">Active sensors</p>
+                        <p className="eyebrow">{t("Active sensors")}</p>
                         <p className="mt-1 font-mono text-xs text-[var(--text-secondary)]">
                           {pad(activeCount)} / {pad(groupDevices.length)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="eyebrow">Active alerts</p>
+                        <p className="eyebrow">{t("Active alerts")}</p>
                         <p
                           className={`mt-1 inline-flex items-center gap-1.5 font-mono text-xs ${
                             alertCount ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"

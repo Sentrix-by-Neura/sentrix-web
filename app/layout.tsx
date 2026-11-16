@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SentrixProvider } from "./lib/sentrix-store";
 import { ThemeProvider } from "./lib/theme-context";
+import { LanguageProvider } from "./lib/language-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,11 +36,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--canvas)] text-[var(--text-primary)]">
-        <ThemeProvider>
+        <LanguageProvider><ThemeProvider>
           <SentrixProvider>
             <ConfirmProvider>{children}</ConfirmProvider>
           </SentrixProvider>
-        </ThemeProvider>
+        </ThemeProvider></LanguageProvider>
       </body>
     </html>
   );
