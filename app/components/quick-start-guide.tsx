@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLanguage } from "../lib/language-context";
+import { useTheme } from "../lib/theme-context";
 
 const STORAGE_KEY = "sentrix_quick_guide_seen_v1";
 
@@ -30,6 +32,7 @@ const STEPS = [
 
 export function QuickStartGuide({ autoOpen = false }: { autoOpen?: boolean }) {
   const { t } = useLanguage();
+  const { isDark } = useTheme();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
 
@@ -84,17 +87,18 @@ export function QuickStartGuide({ autoOpen = false }: { autoOpen?: boolean }) {
         <span className="hidden sm:inline">{t("Quick Guide")}</span>
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="quick-guide-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
+          data-theme={isDark ? "dark" : "light"}
+          className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-[2px] ${isDark ? "dark" : "light"}`}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeGuide();
           }}
         >
-          <div className="surface-card w-full max-w-md rounded-2xl border border-[var(--border)] p-5 shadow-2xl sm:p-6">
+          <div className="surface-card my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-[var(--border)] p-5 text-[var(--text-primary)] shadow-2xl sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
                 {current.badge}
@@ -165,7 +169,8 @@ export function QuickStartGuide({ autoOpen = false }: { autoOpen?: boolean }) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
