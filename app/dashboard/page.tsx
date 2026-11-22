@@ -148,10 +148,16 @@ export default function DashboardPage() {
           <p className="mt-2 font-mono text-xs text-[var(--text-muted)]">
             {currentDevices.length} {t("sensors registered")}
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">
-            <strong className="font-medium text-emerald-600 dark:text-emerald-400">{t("Recent contact")}</strong>: {t("online and sending readings.")}{" "}
-            <strong className="font-medium text-[var(--text-primary)]">{t("Awaiting contact")}</strong>: {t("no recent signal — check power or Wi-Fi.")}
-          </p>
+          <dl className="mt-2.5 space-y-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+            <div>
+              <dt className="inline font-medium text-emerald-600 dark:text-emerald-400">{t("Recent contact")}: </dt>
+              <dd className="inline">{t("online and sending readings.")}</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-[var(--text-primary)]">{t("Awaiting contact")}: </dt>
+              <dd className="inline">{t("no recent signal — check power or Wi-Fi.")}</dd>
+            </div>
+          </dl>
         </article>
 
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
