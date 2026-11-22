@@ -117,6 +117,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   const [pointerInteraction, setPointerInteraction] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; x: number; y: number; origin: number; end: number; moved: boolean } | null>(null);
+  const touchPan = useRef<{ x: number; y: number; origin: number; end: number; moved: boolean } | null>(null);
   const pinch = useRef<{ distance: number; span: number; end: number; fraction: number } | null>(null);
   const span = viewport.zoomSpan ?? defaultSpan;
   const fetchRange = span <= timeframes["1h"].span ? "1h" : span <= timeframes["24h"].span ? "24h" : "7d";
@@ -168,7 +169,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
 
   function startDrag(event: PointerEvent<HTMLDivElement>) {
     setPointerInteraction(true);
-    if (!canPan || !event.isPrimary || event.button !== 0) return;
+    if (event.pointerType === "touch" || !canPan || !event.isPrimary || event.button !== 0) return;
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, origin: displayedEnd, end: displayedEnd, moved: false };
   }
 
@@ -249,8 +250,17 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   });
 
   const handleTouchStart = useEffectEvent((event: TouchEvent, frame: HTMLDivElement) => {
-    if (event.touches.length !== 2 || history?.latest == null) return;
+    if (history?.latest == null) return;
+    if (event.touches.length === 1) {
+      pinch.current = null;
+      if (!canPan) return;
+      const touch = event.touches[0];
+      touchPan.current = { x: touch.clientX, y: touch.clientY, origin: displayedEnd, end: displayedEnd, moved: false };
+      return;
+    }
+    if (event.touches.length !== 2) return;
     drag.current = null;
+    touchPan.current = null;
     setPreviewEnd(null);
     const [a, b] = [event.touches[0], event.touches[1]];
     const distance = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
@@ -262,7 +272,25 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
     pinch.current = { distance, span, end: displayedEnd, fraction };
   });
 
-  const handleTouchMove = useEffectEvent((event: TouchEvent) => {
+  const handleTouchMove = useEffectEvent((event: TouchEvent, frame: HTMLDivElement) => {
+    if (event.touches.length === 1 && touchPan.current && canPan) {
+      const touch = event.touches[0];
+      const dx = touch.clientX - touchPan.current.x;
+      const dy = touch.clientY - touchPan.current.y;
+      if (!touchPan.current.moved) {
+        if (Math.abs(dx) < 6) return;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          touchPan.current = null;
+          return;
+        }
+        touchPan.current.moved = true;
+      }
+      event.preventDefault();
+      const width = Math.max(1, frame.clientWidth - yAxisWidth - chartMargin.right);
+      touchPan.current.end = clamp(touchPan.current.origin - dx * span / width, earliestEnd, latest);
+      setPreviewEnd(touchPan.current.end);
+      return;
+    }
     const activePinch = pinch.current;
     if (!activePinch || event.touches.length !== 2 || history?.latest == null) return;
     event.preventDefault();
@@ -275,26 +303,37 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
     setViewport({ zoomSpan, end: end === latest ? null : end });
   });
 
+  const handleTouchEnd = useEffectEvent((event: TouchEvent, commit: boolean) => {
+    if (event.touches.length < 2) pinch.current = null;
+    if (event.touches.length === 0 && touchPan.current) {
+      const current = touchPan.current;
+      touchPan.current = null;
+      if (current.moved) {
+        setPreviewEnd(null);
+        if (commit) navigateTo(current.end);
+      }
+    }
+  });
+
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
     const handleWheel = (event: WheelEvent) => wheel(event, frame);
     const onTouchStart = (event: TouchEvent) => handleTouchStart(event, frame);
-    const onTouchMove = (event: TouchEvent) => handleTouchMove(event);
-    const onTouchEnd = (event: TouchEvent) => {
-      if (event.touches.length < 2) pinch.current = null;
-    };
+    const onTouchMove = (event: TouchEvent) => handleTouchMove(event, frame);
+    const onTouchEnd = (event: TouchEvent) => handleTouchEnd(event, true);
+    const onTouchCancel = (event: TouchEvent) => handleTouchEnd(event, false);
     frame.addEventListener("wheel", handleWheel, { passive: false });
     frame.addEventListener("touchstart", onTouchStart, { passive: true });
     frame.addEventListener("touchmove", onTouchMove, { passive: false });
     frame.addEventListener("touchend", onTouchEnd, { passive: true });
-    frame.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    frame.addEventListener("touchcancel", onTouchCancel, { passive: true });
     return () => {
       frame.removeEventListener("wheel", handleWheel);
       frame.removeEventListener("touchstart", onTouchStart);
       frame.removeEventListener("touchmove", onTouchMove);
       frame.removeEventListener("touchend", onTouchEnd);
-      frame.removeEventListener("touchcancel", onTouchEnd);
+      frame.removeEventListener("touchcancel", onTouchCancel);
     };
   }, []);
 
