@@ -286,7 +286,7 @@ function SensorAnalyticsContent() {
               {t("Edit AC & Room")}
             </button>
           )}
-          <TelemetryExport key={device.id} deviceId={device.id} />
+          <TelemetryExport key={device.id} deviceId={device.id} deviceName={device.unitName || device.name} />
         </div>
       </div>
 

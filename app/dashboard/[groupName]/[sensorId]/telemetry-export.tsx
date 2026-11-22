@@ -5,7 +5,11 @@ import { telemetryCsv } from "../../../lib/sentrix-api";
 import styles from "./sensor-detail.module.css";
 import { useLanguage } from "../../../lib/language-context";
 
-export function TelemetryExport({ deviceId }: { deviceId: string }) {
+function sanitizeFileSegment(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+export function TelemetryExport({ deviceId, deviceName }: { deviceId: string; deviceName?: string }) {
   const { t } = useLanguage();
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +30,8 @@ export function TelemetryExport({ deviceId }: { deviceId: string }) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `sentrix-${deviceId}-${timeZone.replaceAll("/", "-")}.csv`;
+      const fileLabel = (deviceName && sanitizeFileSegment(deviceName)) || deviceId;
+      link.download = `sentrix-${fileLabel}-${timeZone.replaceAll("/", "-")}.csv`;
       document.body.appendChild(link);
       try {
         link.click();
