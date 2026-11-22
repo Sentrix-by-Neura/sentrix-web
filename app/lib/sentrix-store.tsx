@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, useSyncExterna
 import { supabase } from "./supabase-browser";
 import { apiRequest, authenticatedSession, joinTelemetry, type GroupRow, type DeviceRow, type AlertRow, type ReadingRow, type BoundRow, type OperatingReading } from "./sentrix-api";
 import type { TelemetryHistoryResponse } from "./sentrix-api";
+import { loadAllDeviceLocationMeta, saveDeviceLocationMeta, type DeviceLocationMeta } from "./device-location-meta";
 
 export type Group = { id: string; name: string; slug: string; meshId: string; description: string };
 export type DeviceStatus = "CALIBRATING" | "ACTIVE" | "OFFLINE";
@@ -12,6 +13,9 @@ export type Device = {
   calibrationStartedAt: string; calibrationEndsAt: string; lastSeen: string | null;
   archivedAt: string | null;
   mqttConnected: boolean | null;
+  unitName?: string;
+  roomLocation?: string;
+  locationPhotoUrl?: string;
 };
 export type DeviceClaim = { id: string; setup_token: string; expires_at: string };
 export type DeviceClaimStatus = { id: string; status: "pending" | "confirmed" | "expired"; expires_at: string; device?: DeviceRow };
@@ -46,13 +50,16 @@ export function findGroup(groups: Group[], route: string) {
   return legacy.length === 1 ? legacy[0] : undefined;
 }
 const mapGroup = (g: GroupRow): Group => ({ id: g.id, name: g.name, slug: `${slugify(g.name)}-${g.id}`, meshId: g.mesh_id, description: g.description ?? "" });
-const mapDevice = (d: DeviceRow): Device => ({
+const mapDevice = (d: DeviceRow, localMeta?: DeviceLocationMeta): Device => ({
   id: d.id, groupId: d.group_id ?? "", name: d.name || `Sensor ${d.mac_address}`,
   macAddress: mac(d.mac_address).match(/../g)?.join(":") ?? d.mac_address,
   status: d.status === "UNCLAIMED" ? "OFFLINE" : d.status,
   calibrationStartedAt: d.calibration_started_at ?? "", calibrationEndsAt: d.calibration_ends_at ?? "", lastSeen: d.last_seen,
   archivedAt: d.archived_at ?? null,
   mqttConnected: d.mqtt_connected ?? null,
+  unitName: localMeta?.unitName ?? d.unit_name ?? undefined,
+  roomLocation: localMeta?.roomLocation ?? d.room_location ?? undefined,
+  locationPhotoUrl: localMeta?.locationPhotoUrl ?? d.location_photo_url ?? undefined,
 });
 const mapAlert = (a: AlertRow): Alert => ({ id: a.id, deviceId: a.device_id, groupId: a.group_id, timestamp: a.timestamp,
   actualValue: a.actual_value, expectedMax: a.expected_max, expectedMin: a.expected_min, severity: a.severity, isResolved: a.is_resolved, userFeedback: a.user_feedback });
@@ -76,7 +83,8 @@ export async function refreshData() {
     ]);
     if (owner !== epoch || sequence !== refreshSequence) return;
     if (profile.error) throw new Error("Could not load your profile. Try refreshing.");
-    publish({ groups, devices: deviceLists.flat().map(mapDevice), alerts: alerts.map(mapAlert), ready: true, error: null, userId: session.user.id,
+    const localMetaMap = loadAllDeviceLocationMeta(session.user.id);
+    publish({ groups, devices: deviceLists.flat().map(d => mapDevice(d, localMetaMap[d.id])), alerts: alerts.map(mapAlert), ready: true, error: null, userId: session.user.id,
       userProfile: { ...DEFAULT_USER_PROFILE, name: session.user.user_metadata?.full_name || profile.data?.name || "User", email: session.user.email ?? "", role: profile.data?.role === "ADMIN" ? "System Administrator" : "Operator", avatarUrl: session.user.user_metadata?.avatar_url ?? "" } });
   } catch (error) {
     if (owner === epoch && sequence === refreshSequence) publish({ ...state, ready: true, error: message(error) });
@@ -308,7 +316,25 @@ export function useOperatingState(deviceId: string) {
   const { reading, loading, error } = result;
   return { reading, loading, error };
 }
-const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
+function updateDeviceLocation(deviceId: string, meta: DeviceLocationMeta) {
+  const all = saveDeviceLocationMeta(state.userId, deviceId, meta);
+  const nextMeta = all[deviceId];
+  publish({
+    ...state,
+    devices: state.devices.map(d =>
+      d.id === deviceId
+        ? {
+            ...d,
+            unitName: nextMeta?.unitName,
+            roomLocation: nextMeta?.roomLocation,
+            locationPhotoUrl: nextMeta?.locationPhotoUrl,
+          }
+        : d
+    ),
+  });
+}
+
+const actions = { createGroup, deleteGroup, claimDevice, getDeviceClaim, deleteDevice, updateDeviceLocation, submitAlertFeedback, resolveAlert, updateUserProfile, resetUserProfile, clearUserAvatar, refreshData };
 type SentrixContextValue = StoreState & typeof actions;
 const SentrixContext = createContext<SentrixContextValue | null>(null);
 export function SentrixProvider({ children }: { children: ReactNode }) {

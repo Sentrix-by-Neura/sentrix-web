@@ -170,11 +170,16 @@ function LocationDetailContent() {
                           href={`/dashboard/${group.slug}/${device.id}`}
                           className="after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-amber-500"
                         >
-                          {device.name}
+                          {device.unitName || device.name}
                         </Link>
                       </h3>
-                      <p className="font-mono text-[11px] text-[var(--text-muted)]">
-                        {device.macAddress}
+                      {device.roomLocation && (
+                        <p className="text-xs text-[var(--text-secondary)] line-clamp-1">
+                          📍 {device.roomLocation}
+                        </p>
+                      )}
+                      <p className="font-mono text-xs text-[var(--text-muted)]">
+                        {device.unitName ? `${device.name} · ` : ""}{device.macAddress}
                       </p>
                     </div>
                     <button

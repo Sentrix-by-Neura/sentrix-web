@@ -9,6 +9,9 @@ export type DeviceRow = {
   last_seen: string | null;
   archived_at?: string | null;
   mqtt_connected?: boolean | null;
+  unit_name?: string | null;
+  room_location?: string | null;
+  location_photo_url?: string | null;
 };
 export type AlertRow = {
   id: string; device_id: string; group_id: string; timestamp: string;

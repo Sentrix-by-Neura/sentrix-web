@@ -49,6 +49,7 @@ function AlertsContent() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("unresolved");
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<{ src: string; title: string; room?: string } | null>(null);
 
 
 
@@ -309,19 +310,54 @@ function AlertsContent() {
                               href={`/dashboard/${group.slug}/${device.id}`}
                               className="font-semibold text-[var(--text-primary)] hover:text-amber-500 transition"
                             >
-                              ⚡ {device.name}
+                              ⚡ {device.unitName || device.name}
                             </Link>
                           ) : (
                             <span className="font-semibold text-[var(--text-primary)]">
-                              {device?.name ?? t("AC Circuit")}
+                              {device?.unitName || device?.name || t("AC Circuit")}
+                            </span>
+                          )}
+                          {device?.unitName && (
+                            <span className="text-[var(--text-secondary)]">
+                              ({device.name})
                             </span>
                           )}
                           {device && (
-                            <span className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
+                            <span className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--text-muted)]">
                               {device.macAddress}
                             </span>
                           )}
                         </div>
+
+                        {(device?.roomLocation || device?.locationPhotoUrl) && (
+                          <div className="flex flex-wrap items-center gap-2.5 pt-0.5 text-xs text-[var(--text-secondary)]">
+                            {device.roomLocation && (
+                              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--canvas)] px-2 py-0.5">
+                                🏢 {device.roomLocation}
+                              </span>
+                            )}
+                            {device.locationPhotoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewPhoto({
+                                  src: device.locationPhotoUrl!,
+                                  title: device.unitName || device.name,
+                                  room: device.roomLocation,
+                                })}
+                                className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--canvas)] px-2 py-0.5 text-xs font-medium text-amber-600 hover:border-amber-500/50 dark:text-amber-400"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={device.locationPhotoUrl}
+                                  alt=""
+                                  aria-hidden="true"
+                                  className="h-5 w-5 rounded object-cover"
+                                />
+                                {t("View room photo")}
+                              </button>
+                            )}
+                          </div>
+                        )}
 
                         {/* Deviation Description */}
                         <p className="font-mono text-sm font-medium text-[var(--text-primary)]">
@@ -422,6 +458,43 @@ function AlertsContent() {
           </div>
         )}
       </div>
+
+      {previewPhoto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={previewPhoto.title}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setPreviewPhoto(null);
+          }}
+        >
+          <div className="surface-card w-full max-w-lg space-y-3 rounded-2xl border border-[var(--border)] p-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-base font-semibold text-[var(--text-primary)]">{previewPhoto.title}</p>
+                {previewPhoto.room && (
+                  <p className="text-xs text-[var(--text-secondary)]">📍 {previewPhoto.room}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewPhoto(null)}
+                aria-label={t("Close dialog")}
+                className="flex size-9 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+              >
+                ✕
+              </button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewPhoto.src}
+              alt={previewPhoto.title}
+              className="max-h-[70vh] w-full rounded-xl border border-[var(--border)] object-contain"
+            />
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
