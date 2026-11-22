@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
 import { AppShell } from "../components/app-shell";
 import { useSentrix } from "../lib/sentrix-store";
@@ -64,9 +65,16 @@ function AppearanceSettings() {
 }
 
 function SettingsContent() {
+  const { t } = useLanguage();
   const { userProfile, userId } = useSentrix();
   return (
     <AppShell>
+      <Link
+        href="/dashboard"
+        className="mb-3 inline-flex min-h-10 items-center text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+      >
+        {t("← Back to Dashboard")}
+      </Link>
       <h1 className="text-2xl font-semibold"><T>Settings</T></h1>
       <div className="mt-6 space-y-6">
         <ProfileForm key={userId} initialName={userProfile.name} />

@@ -107,7 +107,14 @@ function AlertsContent() {
     <AppShell>
       <div className="space-y-6">
         {/* Header Section */}
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Link
+            href="/dashboard"
+            className="mb-2 inline-flex min-h-10 items-center text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+          >
+            {t("← Back to Dashboard")}
+          </Link>
+          <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-[-0.045em] text-[var(--text-primary)] sm:text-2xl">
@@ -120,6 +127,7 @@ function AlertsContent() {
               )}
             </div>
           </div>
+        </div>
         </div>
 
         <p className="text-sm text-[var(--text-muted)]">{t("Showing up to the latest 200 alerts. Filters apply to this recent history.")}</p>

@@ -506,6 +506,7 @@ export const indonesian: Record<string, string> = {
   "Remove photo": "Hapus foto",
   "Save location": "Simpan lokasi",
   "Edit Name": "Ubah Nama",
+  "Edit AC & Room": "Ubah AC & Ruangan",
   "View room photo": "Lihat foto ruangan",
   "Please choose an image file (JPG, PNG, or WebP).": "Pilih berkas gambar (JPG, PNG, atau WebP).",
   "Image is too large. Please choose a photo under 10 MB.": "Ukuran gambar terlalu besar. Pilih foto di bawah 10 MB.",
@@ -515,4 +516,5 @@ export const indonesian: Record<string, string> = {
   "Could not save location details. Try a smaller photo.": "Tidak dapat menyimpan detail lokasi. Coba foto yang lebih kecil.",
   "Room & AC photo": "Foto Ruangan & AC",
   "Tap photo to enlarge": "Ketuk foto untuk memperbesar",
+  "← Back to Dashboard": "← Kembali ke Dasbor",
 };
