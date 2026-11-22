@@ -240,10 +240,42 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       </div>
 
       <div className={styles.legend}>
-        <span><i aria-hidden="true" className={styles.currentKey} />{t("Current")}</span>
-        <span><i aria-hidden="true" className={styles.rangeKey} />{t("Safe range")}</span>
-        <span><i aria-hidden="true" className={styles.anomalyKey} />{t("Anomaly")}</span>
+        <span><i aria-hidden="true" className={styles.currentKey} />{t("Current (AC power draw)")}</span>
+        <span><i aria-hidden="true" className={styles.rangeKey} />{t("Safe range (normal band)")}</span>
+        <span><i aria-hidden="true" className={styles.anomalyKey} />{t("Anomaly (outside safe range)")}</span>
       </div>
+
+      <details className="rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3.5 py-2.5 text-sm text-[var(--text-secondary)]">
+        <summary className="cursor-pointer select-none font-medium text-[var(--text-primary)]">
+          {t("How to read this chart (Normal vs. Anomaly)")}
+        </summary>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+            <p className="flex items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+              {t("Sample normal reading")}
+            </p>
+            <p className="mt-1 font-mono text-xs text-[var(--text-primary)]">
+              4.20 A · {t("Safe range")} 3.50–5.00 A
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+              {t("RMS Current measures how hard the AC is working. When the line stays inside the shaded Safe Range, the AC is running normally.")}
+            </p>
+          </div>
+          <div className="rounded-lg border border-red-500/25 bg-[var(--surface)] p-3">
+            <p className="flex items-center gap-2 font-semibold text-red-500">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
+              {t("Sample anomaly")}
+            </p>
+            <p className="mt-1 font-mono text-xs text-[var(--text-primary)]">
+              7.40 A · {t("Safe range")} 3.50–5.00 A
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+              {t("A red dot marks a spike or drop outside the Safe Range — a sign to check for dirty filters, icing, or compressor strain.")}
+            </p>
+          </div>
+        </div>
+      </details>
 
       <div
         ref={frameRef}
