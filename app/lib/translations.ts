@@ -475,4 +475,10 @@ export const indonesian: Record<string, string> = {
   "Sample anomaly": "Contoh anomali",
   "RMS Current measures how hard the AC is working. When the line stays inside the shaded Safe Range, the AC is running normally.": "Arus RMS mengukur seberapa berat kerja AC. Saat garis berada di dalam area Rentang Aman yang diarsir, AC berjalan normal.",
   "A red dot marks a spike or drop outside the Safe Range — a sign to check for dirty filters, icing, or compressor strain.": "Titik merah menandai lonjakan atau penurunan di luar Rentang Aman — tanda untuk memeriksa filter kotor, koil membeku, atau beban kompresor.",
+  "Chart zoom and pan controls": "Kontrol zoom dan geser grafik",
+  "Pan earlier": "Geser lebih awal",
+  "Pan later": "Geser lebih baru",
+  "Zoom out": "Perkecil",
+  "Zoom in": "Perbesar",
+  "Pinch or use + / − to zoom · Drag or use arrows to pan · Tap any point for details": "Cubit atau gunakan + / − untuk zoom · Geser atau gunakan panah · Ketuk titik mana saja untuk detail",
 };

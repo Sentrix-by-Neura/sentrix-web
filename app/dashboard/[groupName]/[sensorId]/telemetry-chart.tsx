@@ -117,6 +117,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   const [pointerInteraction, setPointerInteraction] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; x: number; y: number; origin: number; end: number; moved: boolean } | null>(null);
+  const pinch = useRef<{ distance: number; span: number; end: number; fraction: number } | null>(null);
   const span = viewport.zoomSpan ?? defaultSpan;
   const fetchRange = span <= timeframes["1h"].span ? "1h" : span <= timeframes["24h"].span ? "24h" : "7d";
   const windowCount = Math.ceil(span / timeframes[fetchRange].span);
@@ -136,9 +137,34 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   }
 
   function resetZoom() {
-    setViewport(previous => ({ ...previous, zoomSpan: null }));
+    setViewport({ end: null, zoomSpan: null });
     setCurrentDomain(null);
   }
+
+  function zoomBy(factor: number, fraction = 0.5) {
+    if (history?.latest == null) return;
+    setPointerInteraction(true);
+    setViewport(previous => {
+      const width = previous.zoomSpan ?? defaultSpan;
+      const zoomSpan = clamp(Math.round(width * factor), minimumSpan, maximumSpan);
+      if (zoomSpan === width) return previous;
+      const edge = viewportEnd(previous.end, width, oldest, latest);
+      const end = viewportEnd(edge + (1 - fraction) * (zoomSpan - width), zoomSpan, oldest, latest);
+      return { zoomSpan, end: end === latest ? null : end };
+    });
+  }
+
+  function panBy(direction: -1 | 1) {
+    if (!canPan) return;
+    setPointerInteraction(true);
+    navigateTo(displayedEnd + direction * (span / 2));
+  }
+
+  const canZoomIn = history?.latest != null && span > minimumSpan;
+  const canZoomOut = history?.latest != null && span < maximumSpan;
+  const canPanEarlier = canPan && displayedEnd > earliestEnd;
+  const canPanLater = canPan && displayedEnd < latest;
+  const isModified = viewport.zoomSpan !== null || viewport.end !== null || currentDomain !== null;
 
   function startDrag(event: PointerEvent<HTMLDivElement>) {
     setPointerInteraction(true);
@@ -222,21 +248,110 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
     });
   });
 
+  const handleTouchStart = useEffectEvent((event: TouchEvent, frame: HTMLDivElement) => {
+    if (event.touches.length !== 2 || history?.latest == null) return;
+    drag.current = null;
+    setPreviewEnd(null);
+    const [a, b] = [event.touches[0], event.touches[1]];
+    const distance = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    if (distance < 10) return;
+    const bounds = frame.getBoundingClientRect();
+    const plotWidth = Math.max(1, bounds.width - yAxisWidth - chartMargin.right);
+    const midX = (a.clientX + b.clientX) / 2;
+    const fraction = clamp((midX - bounds.left - yAxisWidth) / plotWidth, 0, 1);
+    pinch.current = { distance, span, end: displayedEnd, fraction };
+  });
+
+  const handleTouchMove = useEffectEvent((event: TouchEvent) => {
+    const activePinch = pinch.current;
+    if (!activePinch || event.touches.length !== 2 || history?.latest == null) return;
+    event.preventDefault();
+    const [a, b] = [event.touches[0], event.touches[1]];
+    const distance = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    if (distance < 10) return;
+    const factor = activePinch.distance / distance;
+    const zoomSpan = clamp(Math.round(activePinch.span * factor), minimumSpan, maximumSpan);
+    const end = viewportEnd(activePinch.end + (1 - activePinch.fraction) * (zoomSpan - activePinch.span), zoomSpan, oldest, latest);
+    setViewport({ zoomSpan, end: end === latest ? null : end });
+  });
+
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
     const handleWheel = (event: WheelEvent) => wheel(event, frame);
+    const onTouchStart = (event: TouchEvent) => handleTouchStart(event, frame);
+    const onTouchMove = (event: TouchEvent) => handleTouchMove(event);
+    const onTouchEnd = (event: TouchEvent) => {
+      if (event.touches.length < 2) pinch.current = null;
+    };
     frame.addEventListener("wheel", handleWheel, { passive: false });
-    return () => frame.removeEventListener("wheel", handleWheel);
+    frame.addEventListener("touchstart", onTouchStart, { passive: true });
+    frame.addEventListener("touchmove", onTouchMove, { passive: false });
+    frame.addEventListener("touchend", onTouchEnd, { passive: true });
+    frame.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    return () => {
+      frame.removeEventListener("wheel", handleWheel);
+      frame.removeEventListener("touchstart", onTouchStart);
+      frame.removeEventListener("touchmove", onTouchMove);
+      frame.removeEventListener("touchend", onTouchEnd);
+      frame.removeEventListener("touchcancel", onTouchEnd);
+    };
   }, []);
 
   return (
     <section aria-label={t("Current history")} className={`${styles.panel} space-y-5`}>
       <div className={styles.sectionHeader}>
         <h2>{t("Current history")}</h2>
-        {(viewport.zoomSpan !== null || currentDomain !== null) && (
-          <button type="button" className={styles.control} onClick={resetZoom}>{t("Reset zoom")}</button>
-        )}
+        <div role="group" aria-label={t("Chart zoom and pan controls")} className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            className={styles.control}
+            onClick={() => panBy(-1)}
+            disabled={!canPanEarlier}
+            aria-label={t("Pan earlier")}
+            title={t("Pan earlier")}
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            className={styles.control}
+            onClick={() => panBy(1)}
+            disabled={!canPanLater}
+            aria-label={t("Pan later")}
+            title={t("Pan later")}
+          >
+            →
+          </button>
+          <button
+            type="button"
+            className={styles.control}
+            onClick={() => zoomBy(2)}
+            disabled={!canZoomOut}
+            aria-label={t("Zoom out")}
+            title={t("Zoom out")}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            className={styles.control}
+            onClick={() => zoomBy(0.5)}
+            disabled={!canZoomIn}
+            aria-label={t("Zoom in")}
+            title={t("Zoom in")}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className={styles.control}
+            onClick={resetZoom}
+            disabled={!isModified}
+          >
+            {t("Reset zoom")}
+          </button>
+        </div>
       </div>
 
       <div className={styles.legend}>
@@ -375,6 +490,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
               stroke="var(--chart-line)"
               strokeWidth={2}
               isAnimationActive={false}
+              activeDot={{ r: 6, fill: "var(--chart-line)", stroke: "var(--surface)", strokeWidth: 2 }}
               dot={(props) => {
                 const { cx, cy, payload } = props;
                 if (!(payload?.isAnomaly || payload?.isolated) || cx == null || cy == null) return <g key={`empty-${props.index}`} />;
@@ -395,9 +511,10 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
         )}
       </div>
       {history?.oldest != null && (
-        <p className="text-xs text-[var(--text-secondary)]">
-          {windowDate.formatRange(displayedStart, displayedEnd)}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
+          <p>{windowDate.formatRange(displayedStart, displayedEnd)}</p>
+          <p>{t("Pinch or use + / − to zoom · Drag or use arrows to pan · Tap any point for details")}</p>
+        </div>
       )}
       {loading && visiblePoints.length > 0 && <p role="status" className={styles.message}>{t("Loading current history…")}</p>}
       {error && (
