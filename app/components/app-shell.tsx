@@ -6,6 +6,7 @@ import { Suspense, useEffect, type ReactNode } from "react";
 import { Brand } from "./brand";
 import { AccountDropdown } from "./account-dropdown";
 import { LanguageToggle } from "./language-toggle";
+import { QuickStartGuide } from "./quick-start-guide";
 import { useLanguage } from "../lib/language-context";
 import { useSentrix } from "../lib/sentrix-store";
 import { useTheme } from "../lib/theme-context";
@@ -111,6 +112,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <QuickStartGuide autoOpen={ready && !!userId} />
             <LanguageToggle />
             <AlertsLink />
             <div className="hidden h-8 w-px bg-[var(--border)] lg:block" />
