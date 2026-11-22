@@ -20,7 +20,7 @@ function DashboardLink({ active = false }: { active?: boolean }) {
     <Link
       href="/dashboard"
       aria-current={active ? "page" : undefined}
-      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
         active
           ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
           : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
@@ -55,7 +55,7 @@ function AlertsLink() {
         <path d="M10 21h4" />
       </svg>
       {unresolvedCount > 0 && (
-        <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-semibold text-white ring-2 ring-[var(--canvas)]">
+        <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[11px] font-semibold text-white ring-2 ring-[var(--canvas)]">
           {unresolvedCount}
         </span>
       )}

@@ -20,12 +20,17 @@ function ProfileForm({ initialName }: { initialName: string }) {
     catch (error) { setResult(error instanceof Error ? error.message : "Could not save profile."); }
     finally { setPending(false); }
   }
-  return <form onSubmit={save} className="surface-card space-y-5 rounded-xl border border-[var(--border)] p-6">
-    <h2 className="text-base font-semibold">{t("Profile")}</h2>
-    <label className="block max-w-xl text-sm">{t("Full name")}<input required maxLength={100} value={name} onChange={e => setName(e.target.value)} className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-3" /></label>
-    <p className="text-sm">{t("Email")}: {userProfile.email}</p>
-    <button type="submit" disabled={pending} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-50">{t(pending ? "Saving…" : "Save profile")}</button>
-    {result && <p role="status" className="text-sm">{t(result)}</p>}
+  return <form onSubmit={save} className="surface-card space-y-5 rounded-xl border border-[var(--border)] p-4 sm:p-6">
+    <h2 className="text-lg font-semibold sm:text-base">{t("Profile")}</h2>
+    <label className="block max-w-xl text-base font-medium sm:text-sm">
+      {t("Full name")}
+      <input required maxLength={100} value={name} onChange={e => setName(e.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-3 text-base font-normal sm:text-sm" />
+    </label>
+    <p className="break-all text-base text-[var(--text-secondary)] sm:text-sm">
+      <span className="font-medium text-[var(--text-primary)]">{t("Email")}:</span> {userProfile.email}
+    </p>
+    <button type="submit" disabled={pending} className="min-h-11 rounded-lg bg-amber-500 px-5 py-2.5 text-base font-semibold text-stone-950 disabled:opacity-50 sm:text-sm">{t(pending ? "Saving…" : "Save profile")}</button>
+    {result && <p role="status" className="text-base sm:text-sm">{t(result)}</p>}
   </form>;
 }
 
@@ -34,9 +39,9 @@ function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <section aria-labelledby="appearance-heading" className="surface-card space-y-4 rounded-xl border border-[var(--border)] p-6">
-      <h2 id="appearance-heading" className="text-base font-semibold">{t("Appearance")}</h2>
-      <fieldset className="flex gap-2">
+    <section aria-labelledby="appearance-heading" className="surface-card space-y-4 rounded-xl border border-[var(--border)] p-4 sm:p-6">
+      <h2 id="appearance-heading" className="text-lg font-semibold sm:text-base">{t("Appearance")}</h2>
+      <fieldset className="flex flex-wrap gap-3">
         <legend className="sr-only">{t("Color theme")}</legend>
         {(["light", "dark"] as const).map(option => (
           <label key={option} className="cursor-pointer">
@@ -48,7 +53,7 @@ function AppearanceSettings() {
               onChange={() => setTheme(option)}
               className="peer sr-only"
             />
-            <span className="inline-flex min-h-10 min-w-20 items-center justify-center rounded-lg border border-[var(--border)] px-3 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] peer-checked:border-amber-600/60 peer-checked:bg-amber-500/10 peer-checked:text-[var(--text-primary)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber-500">
+            <span className="inline-flex min-h-11 min-w-24 items-center justify-center rounded-lg border border-[var(--border)] px-4 text-base text-[var(--text-secondary)] transition hover:bg-[var(--surface-hover)] peer-checked:border-amber-600/60 peer-checked:bg-amber-500/10 peer-checked:text-[var(--text-primary)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber-500 sm:text-sm">
               {t(option === "light" ? "Light" : "Dark")}
             </span>
           </label>

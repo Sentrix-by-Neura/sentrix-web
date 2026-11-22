@@ -100,8 +100,11 @@
   .metrics > div { padding: 20px 12px; }
   .metrics > div:nth-child(odd) { padding-left: 0; border-left: 0; }
   .metrics > div:nth-child(n+3) { border-top: 1px solid var(--border); }
-  .metrics dt { font-size: .8125rem; }
+  .metrics dt { font-size: .9375rem; }
   .metrics dd { font-size: 1.75rem; }
+  .status { font-size: .875rem; }
+  .control { font-size: .9375rem; }
+  .legend { font-size: .875rem; }
   .panel { padding: 16px; }
 }
 

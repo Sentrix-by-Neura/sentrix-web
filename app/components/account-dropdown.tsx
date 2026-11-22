@@ -57,13 +57,13 @@ export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = fal
           className="surface-card absolute right-0 top-full z-40 mt-2 w-56 max-w-[calc(100vw-5rem)] rounded-xl border border-[var(--border)] p-1.5 shadow-xl"
         >
           <div className="border-b border-[var(--border)] px-2.5 pb-2 pt-1.5">
-            <p className="break-words text-sm font-semibold text-[var(--text-primary)]">{name}</p>
-            <p className="mt-0.5 break-all text-xs text-[var(--text-secondary)]">{email}</p>
+            <p className="break-words text-base font-semibold text-[var(--text-primary)] sm:text-sm">{name}</p>
+            <p className="mt-0.5 break-all text-sm text-[var(--text-secondary)] sm:text-xs">{email}</p>
           </div>
           <Link
             href="/settings"
             onClick={() => setOpen(false)}
-            className="mt-1 block rounded-lg px-2.5 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
+            className="mt-1 block rounded-lg px-2.5 py-2.5 text-base text-[var(--text-primary)] hover:bg-[var(--surface-hover)] sm:py-2 sm:text-sm"
           >
             {t("Settings")}
           </Link>
@@ -71,7 +71,7 @@ export function AccountDropdown({ name, email, avatarUrl, redirectOnLogout = fal
             type="button"
             onClick={logout}
             disabled={signingOut}
-            className="block w-full rounded-lg px-2.5 py-2 text-left text-sm text-red-600 hover:bg-[var(--surface-hover)] disabled:opacity-60 dark:text-red-400"
+            className="block w-full rounded-lg px-2.5 py-2.5 text-left text-base text-red-600 hover:bg-[var(--surface-hover)] disabled:opacity-60 dark:text-red-400 sm:py-2 sm:text-sm"
           >
             {t(signingOut ? "Logging out…" : "Log out")}
           </button>
