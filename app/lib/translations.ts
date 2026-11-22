@@ -505,7 +505,7 @@ export const indonesian: Record<string, string> = {
   "Processing photo…": "Memproses foto…",
   "Remove photo": "Hapus foto",
   "Save location": "Simpan lokasi",
-  "Edit AC & Room": "Ubah AC & Ruangan",
+  "Edit Name": "Ubah Nama",
   "View room photo": "Lihat foto ruangan",
   "Please choose an image file (JPG, PNG, or WebP).": "Pilih berkas gambar (JPG, PNG, atau WebP).",
   "Image is too large. Please choose a photo under 10 MB.": "Ukuran gambar terlalu besar. Pilih foto di bawah 10 MB.",

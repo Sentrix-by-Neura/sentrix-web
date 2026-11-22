@@ -16,7 +16,7 @@ DECLARE
   target_user_id uuid;
   -- If you want to seed data for a specific account email, enter it below.
   -- If left empty (''), it will automatically target your most recently created user.
-  specific_email text := ''; 
+ specific_email text := 'demo@sentrix.my.id';
   
   -- Stable Group UUIDs
   grp_server_id  uuid := '11111111-1111-1111-1111-111111111111';
