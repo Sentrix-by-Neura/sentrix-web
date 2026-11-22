@@ -29,6 +29,7 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
       useTelemetry: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { points: [{ timestamp: "2026-10-24T01:00:00Z", rmsCurrent: 2, lowerBound: 0, upperBound: 5 }], loading: false, error: null }; },
     };
     if (name.endsWith("sentrix-bluetooth")) return {};
+    if (name.endsWith("device-location-meta")) return { resizeLocationPhoto: async () => "" };
     if (name.endsWith("confirm-modal")) return { useConfirm: () => () => {} };
     if (name.endsWith("ble-onboarding-modal")) return { BleOnboardingModal: () => null };
     if (name.endsWith("telemetry-chart")) return { TelemetryChart: () => createElement("div", null, "Preserved telemetry chart") };

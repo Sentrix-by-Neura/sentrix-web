@@ -25,6 +25,7 @@ function setup(handler, environment = {}) {
   runInNewContext(outputText, {
     exports, Error, Date, Map, Set, AbortController, ...environment,
     require: name => name === "./sentrix-api" ? { apiRequest, authenticatedSession: async () => { if (!session) throw new Error("Log in again"); return session; } } :
+      name === "./device-location-meta" ? { loadAllDeviceLocationMeta: () => ({}), saveDeviceLocationMeta: () => ({}) } :
       name === "./supabase-browser" ? { supabase: { auth: { onAuthStateChange: () => ({ data: {} }) }, from: table => { assert.equal(table, "users"); return { select: columns => { assert.equal(columns, "name,role"); return { eq: () => ({ maybeSingle: async () => ({ data: { name: "Alice", role: "USER" } }) }) }; } }; } } } :
       { createContext: () => ({}), ...environment.react },
   });

@@ -27,6 +27,7 @@ function renderShell(session) {
       if (name === "./brand") return { Brand: () => createElement("a", { href: "/dashboard" }, "Sentrix") };
       if (name === "./account-dropdown") return { AccountDropdown: () => null };
       if (name === "./context-menu") return { SentrixContextMenu: () => null };
+      if (name === "./quick-start-guide") return { QuickStartGuide: () => null };
       if (name === "../lib/theme-context") return { useTheme: () => ({ isDark: true }) };
       if (name === "../lib/supabase-browser") return { isSupabaseConfigured: false, supabase: null };
       if (name === "../lib/sentrix-store") return { useSentrix: () => ({ userProfile: { name: "User" }, alerts: [], devices: [], refreshData() {}, error: null, ...session }) };

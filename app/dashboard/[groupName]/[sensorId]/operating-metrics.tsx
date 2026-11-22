@@ -19,15 +19,11 @@ export function OperatingMetrics({ device, reading, loading, error, expectedMin,
     <section aria-label={t("AC operating information")} aria-busy={pending}>
       <dl className={styles.metrics}>
         <div>
-          <dt>
-            {t("RMS Current")}
-            <span className="mt-0.5 block text-xs font-normal text-[var(--text-muted)]">
-              {t("AC electrical draw")}
-            </span>
-          </dt>
+          <dt>{t("RMS Current")}</dt>
           <dd className={pending ? styles.skeleton : undefined}>
             {pending ? <span className="sr-only">{t("Loading current")}</span> : typeof reading?.rms_current === "number" && Number.isFinite(reading.rms_current) ? <>{reading.rms_current.toFixed(2)} <span className={styles.unit}>A</span></> : t("Unknown")}
           </dd>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">{t("AC electrical draw")}</p>
         </div>
         <div>
           <dt>{t("Room Temperature")}</dt>
@@ -42,13 +38,9 @@ export function OperatingMetrics({ device, reading, loading, error, expectedMin,
           <dd className={pending ? styles.skeleton : undefined}>{pending ? <span className="sr-only">{t("Loading AC power")}</span> : t(power)}</dd>
         </div>
         <div className={styles.normalRange}>
-          <dt>
-            {t("Normal RMS Current Range")}
-            <span className="mt-0.5 block text-xs font-normal text-[var(--text-secondary)]">
-              {t("Expected safe operating band for this AC")}
-            </span>
-          </dt>
+          <dt>{t("Normal RMS Current Range")}</dt>
           <dd>{expectedMin !== null && expectedMax !== null && Number.isFinite(expectedMin) && Number.isFinite(expectedMax) ? <>{expectedMin.toFixed(2)} {t("to")} {expectedMax.toFixed(2)} <span className={styles.unit}>A</span></> : t("Unknown")}</dd>
+          <p className="w-full text-xs text-[var(--text-secondary)]">{t("Expected safe operating band for this AC")}</p>
         </div>
       </dl>
       {error && <p role="status" className={styles.message}>{t("Could not refresh readings.")} {t(error)}</p>}
