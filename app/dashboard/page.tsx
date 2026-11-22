@@ -140,13 +140,17 @@ export default function DashboardPage() {
           <h2 className="eyebrow">{t("Device contact")}</h2>
           <p className="mt-2 font-mono text-2xl leading-none tracking-[-0.06em] sm:text-[1.75rem]">
             <span className="text-emerald-600 dark:text-emerald-400">{pad(online)}</span>
-            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">{t("Recent contact")}</span>
+            <span className="ml-1.5 text-sm tracking-normal text-[var(--text-secondary)] sm:text-xs">{t("Recent contact")}</span>
             <span className="mx-2 text-[var(--text-muted)]">/</span>
             <span className={offline ? "text-red-500" : ""}>{pad(offline)}</span>
-            <span className="ml-1.5 text-xs tracking-normal text-[var(--text-secondary)]">{t("Awaiting contact")}</span>
+            <span className="ml-1.5 text-sm tracking-normal text-[var(--text-secondary)] sm:text-xs">{t("Awaiting contact")}</span>
           </p>
-          <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
+          <p className="mt-2 font-mono text-xs text-[var(--text-muted)]">
             {currentDevices.length} {t("sensors registered")}
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+            <strong className="font-medium text-emerald-600 dark:text-emerald-400">{t("Recent contact")}</strong>: {t("online and sending readings.")}{" "}
+            <strong className="font-medium text-[var(--text-primary)]">{t("Awaiting contact")}</strong>: {t("no recent signal — check power or Wi-Fi.")}
           </p>
         </article>
 

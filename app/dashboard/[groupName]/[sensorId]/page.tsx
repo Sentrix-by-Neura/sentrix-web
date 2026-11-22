@@ -117,6 +117,25 @@ function SensorAnalyticsContent() {
         </div>
       </div>
 
+      {!device.archivedAt && !hasRecentContact(device) && (
+        <aside
+          aria-label={t("Sensor connection checklist")}
+          className="surface-card rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-[var(--text-primary)]"
+        >
+          <p className="font-semibold text-amber-700 dark:text-amber-400">
+            {t("Sensor unavailable — what to check")}
+          </p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            {t("This sensor hasn't sent a recent reading. You usually do not need to re-enter Wi-Fi credentials.")}
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--text-secondary)]">
+            <li>{t("Check that the sensor has power and its indicator LED is on.")}</li>
+            <li>{t("Check that your 2.4 GHz Wi-Fi router is online, then wait 1–2 minutes for automatic reconnection.")}</li>
+            <li>{t("Only re-setup Wi-Fi (hold BOOT for 5 seconds, then Add Device) if your Wi-Fi name or password changed.")}</li>
+          </ul>
+        </aside>
+      )}
+
       <OperatingMetrics device={device} {...operating} expectedMin={latestTelemetry?.lowerBound ?? null} expectedMax={latestTelemetry?.upperBound ?? null} />
 
       <TelemetryChart key={device.id} deviceId={device.id} />

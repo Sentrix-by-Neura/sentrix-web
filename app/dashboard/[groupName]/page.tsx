@@ -109,13 +109,32 @@ function LocationDetailContent() {
 
       {/* Sensors Card Grid Section */}
       <section aria-label={t("Sensors")} className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <h2 className="eyebrow">{t("Sensors")}</h2>
-            <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
+            <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-xs text-[var(--text-muted)]">
               {groupDevices.length.toString().padStart(2, "0")}
             </span>
           </div>
+          <details className="text-xs text-[var(--text-secondary)]">
+            <summary className="cursor-pointer select-none font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400">
+              {t("What do sensor statuses mean?")}
+            </summary>
+            <dl className="surface-card mt-2 max-w-xl space-y-1.5 rounded-lg border border-[var(--border)] p-3 text-xs leading-relaxed">
+              <div>
+                <dt className="inline font-semibold text-emerald-600 dark:text-emerald-400">{t("Monitoring active")}: </dt>
+                <dd className="inline">{t("Sensor is online and checking your AC normally.")}</dd>
+              </div>
+              <div>
+                <dt className="inline font-semibold text-amber-600 dark:text-amber-400">{t("Calibrating")}: </dt>
+                <dd className="inline">{t("Sensor is online and learning this AC's normal 7-day power pattern.")}</dd>
+              </div>
+              <div>
+                <dt className="inline font-semibold text-[var(--text-primary)]">{t("Unavailable")}: </dt>
+                <dd className="inline">{t("No recent signal. Check power and Wi-Fi first — you only need to re-enter Wi-Fi if your network name or password changed.")}</dd>
+              </div>
+            </dl>
+          </details>
         </div>
 
         {groupDevices.length === 0 ? (
@@ -184,6 +203,11 @@ function LocationDetailContent() {
 
                   <div className="mt-5 border-t border-[var(--border)] pt-4">
                     <StatusBadge device={device} />
+                    {!device.archivedAt && !hasRecentContact(device) && (
+                      <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                        {t("No recent signal — check power and Wi-Fi. No need to re-enter Wi-Fi unless it changed.")}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
