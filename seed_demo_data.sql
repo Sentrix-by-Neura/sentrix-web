@@ -195,34 +195,54 @@ BEGIN
   FROM generate_series(0, 1440, 3) AS m
   ON CONFLICT (device_id, "timestamp") DO NOTHING;
 
-  -- 7. Seed Alerts
+  -- 7. Seed Varied Demo Alerts (across all groups, date windows, and workflow states)
   DELETE FROM public.alerts 
-  WHERE device_id IN (dev_crac01_id, dev_split3f_id, dev_chiller_id);
+  WHERE device_id IN (dev_crac01_id, dev_crac02_id, dev_split3f_id, dev_split4f_id, dev_chiller_id);
 
   INSERT INTO public.alerts (
     id, device_id, "timestamp", actual_value, expected_max, expected_min, 
     severity, is_resolved, user_feedback, created_at, updated_at
   )
   VALUES
-    -- Critical Unresolved Alert on CRAC 01 (corresponds to spike 2 hours ago)
+    -- 1. Critical Unresolved, no feedback yet (35 mins ago · Main Server Room)
+    (
+      gen_random_uuid(), dev_crac01_id, now() - interval '35 minutes',
+      23.4, 17.0, 11.5, 'CRITICAL', false, null, now() - interval '35 minutes', now() - interval '35 minutes'
+    ),
+    -- 2. Critical Unresolved, no feedback yet (2 hours ago · matches CRAC 01 spike)
     (
       gen_random_uuid(), dev_crac01_id, now() - interval '2 hours',
       22.8, 17.0, 11.5, 'CRITICAL', false, null, now() - interval '2 hours', now() - interval '2 hours'
     ),
-    -- Warning Unresolved Alert on Split AC 3F (corresponds to spike 7 hours ago)
+    -- 3. Warning Unresolved, no feedback yet (7 hours ago · East Wing Split AC 3F)
     (
       gen_random_uuid(), dev_split3f_id, now() - interval '7 hours',
       18.2, 14.5, 8.0, 'WARNING', false, null, now() - interval '7 hours', now() - interval '7 hours'
     ),
-    -- Resolved Alert from 1 day ago (confirmed anomaly)
+    -- 4. Warning Unresolved, already marked Valid Issue (14 hours ago · Chiller Plant)
+    (
+      gen_random_uuid(), dev_chiller_id, now() - interval '14 hours',
+      24.6, 22.0, 15.0, 'WARNING', false, true, now() - interval '14 hours', now() - interval '12 hours'
+    ),
+    -- 5. Warning Unresolved, drop below safe range (2 days ago · East Wing Split AC 4F)
+    (
+      gen_random_uuid(), dev_split4f_id, now() - interval '2 days',
+      4.1, 14.5, 8.0, 'WARNING', false, null, now() - interval '2 days', now() - interval '2 days'
+    ),
+    -- 6. Resolved Alert from 1 day ago (confirmed Valid Issue · East Wing Split AC 3F)
     (
       gen_random_uuid(), dev_split3f_id, now() - interval '26 hours',
       6.2, 14.5, 8.0, 'WARNING', true, true, now() - interval '26 hours', now() - interval '20 hours'
     ),
-    -- Resolved Alert from 3 days ago (false alarm feedback)
+    -- 7. Resolved Alert from 3 days ago (False Alarm · Chiller Plant)
     (
       gen_random_uuid(), dev_chiller_id, now() - interval '3 days',
       23.4, 22.0, 15.0, 'WARNING', true, false, now() - interval '3 days', now() - interval '2 days'
+    ),
+    -- 8. Older Resolved Alert from 10 days ago (outside 7d filter · Main Server Room)
+    (
+      gen_random_uuid(), dev_crac01_id, now() - interval '10 days',
+      20.9, 17.0, 11.5, 'CRITICAL', true, true, now() - interval '10 days', now() - interval '9 days'
     );
 
   RAISE NOTICE '>>> Fake demo data seeded successfully for User: %! Role updated to ADMIN.', target_user_id;
