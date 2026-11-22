@@ -344,14 +344,14 @@ function AlertsContent() {
                                   title: device.unitName || device.name,
                                   room: device.roomLocation,
                                 })}
-                                className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--canvas)] px-2 py-0.5 text-xs font-medium text-amber-600 hover:border-amber-500/50 dark:text-amber-400"
+                                className="inline-flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-1.5 pr-3 text-xs font-medium text-amber-600 hover:border-amber-500/50 dark:text-amber-400"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={device.locationPhotoUrl}
                                   alt=""
                                   aria-hidden="true"
-                                  className="h-5 w-5 rounded object-cover"
+                                  className="h-14 w-20 rounded object-cover"
                                 />
                                 {t("View room photo")}
                               </button>

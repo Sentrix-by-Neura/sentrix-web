@@ -196,6 +196,7 @@ function SensorAnalyticsContent() {
 
   const { ready, groups, devices, alerts, submitAlertFeedback, resolveAlert } = useSentrix();
   const [showEditLocation, setShowEditLocation] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const group = findGroup(groups, groupSlug);
   const groupDevices = devices.filter(d => d.groupId === group?.id);
   const device = groupDevices.find(d => d.id === sensorId || d.id === rawSensor)
@@ -249,31 +250,21 @@ function SensorAnalyticsContent() {
       </nav>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-wrap items-start gap-4">
-          {device.locationPhotoUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={device.locationPhotoUrl}
-              alt={device.unitName || device.name}
-              className="h-16 w-16 shrink-0 rounded-xl border border-[var(--border)] object-cover"
-            />
-          )}
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
-                {device.unitName || device.name}
-              </h1>
-              <DynamicSensorStatusBadge device={device} />
-            </div>
-            <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
-              {device.unitName ? `${device.name} · ` : ""}{device.macAddress}
-            </p>
-            {device.roomLocation && (
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                📍 {device.roomLocation}
-              </p>
-            )}
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
+              {device.unitName || device.name}
+            </h1>
+            <DynamicSensorStatusBadge device={device} />
           </div>
+          <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
+            {device.unitName ? `${device.name} · ` : ""}{device.macAddress}
+          </p>
+          {device.roomLocation && (
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              📍 {device.roomLocation}
+            </p>
+          )}
         </div>
 
         <div className={styles.headerActions}>
@@ -289,6 +280,69 @@ function SensorAnalyticsContent() {
           <TelemetryExport key={device.id} deviceId={device.id} deviceName={device.unitName || device.name} />
         </div>
       </div>
+
+      {device.locationPhotoUrl && (
+        <div className="surface-card rounded-xl border border-[var(--border)] p-3 sm:p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-[var(--text-primary)]">
+              {t("Room & AC photo")}
+            </span>
+            <span className="text-xs text-[var(--text-secondary)]">
+              {t("Tap photo to enlarge")}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowPhotoModal(true)}
+            aria-label={t("View room photo")}
+            className="block w-full max-w-md overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--canvas)] p-0"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={device.locationPhotoUrl}
+              alt={device.unitName || device.name}
+              className="h-48 w-full object-cover transition hover:opacity-95 sm:h-56"
+            />
+          </button>
+        </div>
+      )}
+
+      {showPhotoModal && device.locationPhotoUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={device.unitName || device.name}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowPhotoModal(false);
+          }}
+        >
+          <div className="surface-card w-full max-w-2xl space-y-3 rounded-2xl border border-[var(--border)] p-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-base font-semibold text-[var(--text-primary)]">{device.unitName || device.name}</p>
+                {device.roomLocation && (
+                  <p className="text-xs text-[var(--text-secondary)]">📍 {device.roomLocation}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(false)}
+                aria-label={t("Close dialog")}
+                className="flex size-9 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+              >
+                ✕
+              </button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={device.locationPhotoUrl}
+              alt={device.unitName || device.name}
+              className="max-h-[75vh] w-full rounded-xl border border-[var(--border)] object-contain"
+            />
+          </div>
+        </div>
+      )}
 
       {showEditLocation && (
         <EditLocationModal device={device} onClose={() => setShowEditLocation(false)} />

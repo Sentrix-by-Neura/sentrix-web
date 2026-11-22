@@ -513,4 +513,6 @@ export const indonesian: Record<string, string> = {
   "Could not load image preview.": "Tidak dapat memuat pratinjau gambar.",
   "Could not process image.": "Tidak dapat memproses gambar.",
   "Could not save location details. Try a smaller photo.": "Tidak dapat menyimpan detail lokasi. Coba foto yang lebih kecil.",
+  "Room & AC photo": "Foto Ruangan & AC",
+  "Tap photo to enlarge": "Ketuk foto untuk memperbesar",
 };
