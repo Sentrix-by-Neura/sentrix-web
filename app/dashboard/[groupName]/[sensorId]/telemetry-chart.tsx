@@ -361,7 +361,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       </div>
 
       <details className="rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3.5 py-2.5 text-sm text-[var(--text-secondary)]">
-        <summary className="cursor-pointer select-none font-medium text-[var(--text-primary)]">
+        <summary className="cursor-pointer select-none font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400">
           {t("How to read this chart (Normal vs. Anomaly)")}
         </summary>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
