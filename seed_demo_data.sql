@@ -71,47 +71,37 @@ BEGIN
 
   -- 4. Seed Devices
   INSERT INTO public.devices (
-    id, mac_address, pin_code, name, group_id, status, 
-    calibration_started_at, calibration_ends_at, last_seen, 
-    firmware_version, local_ip, wifi_rssi, node_role, updated_at
+    id, mac_address, name, group_id, status,
+    calibration_started_at, calibration_ends_at, last_seen, updated_at
   )
   VALUES
     (
-      dev_crac01_id, '246F28A13C01', '482913', 'CRAC Compressor 01 · Primary', grp_server_id, 'ACTIVE',
-      now() - interval '30 days', now() - interval '23 days', now() - interval '20 seconds',
-      'v1.2.4', '192.168.10.141', -54, 'ROOT', now()
+      dev_crac01_id, '246F28A13C01', 'CRAC Compressor 01 · Primary', grp_server_id, 'ACTIVE',
+      now() - interval '30 days', now() - interval '23 days', now() - interval '20 seconds', now()
     ),
     (
-      dev_crac02_id, '246F28A13C02', '715204', 'CRAC Compressor 02 · Backup', grp_server_id, 'CALIBRATING',
-      now() - interval '2 days', now() + interval '5 days', now() - interval '45 seconds',
-      'v1.2.4', '192.168.10.142', -62, 'NODE', now()
+      dev_crac02_id, '246F28A13C02', 'CRAC Compressor 02 · Backup', grp_server_id, 'CALIBRATING',
+      now() - interval '2 days', now() + interval '5 days', now() - interval '45 seconds', now()
     ),
     (
-      dev_split3f_id, '246F28B7910A', '390671', 'Split AC 3F-East · MCB', grp_east_id, 'ACTIVE',
-      now() - interval '20 days', now() - interval '13 days', now() - interval '15 seconds',
-      'v1.2.4', '192.168.20.55', -48, 'ROOT', now()
+      dev_split3f_id, '246F28B7910A', 'Split AC 3F-East · MCB', grp_east_id, 'ACTIVE',
+      now() - interval '20 days', now() - interval '13 days', now() - interval '15 seconds', now()
     ),
     (
-      dev_split4f_id, '246F28B7910B', '604158', 'Split AC 4F-East · MCB', grp_east_id, 'OFFLINE',
-      now() - interval '20 days', now() - interval '13 days', now() - interval '4 hours',
-      'v1.2.3', '192.168.20.56', -85, 'NODE', now()
+      dev_split4f_id, '246F28B7910B', 'Split AC 4F-East · MCB', grp_east_id, 'OFFLINE',
+      now() - interval '20 days', now() - interval '13 days', now() - interval '4 hours', now()
     ),
     (
-      dev_chiller_id, '246F28C38801', '829105', 'Centrifugal Chiller Pump #1', grp_chiller_id, 'ACTIVE',
-      now() - interval '15 days', now() - interval '8 days', now() - interval '35 seconds',
-      'v1.2.4', '192.168.30.12', -58, 'ROOT', now()
+      dev_chiller_id, '246F28C38801', 'Centrifugal Chiller Pump #1', grp_chiller_id, 'ACTIVE',
+      now() - interval '15 days', now() - interval '8 days', now() - interval '35 seconds', now()
     )
   ON CONFLICT (id) DO UPDATE
-    SET name                   = EXCLUDED.name, 
-        group_id               = EXCLUDED.group_id, 
+    SET name                   = EXCLUDED.name,
+        group_id               = EXCLUDED.group_id,
         status                 = EXCLUDED.status,
         last_seen              = EXCLUDED.last_seen,
         calibration_started_at = EXCLUDED.calibration_started_at,
         calibration_ends_at    = EXCLUDED.calibration_ends_at,
-        firmware_version       = EXCLUDED.firmware_version,
-        local_ip               = EXCLUDED.local_ip,
-        wifi_rssi              = EXCLUDED.wifi_rssi,
-        node_role              = EXCLUDED.node_role,
         updated_at             = now();
 
   -- 5. Seed Prediction Bounds (Safe Operating Zones)
