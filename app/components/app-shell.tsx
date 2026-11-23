@@ -56,7 +56,7 @@ function AlertsLink() {
         <path d="M10 21h4" />
       </svg>
       {unresolvedCount > 0 && (
-        <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[11px] font-semibold text-white ring-2 ring-[var(--canvas)]">
+        <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[0.6875rem] font-semibold text-white ring-2 ring-[var(--canvas)]">
           {unresolvedCount}
         </span>
       )}

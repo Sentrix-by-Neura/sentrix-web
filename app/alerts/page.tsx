@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/app-shell";
+import { HelpPopover } from "../components/help-popover";
 import { useSentrix } from "../lib/sentrix-store";
 import { T, useLanguage, type Language } from "../lib/language-context";
 
@@ -120,8 +121,11 @@ function AlertsContent() {
               <h1 className="text-xl font-semibold tracking-[-0.045em] text-[var(--text-primary)] sm:text-2xl">
                 {t("Alerts")}
               </h1>
+              <HelpPopover label={t("Alerts")} title={t("Alerts")}>
+                <p>{t("Showing up to the latest 200 alerts. Filters apply to this recent history.")}</p>
+              </HelpPopover>
               {unresolvedCount > 0 && (
-                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[0.625rem] font-semibold text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
                   {unresolvedCount} {t("Unresolved")}
                 </span>
               )}
@@ -130,7 +134,6 @@ function AlertsContent() {
         </div>
         </div>
 
-        <p className="text-sm text-[var(--text-muted)]">{t("Showing up to the latest 200 alerts. Filters apply to this recent history.")}</p>
         {/* Transient Notification Toast */}
         {toastMessage && (
           <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-500 shadow-lg animate-in fade-in slide-in-from-top-2">
@@ -155,7 +158,7 @@ function AlertsContent() {
             <div>
               <label
                 htmlFor="filter-date"
-                className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
+                className="mb-1 block font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
               >
                 {t("Time Range")}
               </label>
@@ -175,7 +178,7 @@ function AlertsContent() {
             <div>
               <label
                 htmlFor="filter-group"
-                className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
+                className="mb-1 block font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
               >
                 {t("Facility Group")}
               </label>
@@ -198,7 +201,7 @@ function AlertsContent() {
             <div>
               <label
                 htmlFor="filter-status"
-                className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
+                className="mb-1 block font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)]"
               >
                 {t("Resolution Status")}
               </label>
@@ -215,7 +218,7 @@ function AlertsContent() {
             </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[11px] text-[var(--text-muted)] font-mono">
+          <div className="mt-3 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[0.6875rem] text-[var(--text-muted)] font-mono">
             <span>
               {t("Showing")} {filteredAlerts.length} {t("of")} {alerts.length} {t("total alerts")}
             </span>
@@ -277,7 +280,7 @@ function AlertsContent() {
                       <div className="flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${device?.archivedAt ? "bg-neutral-400" : alert.isResolved ? "bg-emerald-500" : "bg-red-500 animate-pulse"}`} />
                         <span
-                          className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                          className={`rounded-md px-2 py-0.5 font-mono text-[0.625rem] font-semibold ${
                             device?.archivedAt ? "border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text-secondary)]" : alert.isResolved
                               ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                               : "bg-red-500/10 text-red-500 border border-red-500/20"
@@ -331,7 +334,7 @@ function AlertsContent() {
                             </span>
                           )}
                           {device && (
-                            <span className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--text-muted)]">
+                            <span className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 font-mono text-[0.6875rem] text-[var(--text-muted)]">
                               {device.macAddress}
                             </span>
                           )}
@@ -376,7 +379,7 @@ function AlertsContent() {
                       {/* Current vs Bounds Metric Box */}
                       <div className="lg:col-span-5 flex items-center justify-start lg:justify-end gap-3 rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-3">
                         <div className="text-left">
-                          <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-muted)]">
+                          <p className="font-mono text-[0.5625rem] uppercase tracking-wider text-[var(--text-muted)]">
                             {t("Measured Current")}
                           </p>
                           <p className="font-mono text-lg font-bold text-red-500">
@@ -385,7 +388,7 @@ function AlertsContent() {
                         </div>
                         <div className="h-8 w-px bg-[var(--border)]" />
                         <div className="text-left">
-                          <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-muted)]">
+                          <p className="font-mono text-[0.5625rem] uppercase tracking-wider text-[var(--text-muted)]">
                             {t("Expected Safe Range")}
                           </p>
                           <p className="font-mono text-xs font-semibold text-[var(--text-secondary)]">
@@ -430,7 +433,7 @@ function AlertsContent() {
                             <button
                               type="button"
                               onClick={() => { void submitAlertFeedback(alert.id, !alert.userFeedback).catch(() => {}); }}
-                              className="font-mono text-[10px] text-[var(--text-muted)] hover:text-amber-500 underline"
+                              className="font-mono text-[0.625rem] text-[var(--text-muted)] hover:text-amber-500 underline"
                             >
                               {t("Change")}
                             </button>

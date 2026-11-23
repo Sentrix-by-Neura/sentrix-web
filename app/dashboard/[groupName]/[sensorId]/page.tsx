@@ -11,6 +11,7 @@ import { TelemetryExport } from "./telemetry-export";
 import styles from "./sensor-detail.module.css";
 import "./tokens.css";
 import { T, useLanguage } from "../../../lib/language-context";
+import { HelpPopover } from "../../../components/help-popover";
 
 function EditLocationModal({ device, onClose }: { device: Device; onClose: () => void }) {
   const { t } = useLanguage();
@@ -104,18 +105,21 @@ function EditLocationModal({ device, onClose }: { device: Device; onClose: () =>
         </label>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[var(--text-primary)]">
-            {t("Room / Unit Photo (Optional)")}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => { void handlePhotoChange(e); }}
-              className="mt-1.5 block w-full text-sm text-[var(--text-secondary)] file:mr-3 file:rounded-lg file:border file:border-[var(--border)] file:bg-[var(--surface-hover)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--text-primary)]"
-            />
-          </label>
-          <p className="text-xs text-[var(--text-secondary)]">
-            {t("Shown on alerts so technicians can find the exact room and AC unit.")}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="ac-unit-photo-input" className="text-sm font-medium text-[var(--text-primary)]">
+              {t("Room / Unit Photo (Optional)")}
+            </label>
+            <HelpPopover label={t("Room / Unit Photo (Optional)")} title={t("Room / Unit Photo (Optional)")}>
+              <p>{t("Shown on alerts so technicians can find the exact room and AC unit.")}</p>
+            </HelpPopover>
+          </div>
+          <input
+            id="ac-unit-photo-input"
+            type="file"
+            accept="image/*"
+            onChange={(e) => { void handlePhotoChange(e); }}
+            className="block w-full text-sm text-[var(--text-secondary)] file:mr-3 file:rounded-lg file:border file:border-[var(--border)] file:bg-[var(--surface-hover)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--text-primary)]"
+          />
           {processingPhoto && <p className="text-xs text-[var(--text-secondary)]">{t("Processing photo…")}</p>}
           {photoUrl && (
             <div className="space-y-2">
@@ -255,7 +259,22 @@ function SensorAnalyticsContent() {
             <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
               {device.unitName || device.name}
             </h1>
-            <DynamicSensorStatusBadge device={device} />
+            <div className="inline-flex items-center gap-1.5">
+              <DynamicSensorStatusBadge device={device} />
+              {!device.archivedAt && !hasRecentContact(device) && (
+                <HelpPopover
+                  label={t("Sensor connection checklist")}
+                  title={t("Sensor unavailable — what to check")}
+                >
+                  <p>{t("This sensor hasn't sent a recent reading. You usually do not need to re-enter Wi-Fi credentials.")}</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-4">
+                    <li>{t("Check that the sensor has power and its indicator LED is on.")}</li>
+                    <li>{t("Check that your 2.4 GHz Wi-Fi router is online, then wait 1–2 minutes for automatic reconnection.")}</li>
+                    <li>{t("Only re-setup Wi-Fi (hold BOOT for 5 seconds, then Add Device) if your Wi-Fi name or password changed.")}</li>
+                  </ul>
+                </HelpPopover>
+              )}
+            </div>
           </div>
           <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
             {device.unitName ? `${device.name} · ` : ""}{device.macAddress}
@@ -346,25 +365,6 @@ function SensorAnalyticsContent() {
 
       {showEditLocation && (
         <EditLocationModal device={device} onClose={() => setShowEditLocation(false)} />
-      )}
-
-      {!device.archivedAt && !hasRecentContact(device) && (
-        <aside
-          aria-label={t("Sensor connection checklist")}
-          className="surface-card rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-[var(--text-primary)]"
-        >
-          <p className="font-semibold text-amber-700 dark:text-amber-400">
-            {t("Sensor unavailable — what to check")}
-          </p>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            {t("This sensor hasn't sent a recent reading. You usually do not need to re-enter Wi-Fi credentials.")}
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--text-secondary)]">
-            <li>{t("Check that the sensor has power and its indicator LED is on.")}</li>
-            <li>{t("Check that your 2.4 GHz Wi-Fi router is online, then wait 1–2 minutes for automatic reconnection.")}</li>
-            <li>{t("Only re-setup Wi-Fi (hold BOOT for 5 seconds, then Add Device) if your Wi-Fi name or password changed.")}</li>
-          </ul>
-        </aside>
       )}
 
       <OperatingMetrics device={device} {...operating} expectedMin={latestTelemetry?.lowerBound ?? null} expectedMax={latestTelemetry?.upperBound ?? null} />

@@ -348,12 +348,12 @@ export default function Home() {
                       <span className="font-mono text-xs uppercase tracking-wider text-amber-400 font-bold">
                         {t("SENTRIX KIT")}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[0.625rem] font-semibold text-emerald-400">
                       
                         {t("Prototype")}
                       </span>
                     </div>
-                    <p className="mt-0.5 font-mono text-[11px] text-stone-400">
+                    <p className="mt-0.5 font-mono text-[0.6875rem] text-stone-400">
                       {t("Non-invasive edge node hardware")}
                     </p>
                   </div>
@@ -374,7 +374,7 @@ export default function Home() {
 
                     {/* Top-right subtle badge */}
                     <div className="absolute top-2.5 right-2.5 pointer-events-none">
-                      <span className="rounded-full border border-amber-500/30 bg-black/75 px-2.5 py-1 font-mono text-[10px] text-amber-300 backdrop-blur-md">
+                      <span className="rounded-full border border-amber-500/30 bg-black/75 px-2.5 py-1 font-mono text-[0.625rem] text-amber-300 backdrop-blur-md">
                         ESP32 + IR + SCT-013
                       </span>
                     </div>
@@ -385,7 +385,7 @@ export default function Home() {
                     <span className="text-stone-300 font-medium truncate">
                       {t("Sentrix Edge Node Assembly")}
                     </span>
-                    <span className="shrink-0 rounded bg-stone-800/80 px-2 py-0.5 text-[10px] sm:text-xs text-amber-400 font-semibold uppercase tracking-wider">
+                    <span className="shrink-0 rounded bg-stone-800/80 px-2 py-0.5 text-[0.625rem] sm:text-xs text-amber-400 font-semibold uppercase tracking-wider">
                       ESP-WROOM-32
                     </span>
                   </div>

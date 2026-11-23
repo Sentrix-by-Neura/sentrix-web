@@ -161,7 +161,7 @@ function GroupPickerModal({
                 <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-amber-500">
                   📍 {group.name}
                 </p>
-                <p className="font-mono text-[10px] text-[var(--text-muted)]">
+                <p className="font-mono text-[0.625rem] text-[var(--text-muted)]">
                   Mesh: {group.meshId.slice(0, 8)}…
                 </p>
               </div>
@@ -384,7 +384,7 @@ function SentrixContextMenuContent() {
       if (group) {
         return (
           <>
-            <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
+            <div className="px-3 py-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
               {t("GROUP")} · {group.name}
             </div>
             <div className="py-1">
@@ -453,7 +453,7 @@ function SentrixContextMenuContent() {
         const group = groups.find((g) => g.id === device.groupId);
         return (
           <>
-            <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
+            <div className="px-3 py-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
               {t("AC NODE")} · {device.name}
             </div>
             <div className="py-1">
@@ -525,7 +525,7 @@ function SentrixContextMenuContent() {
         if (devices.find(d => d.id === alert.deviceId)?.archivedAt) return <p className="px-3 py-2 text-xs text-[var(--text-secondary)]">{t("Archived sensor history")}</p>;
         return (
           <>
-            <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
+            <div className="px-3 py-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
               {t("ANOMALY")} · {t(alert.severity)} ({alert.actualValue}A)
             </div>
             <div className="py-1">
@@ -576,7 +576,7 @@ function SentrixContextMenuContent() {
     // Default Workspace Menu (Empty space right-click)
     return (
       <>
-        <div className="px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
+        <div className="px-3 py-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] truncate">
           {t("SENTRIX QUICK SHORTCUTS")}
         </div>
         <div className="py-1">
@@ -682,7 +682,7 @@ function SentrixContextMenuContent() {
                 role="menuitem"
               >
                 <span className="truncate">{t("Copy Selected Text")}</span>
-                <span className="font-mono text-[10px] text-[var(--text-muted)] group-hover:text-amber-500">
+                <span className="font-mono text-[0.625rem] text-[var(--text-muted)] group-hover:text-amber-500">
                   Ctrl+C
                 </span>
               </button>
@@ -692,7 +692,7 @@ function SentrixContextMenuContent() {
 
           {renderMenuItems()}
 
-          <div className="px-3 py-1 border-t border-[var(--border)] font-mono text-[9px] text-[var(--text-muted)] text-center select-none">
+          <div className="px-3 py-1 border-t border-[var(--border)] font-mono text-[0.5625rem] text-[var(--text-muted)] text-center select-none">
             {t("Shift + Right-Click for browser menu")}
           </div>
         </div>

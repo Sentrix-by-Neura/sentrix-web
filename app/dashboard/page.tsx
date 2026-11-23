@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useSentrix, hasRecentContact, type Alert } from "../lib/sentrix-store";
 import { useConfirm } from "../components/confirm-modal";
+import { HelpPopover } from "../components/help-popover";
 import { useLanguage } from "../lib/language-context";
 
 type AnomalyWindow = "24h" | "7d";
@@ -135,9 +136,23 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <section className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3" aria-label={t("Global health overview")}>
+      <section className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2" aria-label={t("Global health overview")}>
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
-          <h2 className="eyebrow">{t("Device contact")}</h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="eyebrow">{t("Device contact")}</h2>
+            <HelpPopover label={t("Device contact")} title={t("Device contact")}>
+              <dl className="space-y-1.5">
+                <div>
+                  <dt className="inline font-medium text-emerald-600 dark:text-emerald-400">{t("Recent contact")}: </dt>
+                  <dd className="inline">{t("online and sending readings.")}</dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium text-[var(--text-primary)]">{t("Awaiting contact")}: </dt>
+                  <dd className="inline">{t("no recent signal — check power or Wi-Fi.")}</dd>
+                </div>
+              </dl>
+            </HelpPopover>
+          </div>
           <p className="mt-2 font-mono text-2xl leading-none tracking-[-0.06em] sm:text-[1.75rem]">
             <span className="text-emerald-600 dark:text-emerald-400">{pad(online)}</span>
             <span className="ml-1.5 text-sm tracking-normal text-[var(--text-secondary)] sm:text-xs">{t("Recent contact")}</span>
@@ -148,36 +163,6 @@ export default function DashboardPage() {
           <p className="mt-2 font-mono text-xs text-[var(--text-muted)]">
             {currentDevices.length} {t("sensors registered")}
           </p>
-          <dl className="mt-2.5 space-y-1 text-xs leading-relaxed text-[var(--text-secondary)]">
-            <div>
-              <dt className="inline font-medium text-emerald-600 dark:text-emerald-400">{t("Recent contact")}: </dt>
-              <dd className="inline">{t("online and sending readings.")}</dd>
-            </div>
-            <div>
-              <dt className="inline font-medium text-[var(--text-primary)]">{t("Awaiting contact")}: </dt>
-              <dd className="inline">{t("no recent signal — check power or Wi-Fi.")}</dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
-          <h2 className="eyebrow">{t("System status")}</h2>
-          {unresolved.length === 0 ? (
-            <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b98199]" />
-              {t("No unresolved recent alerts")}
-            </span>
-          ) : (
-            <span className="mt-2.5 inline-flex items-center gap-2 rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1.5 text-sm font-semibold text-red-500">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              {unresolved.length} {t(unresolved.length === 1 ? "unresolved alert in recent history" : "unresolved alerts in recent history")}
-            </span>
-          )}
-          {unresolved.length > 0 && (
-            <Link href="/alerts" className="mt-2 block w-fit text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400">
-              {t("Review alerts →")}
-            </Link>
-          )}
         </article>
 
         <article className="surface-card rounded-xl border border-[var(--border)] px-5 py-4 sm:px-6">
@@ -190,7 +175,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={() => setAnomalyWindow(option)}
                   aria-pressed={anomalyWindow === option}
-                  className={`rounded px-2 py-0.5 font-mono text-[10px] transition ${
+                  className={`rounded px-2 py-0.5 font-mono text-[0.625rem] transition ${
                     anomalyWindow === option
                       ? "bg-[var(--surface)] text-[var(--text-primary)] shadow-sm"
                       : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -212,7 +197,7 @@ export default function DashboardPage() {
               </span>
             )}
           </p>
-          <p className="mt-2 font-mono text-[10px] text-[var(--text-muted)]">
+          <p className="mt-2 font-mono text-[0.625rem] text-[var(--text-muted)]">
             {t("vs")} {previous} {t("in the previous")} {t(anomalyWindow)}
           </p>
         </article>
@@ -221,7 +206,7 @@ export default function DashboardPage() {
       <section className="mt-8 md:mt-10" aria-label={t("Groups")}>
         <div className="mb-4 flex items-center gap-2.5">
           <h2 className="eyebrow">{t("Groups")}</h2>
-          <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
+          <span className="rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[0.5625rem] text-[var(--text-muted)]">
             {pad(groups.length)}
           </span>
         </div>

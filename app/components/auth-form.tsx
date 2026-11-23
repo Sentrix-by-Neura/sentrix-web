@@ -164,7 +164,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-500 border border-amber-500/20">
+              <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 font-mono text-[0.5625rem] font-semibold uppercase tracking-wider text-amber-500 border border-amber-500/20">
                 {t("Action Required")}
               </span>
             </div>
@@ -271,7 +271,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
-                    className="absolute inset-y-0 right-3 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    className="absolute inset-y-0 right-3 text-[0.625rem] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     aria-label={t(showPassword ? "Hide password" : "Show password")}
                   >
                     {t(showPassword ? "Hide" : "Show")}
@@ -319,14 +319,14 @@ export function AuthForm({ mode }: AuthFormProps) {
 
                 {unconfirmedLoginEmail && (
                   <div className="mt-3 border-t border-amber-500/20 pt-2 flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-[var(--text-muted)]">
+                    <span className="text-[0.6875rem] text-[var(--text-muted)]">
                       {t("Didn't get or lost the link?")}
                     </span>
                     <button
                       type="button"
                       disabled={resendStatus === "sending"}
                       onClick={() => handleResendVerification(unconfirmedLoginEmail)}
-                      className="text-[11px] font-semibold text-amber-500 hover:text-amber-400 underline disabled:opacity-50"
+                      className="text-[0.6875rem] font-semibold text-amber-500 hover:text-amber-400 underline disabled:opacity-50"
                     >
                       {t(resendStatus === "sending" ? "Sending…" : "Resend Verification Email")}
                     </button>
@@ -335,7 +335,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
                 {resendFeedback && (
                   <p
-                    className={`mt-2 text-[11px] ${
+                    className={`mt-2 text-[0.6875rem] ${
                       resendStatus === "sent" ? "text-emerald-400" : "text-red-400"
                     }`}
                   >
@@ -357,7 +357,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
         )}
 
-        <div className="flex justify-between font-mono text-[8px] uppercase tracking-widest text-[var(--text-muted)]" />
+        <div className="flex justify-between font-mono text-[0.5rem] uppercase tracking-widest text-[var(--text-muted)]" />
       </section>
       <AuthArtwork />
     </main>

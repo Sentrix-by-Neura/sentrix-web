@@ -14,6 +14,7 @@ import {
 import { useTelemetryHistory, type TelemetryPoint, type TelemetryRange } from "../../../lib/sentrix-store";
 import styles from "./sensor-detail.module.css";
 import { useLanguage } from "../../../lib/language-context";
+import { HelpPopover } from "../../../components/help-popover";
 
 interface TelemetryChartProps {
   deviceId: string;
@@ -340,7 +341,40 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   return (
     <section aria-label={t("Current history")} className={`${styles.panel} space-y-5`}>
       <div className={styles.sectionHeader}>
-        <h2>{t("Current history")}</h2>
+        <div className="flex items-center gap-2">
+          <h2>{t("Current history")}</h2>
+          <HelpPopover label={t("How to read this chart (Normal vs. Anomaly)")} title={t("How to read this chart (Normal vs. Anomaly)")}>
+            <div className="space-y-2.5">
+              <div>
+                <p className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                  {t("Sample normal reading")}
+                </p>
+                <p className="mt-0.5 font-mono text-[0.6875rem] text-[var(--text-primary)]">
+                  4.20 A · {t("Safe range")} 3.50–5.00 A
+                </p>
+                <p className="mt-0.5">
+                  {t("RMS Current measures how hard the AC is working. When the line stays inside the shaded Safe Range, the AC is running normally.")}
+                </p>
+              </div>
+              <div className="border-t border-[var(--border)] pt-2">
+                <p className="flex items-center gap-1.5 font-semibold text-red-500">
+                  <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
+                  {t("Sample anomaly")}
+                </p>
+                <p className="mt-0.5 font-mono text-[0.6875rem] text-[var(--text-primary)]">
+                  7.40 A · {t("Safe range")} 3.50–5.00 A
+                </p>
+                <p className="mt-0.5">
+                  {t("A red dot marks a spike or drop outside the Safe Range — a sign to check for dirty filters, icing, or compressor strain.")}
+                </p>
+              </div>
+              <p className="border-t border-[var(--border)] pt-2 text-[var(--text-muted)]">
+                {t("Pinch or use + / − to zoom · Drag or use arrows to pan · Tap any point for details")}
+              </p>
+            </div>
+          </HelpPopover>
+        </div>
         <div role="group" aria-label={t("Chart zoom and pan controls")} className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
@@ -399,38 +433,6 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
         <span><i aria-hidden="true" className={styles.anomalyKey} />{t("Anomaly (outside safe range)")}</span>
       </div>
 
-      <details className="rounded-lg border border-[var(--border)] bg-[var(--canvas)] px-3.5 py-2.5 text-sm text-[var(--text-secondary)]">
-        <summary className="cursor-pointer select-none font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400">
-          {t("How to read this chart (Normal vs. Anomaly)")}
-        </summary>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
-            <p className="flex items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
-              {t("Sample normal reading")}
-            </p>
-            <p className="mt-1 font-mono text-xs text-[var(--text-primary)]">
-              4.20 A · {t("Safe range")} 3.50–5.00 A
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
-              {t("RMS Current measures how hard the AC is working. When the line stays inside the shaded Safe Range, the AC is running normally.")}
-            </p>
-          </div>
-          <div className="rounded-lg border border-red-500/25 bg-[var(--surface)] p-3">
-            <p className="flex items-center gap-2 font-semibold text-red-500">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
-              {t("Sample anomaly")}
-            </p>
-            <p className="mt-1 font-mono text-xs text-[var(--text-primary)]">
-              7.40 A · {t("Safe range")} 3.50–5.00 A
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
-              {t("A red dot marks a spike or drop outside the Safe Range — a sign to check for dirty filters, icing, or compressor strain.")}
-            </p>
-          </div>
-        </div>
-      </details>
-
       <div
         ref={frameRef}
         className={`relative h-80 w-full ${styles.chartFrame} ${canPan ? styles.panChart : ""}`}
@@ -471,7 +473,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
               ticks={timeTicks}
               tickFormatter={value => tickFormat.format(value)}
               stroke="var(--chart-label)"
-              fontSize={12}
+              fontSize="0.75rem"
               tickLine={false}
               axisLine={{ stroke: "var(--border)" }}
               interval="preserveStartEnd"
@@ -481,7 +483,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
               className={styles.zoomAxis}
               width={yAxisWidth}
               stroke="var(--chart-label)"
-              fontSize={12}
+              fontSize="0.75rem"
               tickLine={false}
               axisLine={{ stroke: "var(--border)" }}
               domain={currentDomain ?? [minY, maxY]}
@@ -552,7 +554,6 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       {history?.oldest != null && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
           <p>{windowDate.formatRange(displayedStart, displayedEnd)}</p>
-          <p>{t("Pinch or use + / − to zoom · Drag or use arrows to pan · Tap any point for details")}</p>
         </div>
       )}
       {loading && visiblePoints.length > 0 && <p role="status" className={styles.message}>{t("Loading current history…")}</p>}
