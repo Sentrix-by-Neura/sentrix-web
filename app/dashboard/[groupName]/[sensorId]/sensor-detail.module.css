@@ -1,6 +1,5 @@
 /* Hallmark · shape: app screen · genre: modern-minimal · theme: Sentrix brand · scope: app · v2.0.0 */
 /* Critique: one measurement row, one device status, chart before event history; existing shell and data retained. */
-/* finish-review: in-thread, ship; gap: none. Normal RMS Current Range remains prominent. */
 /* waive 26b: read-only measurements have no interactive states; controls below have active and disabled styles. */
 /* dropped: repeated back link, group subtitle, received/command times, activity and explanatory copy at the user's request. */
 :global(html):has(.page), :global(body):has(.page) { overflow-x: clip; }
@@ -55,9 +54,6 @@
 .metrics > div + div { border-left: 1px solid var(--border); }
 .metrics dt { color: var(--text-secondary); font-size: .875rem; }
 .metrics dd { margin: 12px 0 0; font-size: 2rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
-.metrics > .normalRange { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; padding: 20px 0; border-left: 0; border-top: 1px solid var(--border); }
-.normalRange dt { color: var(--text-primary); font-weight: 500; }
-.normalRange dd { margin: 0; font-size: 1.5rem; }
 .unit { color: var(--text-secondary); font-size: 1rem; font-weight: 400; }
 .skeleton { width: 7rem; max-width: 100%; min-height: 2.4rem; border-radius: 4px; background: var(--surface-hover); }
 .message { margin-top: 12px; color: var(--text-secondary); font-size: .875rem; }
@@ -82,9 +78,7 @@
 .zoomAxis { cursor: ns-resize; }
 .legend { display: flex; flex-wrap: wrap; gap: 12px 24px; color: var(--text-secondary); font-size: .8125rem; }
 .legend > span { display: inline-flex; align-items: center; gap: 8px; }
-.rangeKey { width: 18px; height: 10px; background: var(--sensor-accent); opacity: .35; }
 .currentKey { width: 18px; height: 2px; background: var(--chart-line); }
-.anomalyKey { width: 8px; height: 8px; background: var(--sensor-danger); }
 .tooltip { min-width: 180px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-primary); font-size: .875rem; }
 .tooltip dl { display: grid; grid-template-columns: auto auto; gap: 8px 16px; margin-top: 8px; font-variant-numeric: tabular-nums; }
 .tooltip dt { color: var(--text-secondary); }

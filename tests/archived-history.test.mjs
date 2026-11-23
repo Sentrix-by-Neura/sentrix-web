@@ -26,11 +26,11 @@ function renderRoute(path, { devices = [archived], sensorId = archived.id, expec
       findGroup: () => group,
       hasRecentContact: device => !device.archivedAt && device.status !== "OFFLINE" && device.mqttConnected !== false && !!device.lastSeen,
       useOperatingState: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { reading: null, loading: false, error: null }; },
-      useTelemetry: id => { if (expectedTelemetryId) assert.equal(id, expectedTelemetryId); return { points: [{ timestamp: "2026-10-24T01:00:00Z", rmsCurrent: 2, lowerBound: 0, upperBound: 5 }], loading: false, error: null }; },
     };
     if (name.endsWith("sentrix-bluetooth")) return {};
     if (name.endsWith("device-location-meta")) return { resizeLocationPhoto: async () => "" };
     if (name.endsWith("confirm-modal")) return { useConfirm: () => () => {} };
+    if (name.endsWith("help-popover")) return { HelpPopover: () => null };
     if (name.endsWith("ble-onboarding-modal")) return { BleOnboardingModal: () => null };
     if (name.endsWith("telemetry-chart")) return { TelemetryChart: () => createElement("div", null, "Preserved telemetry chart") };
     if (name.endsWith("telemetry-export")) return { TelemetryExport: ({ deviceId }) => { if (expectedTelemetryId) assert.equal(deviceId, expectedTelemetryId); return createElement("button", null, "Export all data (CSV)"); } };
@@ -60,8 +60,9 @@ test("archived detail keeps its chart and removes live monitoring and alert cont
 test("archived sensors and alerts do not count toward current dashboard health", () => {
   const html = renderRoute("dashboard/page.tsx");
   assert.match(html, /0 sensors registered/);
-  assert.match(html, /No unresolved recent alerts/);
-  assert.doesNotMatch(html, /Anomalies Detected/);
+  const anomalyCard = html.split(">Recent anomalies</h2>")[1].split("</article>")[0];
+  assert.match(anomalyCard, />00<\/p>/);
+  assert.doesNotMatch(anomalyCard, /Trending up|Trending down/);
 });
 test("preserved historical alerts remain readable without mutation buttons", () => {
   const html = renderRoute("alerts/page.tsx");

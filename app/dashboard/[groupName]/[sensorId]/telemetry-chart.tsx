@@ -2,9 +2,8 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent } from "react";
 import {
-  Area,
   CartesianGrid,
-  ComposedChart,
+  LineChart,
   Line,
   ResponsiveContainer,
   Tooltip,
@@ -50,9 +49,9 @@ function wheelPixels(delta: number, mode: number, pageHeight: number) {
 }
 
 type ChartPoint = {
-  time: number; timestamp?: string; timeLabel?: string; rmsCurrent: number | null;
-  bounds: [number, number] | null; lowerBound: number | null; upperBound: number | null;
-  isAnomaly?: boolean; isolated?: boolean;
+  time: number;
+  rmsCurrent: number | null;
+  isolated?: boolean;
 };
 
 function makeChartPoints(points: TelemetryPoint[], start: number, maxGap: number) {
@@ -63,11 +62,10 @@ function makeChartPoints(points: TelemetryPoint[], start: number, maxGap: number
     const hasPrevious = time - times[index - 1] <= maxGap;
     const hasNext = times[index + 1] - time <= maxGap;
     if (index > 0 && !hasPrevious) {
-      items.push({ time: (time + times[index - 1]) / 2, rmsCurrent: null, bounds: null, lowerBound: null, upperBound: null });
+      items.push({ time: (time + times[index - 1]) / 2, rmsCurrent: null });
     }
     items.push({
-      ...point, time, isolated: !hasPrevious && !hasNext,
-      bounds: point.lowerBound === null || point.upperBound === null ? null : [point.lowerBound, point.upperBound],
+      time, rmsCurrent: point.rmsCurrent, isolated: !hasPrevious && !hasNext,
     });
   });
   return items;
@@ -86,16 +84,12 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0]?.payload;
   if (!data || data.rmsCurrent === null) return null;
-  const safeRange = data.lowerBound === null || data.upperBound === null
-    ? "Unknown"
-    : `${data.lowerBound.toFixed(2)}–${data.upperBound.toFixed(2)} A`;
 
   return (
     <div className={styles.tooltip}>
-      <p>{new Date(data.time).toLocaleString(language === "id" ? "id-ID" : "en-GB")}{data.isAnomaly ? ` (${t("anomaly")})` : ""}</p>
+      <p>{new Date(data.time).toLocaleString(language === "id" ? "id-ID" : "en-GB")}</p>
       <dl>
         <dt>{t("Current")}</dt><dd>{data.rmsCurrent.toFixed(2)} A</dd>
-        <dt>{t("Safe range")}</dt><dd>{t(safeRange)}</dd>
       </dl>
     </div>
   );
@@ -200,7 +194,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
   const chartData = useMemo(() => history ? makeChartPoints(history.points, history.start, timeframes[history.range].maxGap) : [], [history]);
   const visiblePoints = chartData.filter(point => point.rmsCurrent !== null && point.time >= displayedStart && point.time <= displayedEnd);
   const allValues = visiblePoints
-    .flatMap((d) => [d.rmsCurrent, d.lowerBound, d.upperBound])
+    .map(point => point.rmsCurrent)
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   const minY = allValues.length > 0 ? Math.max(0, Math.floor(Math.min(...allValues) - 1)) : 0;
   const maxY = allValues.length > 0 ? Math.ceil(Math.max(...allValues) + 1.5) : 25;
@@ -343,36 +337,9 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       <div className={styles.sectionHeader}>
         <div className="flex items-center gap-2">
           <h2>{t("Current history")}</h2>
-          <HelpPopover label={t("How to read this chart (Normal vs. Anomaly)")} title={t("How to read this chart (Normal vs. Anomaly)")}>
-            <div className="space-y-2.5">
-              <div>
-                <p className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                  {t("Sample normal reading")}
-                </p>
-                <p className="mt-0.5 font-mono text-[0.6875rem] text-[var(--text-primary)]">
-                  4.20 A · {t("Safe range")} 3.50–5.00 A
-                </p>
-                <p className="mt-0.5">
-                  {t("RMS Current measures how hard the AC is working. When the line stays inside the shaded Safe Range, the AC is running normally.")}
-                </p>
-              </div>
-              <div className="border-t border-[var(--border)] pt-2">
-                <p className="flex items-center gap-1.5 font-semibold text-red-500">
-                  <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
-                  {t("Sample anomaly")}
-                </p>
-                <p className="mt-0.5 font-mono text-[0.6875rem] text-[var(--text-primary)]">
-                  7.40 A · {t("Safe range")} 3.50–5.00 A
-                </p>
-                <p className="mt-0.5">
-                  {t("A red dot marks a spike or drop outside the Safe Range — a sign to check for dirty filters, icing, or compressor strain.")}
-                </p>
-              </div>
-              <p className="border-t border-[var(--border)] pt-2 text-[var(--text-muted)]">
-                {t("Pinch or use + / − to zoom · Drag or use arrows to pan · Tap any point for details")}
-              </p>
-            </div>
+          <HelpPopover label={t("How to read this chart")} title={t("How to read this chart")}>
+            <p>{t("The line shows RMS current in amperes (A) over time.")}</p>
+            <p className="mt-2">{t("Pinch or use + / − to zoom · Drag or use arrows to pan · Tap any point for details")}</p>
           </HelpPopover>
         </div>
         <div role="group" aria-label={t("Chart zoom and pan controls")} className="flex flex-wrap items-center gap-1.5">
@@ -428,9 +395,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       </div>
 
       <div className={styles.legend}>
-        <span><i aria-hidden="true" className={styles.currentKey} />{t("Current (AC power draw)")}</span>
-        <span><i aria-hidden="true" className={styles.rangeKey} />{t("Safe range (normal band)")}</span>
-        <span><i aria-hidden="true" className={styles.anomalyKey} />{t("Anomaly (outside safe range)")}</span>
+        <span><i aria-hidden="true" className={styles.currentKey} />{t("RMS Current")} (A)</span>
       </div>
 
       <div
@@ -461,7 +426,7 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
       >
         {history?.oldest != null && (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={chartMargin} aria-keyshortcuts="Shift+ArrowLeft Shift+ArrowRight">
+            <LineChart data={chartData} margin={chartMargin} aria-keyshortcuts="Shift+ArrowLeft Shift+ArrowRight">
             <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="time"
@@ -492,39 +457,6 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
             />
             {previewEnd === null && <Tooltip content={<CustomTooltip />} />}
 
-            {/* Shaded Auto-ARIMA Confidence Interval Area */}
-            <Area
-              type="monotone"
-              dataKey="bounds"
-              stroke="none"
-              fill="var(--sensor-accent)"
-              fillOpacity={0.16}
-              isAnimationActive={false}
-            />
-
-            {/* Expected Upper & Lower Bound Boundary Guidelines */}
-            <Line
-              type="monotone"
-              dataKey="upperBound"
-              stroke="var(--sensor-accent)"
-              strokeOpacity={0.35}
-              strokeDasharray="4 4"
-              strokeWidth={1}
-              dot={false}
-              isAnimationActive={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="lowerBound"
-              stroke="var(--sensor-accent)"
-              strokeOpacity={0.35}
-              strokeDasharray="4 4"
-              strokeWidth={1}
-              dot={false}
-              isAnimationActive={false}
-            />
-
-            {/* Live Electrical RMS Telemetry Data Line */}
             <Line
               type="monotone"
               dataKey="rmsCurrent"
@@ -534,15 +466,11 @@ export function TelemetryChart({ deviceId }: TelemetryChartProps) {
               activeDot={{ r: 6, fill: "var(--chart-line)", stroke: "var(--surface)", strokeWidth: 2 }}
               dot={(props) => {
                 const { cx, cy, payload } = props;
-                if (!(payload?.isAnomaly || payload?.isolated) || cx == null || cy == null) return <g key={`empty-${props.index}`} />;
-                return (
-                  <g key={`anomaly-${payload.timestamp}`}>
-                    <circle cx={cx} cy={cy} r={payload.isAnomaly ? 4.5 : 2.5} fill={payload.isAnomaly ? "var(--sensor-danger)" : "var(--chart-line)"} stroke="var(--surface)" strokeWidth={1.5} />
-                  </g>
-                );
+                if (!payload?.isolated || cx == null || cy == null) return <g key={props.index} />;
+                return <circle key={props.index} cx={cx} cy={cy} r={2.5} fill="var(--chart-line)" stroke="var(--surface)" strokeWidth={1.5} />;
               }}
             />
-          </ComposedChart>
+          </LineChart>
         </ResponsiveContainer>
         )}
         {visiblePoints.length === 0 && previewEnd === null && (

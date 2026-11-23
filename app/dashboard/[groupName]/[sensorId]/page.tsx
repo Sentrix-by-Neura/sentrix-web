@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Suspense, useState, type ChangeEvent, type FormEvent } from "react";
-import { useSentrix, useTelemetry, useOperatingState, findGroup, hasRecentContact, type Device } from "../../../lib/sentrix-store";
+import { useSentrix, useOperatingState, findGroup, hasRecentContact, type Device } from "../../../lib/sentrix-store";
 import { resizeLocationPhoto } from "../../../lib/device-location-meta";
 import { TelemetryChart } from "./telemetry-chart";
 import { OperatingMetrics } from "./operating-metrics";
@@ -207,8 +207,6 @@ function SensorAnalyticsContent() {
     ?? groupDevices.find(d => !d.archivedAt && (d.macAddress === sensorId || d.macAddress === rawSensor))
     ?? groupDevices.find(d => d.macAddress === sensorId || d.macAddress === rawSensor);
   const operating = useOperatingState(device?.id ?? "");
-  const { points: telemetry } = useTelemetry(device?.id ?? "", "24h");
-  const latestTelemetry = telemetry[telemetry.length - 1];
 
   if (!ready) {
     return (
@@ -367,7 +365,7 @@ function SensorAnalyticsContent() {
         <EditLocationModal device={device} onClose={() => setShowEditLocation(false)} />
       )}
 
-      <OperatingMetrics device={device} {...operating} expectedMin={latestTelemetry?.lowerBound ?? null} expectedMax={latestTelemetry?.upperBound ?? null} />
+      <OperatingMetrics device={device} {...operating} />
 
       <TelemetryChart key={device.id} deviceId={device.id} />
 

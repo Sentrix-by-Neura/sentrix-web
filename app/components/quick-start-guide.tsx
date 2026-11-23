@@ -21,7 +21,7 @@ const STEPS = [
   {
     badge: "03 / 04",
     title: "Status & Current Charts",
-    body: "Recent contact means the sensor is online. On a sensor's chart, normal operation stays inside the shaded Safe Range — red dots highlight anomalies. Use + / − or pinch to zoom on your phone.",
+    body: "Recent contact means the sensor is online. The chart shows measured RMS current over time. Use + / − or pinch to zoom on your phone.",
   },
   {
     badge: "04 / 04",

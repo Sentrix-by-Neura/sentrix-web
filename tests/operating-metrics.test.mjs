@@ -19,16 +19,22 @@ runInNewContext(ts.transpileModule(storeSource, { compilerOptions: { module: ts.
 const source = readFileSync(new URL("../app/dashboard/[groupName]/[sensorId]/operating-metrics.tsx", import.meta.url), "utf8");
 const component = {};
 runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
-  exports: component, Date, Number, require: name => name.endsWith("language-context") ? { useLanguage: () => ({ t: text => text, language: "en" }) } : name.endsWith("sentrix-store") ? store : name.endsWith(".module.css") ? { default: {} } : require(name),
+  exports: component, Date, Number, require: name => {
+    if (name.endsWith("language-context")) return { useLanguage: () => ({ t: text => text, language: "en" }) };
+    if (name.endsWith("sentrix-store")) return store;
+    if (name.endsWith("help-popover")) return { HelpPopover: ({ label, children }) => createElement("aside", { "aria-label": label }, children) };
+    if (name.endsWith(".module.css")) return { default: {} };
+    return require(name);
+  },
 });
-const render = (changes = {}) => renderToStaticMarkup(createElement(component.OperatingMetrics, { device, reading, loading: false, error: null, expectedMin: 0.1, expectedMax: 3, ...changes }));
+const render = (changes = {}) => renderToStaticMarkup(createElement(component.OperatingMetrics, { device, reading, loading: false, error: null, ...changes }));
 
 test("operating summary shows each measurement once without redundant details", () => {
   const html = render();
   for (const text of [/27.5°C/, /24.0°C/, />ON</, /0.12/]) assert.match(html, text);
-  for (const label of ["RMS Current", "Room Temperature", "Target Temperature", "AC Power"]) assert.equal(html.split(`<dt>${label}</dt>`).length - 1, 1);
-  assert.equal(html.split("Normal RMS Current Range").length - 1, 1);
-  assert.match(html, /0.10 to 3.00/);
+  for (const label of ["RMS Current", "Room Temperature", "Target Temperature", "AC Status"]) assert.equal(html.split(`>${label}<`).length - 1, 1);
+  assert.doesNotMatch(html, /Normal RMS Current Range|AC Power/);
+  assert.match(html, /aria-label="About AC status".*on or off.*watts \(W\)/);
   assert.doesNotMatch(html, /Backend contact|Go service|Last |Command heard|Measured current|standby|Room temperature is measured|Expected safe range|<time/);
   assert.match(render({ reading: { ...reading, remote_power_on: false } }), />OFF</);
 });
@@ -57,12 +63,4 @@ test("failed refresh preserves last values with a visible error and empty data s
   assert.match(render({ reading: null, loading: true }), /Loading room temperature/);
   assert.doesNotMatch(render({ reading: null, loading: true }), />OFF<|0.0°C/);
   assert.match(render({ reading: { ...reading, rms_current: NaN } }), /Unknown/);
-});
-
-test("missing prediction bounds never invent a normal range or zero threshold", () => {
-  const html = render({ expectedMin: null, expectedMax: null });
-  assert.match(html, /Normal RMS Current Range/);
-  assert.doesNotMatch(html, /0.00 to 0.00|NaN|Infinity/);
-  assert.match(html, /Unknown/);
-  assert.match(render({ expectedMin: 0, expectedMax: 3 }), /0.00 to 3.00/);
 });
